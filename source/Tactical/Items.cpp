@@ -1423,9 +1423,9 @@ UINT8 ItemSlotLimit( OBJECTTYPE * pObject, INT16 bSlot, SOLDIERTYPE *pSoldier, B
 		if (UsingNewInventorySystem() == false)
 			return (max(1, ubSlotLimit));
 		else if(pSoldier != NULL && (pSoldier->flags.uiStatusFlags & SOLDIER_VEHICLE))
-			return (max(1, LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(54,Item[pObject->usItem].ItemSize)])); // IoV 921-001:54 1.13:34
+			return (max(1, LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(54,Item[pObject->usItem].ItemSize)])); //kenkenkenken: IoV 921+z.3=54, 1.13=34 根据LBEPocketType返回物品槽可放物品数量
 		else
-			return (max(1, min(255,LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(54,Item[pObject->usItem].ItemSize)]*4))); // IoV 921-001:54 1.13:34
+			return (max(1, min(255,LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(54,Item[pObject->usItem].ItemSize)]*4))); //kenkenkenken: IoV 921+z.3=54, 1.13=34 根据LBEPocketType返回物品槽可放物品数量×4，有bug，如果物品太小导致数量达到128就溢出变成-128
 	}
 
 	if (UsingNewInventorySystem() == false) {
@@ -1475,7 +1475,7 @@ UINT8 ItemSlotLimit( OBJECTTYPE * pObject, INT16 bSlot, SOLDIERTYPE *pSoldier, B
 	}
 	else
 		iSize = Item[pObject->usItem].ItemSize;
-	iSize = __min(iSize,54); // IoV 921-001:54, 1.13:34
+	iSize = __min(iSize,54); //kenkenkenken: IoV 921+z.3 = 54, 1.13 = 34
 	ubSlotLimit = LBEPocketType[pIndex].ItemCapacityPerSize[iSize];
 
 	//this could be changed, we know guns are physically able to stack
@@ -2682,7 +2682,7 @@ BOOLEAN ValidMerge( UINT16 usMerge, UINT16 usItem )
 
 int GetPocketSizeByDimensions(int sizeX, int sizeY)
 {
-	static const UINT8 cisPocketSize[6][7] = // IoV 921-001:[6][7], 1.13:[6][4]
+	static const UINT8 cisPocketSize[6][7] = //zwwooooo: IoV921+z.3 = [6][7], 1.13 = [6][4] 修改物品尺寸组
 	{
 		//11, 12, 13, 14,
 		//15, 16, 17, 18,
@@ -2690,7 +2690,7 @@ int GetPocketSizeByDimensions(int sizeX, int sizeY)
 		//23, 24, 25, 26,
 		//27, 28, 29, 30,
 		//31, 32, 33, 34
-		13, 14, 15, 16, 17, 18, 19, // IoV 921-001
+		13, 14, 15, 16, 17, 18, 19, //IoV 921+z.3
 		20, 21, 22, 23, 24, 25, 26,
 		27, 28, 29, 30, 31, 32, 33,
 		34, 35, 36, 37, 38, 39, 40,
@@ -2702,7 +2702,7 @@ int GetPocketSizeByDimensions(int sizeX, int sizeY)
 
 void GetPocketDimensionsBySize(int pocketSize, int& sizeX, int& sizeY)
 {
-	static const UINT8 cisPocketSize[6][7] = // IoV 921-001:[6][7], 1.13:[6][4]
+	static const UINT8 cisPocketSize[6][7] = //zwwooooo: IoV921+z.3 = [6][7], 1.13 = [6][4] 修改物品尺寸组
 	{
 		//11, 12, 13, 14,
 		//15, 16, 17, 18,
@@ -2710,7 +2710,7 @@ void GetPocketDimensionsBySize(int pocketSize, int& sizeX, int& sizeY)
 		//23, 24, 25, 26,
 		//27, 28, 29, 30,
 		//31, 32, 33, 34
-		13, 14, 15, 16, 17, 18, 19, // IoV 921-001
+		13, 14, 15, 16, 17, 18, 19, //IoV 921+z.3
 		20, 21, 22, 23, 24, 25, 26,
 		27, 28, 29, 30, 31, 32, 33,
 		34, 35, 36, 37, 38, 39, 40,
@@ -2720,7 +2720,7 @@ void GetPocketDimensionsBySize(int pocketSize, int& sizeX, int& sizeY)
 
 	for(sizeX=0; sizeX<6; sizeX++)
 	{
-		for(sizeY=0; sizeY<7; sizeY++) // IoV 921-001:sizeY<7, 1.13:sizeY<4
+		for(sizeY=0; sizeY<7; sizeY++) //zwwooooo: IoV 921+z.3 = sizeY<7, 1.13 = sizeY<4 修改物品尺寸组
 		{
 			if(pocketSize == cisPocketSize[sizeX][sizeY])
 			{
@@ -2741,21 +2741,21 @@ UINT16 CalculateItemSize( OBJECTTYPE *pObject )
 	// Determine default ItemSize based on item and attachments
 	cisIndex = pObject->usItem;
 	iSize = Item[cisIndex].ItemSize;
-	if(iSize>54) // IoV 921-001: 54 1.13:34
-		iSize = 54; // IoV 921-001: 54 1.13:34
+	if(iSize>54) //kenkenkenken: IoV921+z.3 = 54, 1.13 = 34
+		iSize = 54; //kenkenkenken: IoV921+z.3 = 54, 1.13 = 34
 
 	//for each object in the stack, hopefully there is only 1
 	for (int numStacked = 0; numStacked < pObject->ubNumberOfObjects; ++numStacked) {
 		//some weapon attachments can adjust the ItemSize of a weapon
-		if(iSize<12) {
+		if(iSize<12) { //kenkenkenken: IoV921+z.3 = 12, 1.13: 10
 			for (attachmentList::iterator iter = (*pObject)[numStacked]->attachments.begin(); iter != (*pObject)[numStacked]->attachments.end(); ++iter) {
 				if (iter->exists() == true) {
 					iSize += Item[iter->usItem].itemsizebonus;
 					// CHRISL: This is to catch things if we try and reduce ItemSize when we're already at 0
-					if(iSize > 54 || iSize < 0) // IoV 921-001: 54 1.13:34
+					if(iSize > 54 || iSize < 0) //kenkenkenken: IoV921+z.3 = 54, 1.13 = 34
 						iSize = 0;
-					if(iSize > 11)
-						iSize = 11;
+					if(iSize > 11) //kenkenkenken: IoV921+z.3 = 11, 1.13: 9
+						iSize = 11; //kenkenkenken: IoV921+z.3 = 11, 1.13: 9
 				}
 			}
 		}
@@ -2817,7 +2817,7 @@ UINT16 CalculateItemSize( OBJECTTYPE *pObject )
 						//Now that we have the size of one item, we want to factor in the number of items since two
 						//	items take up more space then one.
 						testSize = testSize + pLBE->inv[x].ubNumberOfObjects - 1;
-						testSize = min(testSize,34);
+						testSize = min(testSize,54); //zwwooooo: IoV921+z.4 = 54, 1.13 = 34
 						//We also need to increase the size of guns so they'll fit with the rest of our calculations.
 						if(testSize < 5)
 							testSize += 10;
@@ -2831,7 +2831,7 @@ UINT16 CalculateItemSize( OBJECTTYPE *pObject )
 				}
 				//Add the total number of filled pockets to our NewSize to account for multiple pockets being used
 				newSize += cnt;
-				newSize = min(newSize,34);
+				newSize = min(newSize,54); //zwwooooo: IoV921++z.4 = 54, 1.13 = 34
 				// If largest item is smaller then LBE, don't change ItemSize
 				if(newSize > 0 && newSize < iSize) {
 					iSize = iSize;
@@ -5982,10 +5982,11 @@ BOOLEAN PlaceObject( SOLDIERTYPE * pSoldier, INT8 bPos, OBJECTTYPE * pObj )
 						break;
 					}
 				}
-				if(pObj->ubNumberOfObjects > 0)
-					return( FALSE );
-				else
-					return( TRUE );
+				// if(pObj->ubNumberOfObjects > 0)
+					// return( FALSE );
+				// else
+					// return( TRUE );
+				if(pObj->ubNumberOfObjects <= 0) return( TRUE ); //zwwooooo: IoV921+z.4 解决纸盒（弹箱类）不能叠加问题
 			}
 		}
 
@@ -9087,7 +9088,7 @@ INT16 GetRangeBonus( OBJECTTYPE * pObj )
 	return( bonus );
 }
 
-//DBB's IoV R919-003 --> by kenkenkenken
+//kenkenkenken: IoV R921+z.3 -->
 INT32 GetRangeBonusIoV( OBJECTTYPE * pObj )
 {
 	INT32 bonus = 10000;
@@ -9104,7 +9105,7 @@ INT32 GetRangeBonusIoV( OBJECTTYPE * pObj )
 	}
 	return( bonus );
 }
-//<--DBB's IoV
+//<-- IoV
 
 INT16 LaserBonus( const INVTYPE * pItem, INT32 iRange, UINT8 bLightLevel )
 {
@@ -11385,7 +11386,7 @@ UINT8 AllowedAimingLevelsNCTH( SOLDIERTYPE *pSoldier, INT32 sGridNo )
 	aimLevels = Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].ubAimLevels;
 	fTwoHanded = Item[pSoldier->inv[pSoldier->ubAttackingHand].usItem].twohanded;
 	// weaponRange = Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].usRange + GetRangeBonus(&pSoldier->inv[pSoldier->ubAttackingHand]);
-	weaponRange = ( Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].usRange * GetRangeBonusIoV(&pSoldier->inv[pSoldier->ubAttackingHand]) ) / 10000; //DBB's IoV R919-003 by kenkenkenken
+	weaponRange = ( Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].usRange * GetRangeBonusIoV(&pSoldier->inv[pSoldier->ubAttackingHand]) ) / 10000; //kenkenkenken: IoV921+z.3 按比例增加射程
 	weaponType = Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].ubWeaponType;
 	fUsingBipod = FALSE;
 
