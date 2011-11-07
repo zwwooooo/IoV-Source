@@ -247,7 +247,7 @@ INT16 GetFlatToHitBonus( OBJECTTYPE * pObj );
 INT16 GetAverageBestLaserRange( OBJECTTYPE * pObj );
 // HEADROCK: Function to get bipod bonus from weapon and its attachments
 INT16 GetBipodBonus( OBJECTTYPE * pObj );
-INT32 GetRangeBonusIoV( OBJECTTYPE * pObj ); //DBB's IoV R919-003 by kenkenkenken
+INT32 GetRangeBonusIoV( OBJECTTYPE * pObj ); // kenkenkenken: IoV R919-003
 INT16 GetBurstToHitBonus( OBJECTTYPE * pObj, BOOLEAN fProneStance = FALSE );
 INT16 GetAutoToHitBonus( OBJECTTYPE * pObj, BOOLEAN fProneStance = FALSE	);
 INT16 GetGearAimBonus( SOLDIERTYPE * pSoldier, INT32 iRange, INT16 ubAimTime);

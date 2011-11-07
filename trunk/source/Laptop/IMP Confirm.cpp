@@ -511,7 +511,7 @@ void DistributeInitialGear(MERCPROFILESTRUCT *pProfile)
 	length = count;
 	count = 0;
 	// Next sort list by size
-	for(j=54; j>=0; j--) // IoV 921:54, 1.13:34
+	for(j=54; j>=0; j--) //zwwooooo IoV921+z.3 = 54, 1.13 = 34 修改物品最大尺寸后，这里也需要修改，否则IMP/AIM等佣兵出场时携带的装备因为 ItemSize 不存在而且消失
 	{
 		for(i=0; i<length; i++)
 		{
