@@ -46,28 +46,45 @@ Save the file.
 
 zwwooooo编译方法总结以及注意地方记录：
 
-* 下载安装VC++ 2008 Express Edition（或者VC++ 2010 Express Edition）
-* 打开 \res\JA2.rc 找到 #include "afxres.h" 改为 #include "windows.h" ，然后保存
-* 双击打开 JA2_VC2008.vcproj
-* 选择 Release 模式
-* ja2/Header Files/Language Defines.h 设置语言
-* ja2/Source Files/GameVersion.cpp 设置版本号
-* 右键->属性ja2项：
-  【配置属性】-【常规】> 输出目录：改为游戏所在目录
-  【配置属性】-【链接器】> 输出文件：改输出的文件名
-* 选择所有项，右键属性，【配置属性】-【C/C++】-【高级】> 禁用特定警告：4819
-* svn4xxx（具体什么版本开始未知，beta2011）后，编译前先把
-\Laptop\email.cpp、\Units\_EnglishText.cpp转换为UTF-16（用Ultra Edit的ASCII Escaped Unicode 编码打开然后另存为UTF-16）
-* 右键 ja2 项 > 生成。
+\\\\ 下载安装VC++ 2008 Express Edition（或者VC++ 2010 Express Edition）
+
+\\\\ 打开 \res\JA2.rc 找到 #include "afxres.h" 改为 #include "windows.h" ，然后保存（新版可以不用）
+
+\\\\ 双击打开 JA2_VC2008.vcproj（现在用2010了）
+
+\\\\ 选择 Release 模式
+
+\\\\ ja2/Header Files/Language Defines.h 设置语言
+
+\\\\ ja2/Source Files/GameVersion.cpp 设置版本号
+
+\\\\ 右键->属性ja2项：
+【配置属性】-【常规】> 输出目录：改为游戏所在目录
+【配置属性】-【链接器】> 输出文件：改输出的文件名
+
+\\\\ 选择所有项，右键属性，【配置属性】-【C/C++】-【高级】> 禁用特定警告：4819（2010下无效，忽略吧）
+
+\\\\ svn4xxx（具体什么版本开始未知，beta2011）后，编译前先把
+Laptop\email.cpp
+****4779无需 Units\_EnglishText.cpp
+Tactical\opplist.cpp
+Tactical\Weapons.cpp
+转换为UTF-16（用Ultra Edit的ASCII Escaped Unicode 编码打开然后另存为UTF-16）
+
+\\\\ 右键 ja2 项 > 生成。
 
 2011.10.23 add
-* svn2665后，编译时会出现如下错误：
+
+\\\\ svn2665后，编译时会出现如下错误：（2779后已修正）
 error C2440: "=" :无法从 "const ModifiedMapFile *" 转换为 "ModifiedMapFile *"
-错误之处是 TileEngine\SaveLoadMap.cpp
+错误之处是
+TileEngine\SaveLoadMap.cpp
 line 203: *ppMMF = &(*itr);
 line 215: pResult = &(*itr);
 改为
 *ppMMF = (ModifiedMapFile*)&(*itr);
 pResult = (ModifiedMapFile*)&(*itr);
 
-* 出现错误: error LNK2001: 无法解析的外部符号 _MemFreeReal
+\\\\ 出现错误: error LNK2001: 无法解析的外部符号 _MemFreeReal（新版已修正）
+
+

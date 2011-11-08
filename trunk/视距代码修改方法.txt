@@ -1,0 +1,32 @@
+== 视距代码修改方法 ==
+
+YY/讨论/研究：daboboye，zwwooooo
+
+Code：zwwooooo
+
+原帖：http://tbsgame.net/bbs/index.php?showtopic=57186&view=findpost&p=797200
+
+
+打开 Tactical\opplist.cpp 大概 ln 242，然后用下面的替换
+
+
+{
+{ // human
+80, // brightest
+86,
+93,
+100, // normal daylight, 3
+93,
+86,
+79,
+72,
+65, // mid-dawn, 8
+57,
+49,
+41,
+33, // normal nighttime, 9 (10 tiles)
+25,
+17,
+9
+}
+};
