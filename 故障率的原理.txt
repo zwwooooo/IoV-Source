@@ -1,0 +1,123 @@
+== 故障模拟系统 ==
+
+YY/讨论/研究：daboboye，kenkenkenken
+
+Code：kenkenkenken
+
+原帖：http://tbsgame.net/bbs/index.php?showtopic=58583&view=findpost&p=814850
+
+
+新卡壳系统的代码已经试制完成，我将其称之为“故障模拟系统”，而不是“卡壳模拟系统”，我认为转轮、泵动之类的武器一般不会jam的，但是会malfunction 0006.GIF
+
+目前系统比较简单，由三部分组成：
+
+1、xml文件：weapons.xml
+2、ini文件： IoV_Settings.ini
+3、程序代码
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+xml文件
+
+在weapons.xml中加了新参数MalfunctionRate 故障率
+
+格式形如：
+
+<MalfunctionRate>10</MalfunctionRate>
+
+范围是0～255，如果没定义就是0，但是程序里会把0转成255，也就是实际范围1～255
+
+越大故障率越低
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+ini文件
+
+加了新的ini文件叫IoV_Settings.ini，默认在Data-IoV文件夹里，这个文件的意义是使IoV的今后的一些参数可以外置
+
+目前只定义了一节 [Malfunction Settings] 故障设定
+
+格式：
+
+[Malfunction Settings]
+
+MALFUNCTION_RATE_DIVISOR_BASIC = 100
+
+MALFUNCTION_RATE_DIVISOR_BURST = 200
+
+MALFUNCTION_RATE_DIVISOR_BASIC 是单发除数因子，越大故障率越高
+
+MALFUNCTION_RATE_DIVISOR_BURST是连发除数因子，也是越大故障率越高
+
+这两个参数使得武器的单连发故障率可以分开全局设置
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+程序里的公式
+
+没有完全用教授的公式，因为教授的公式算出来故障率是小数，这个在程序里就是浮点数，一般是不太提倡的，不利于计算 0013.GIF
+
+目前是这样：
+
+1、从weapons.xml里读出武器的故障率 malfunctionRate
+
+2、从内存读出武器的物品状态 condition
+
+3、从ini文件里读出除数因子 malfunctionRateDivisor
+---如果武器是单发状态读MALFUNCTION_RATE_DIVISOR_BASIC
+---如果武器是连发状态读MALFUNCTION_RATE_DIVISOR_BURST
+
+4、计算下雨的影响gGameExternalOptions.ubWeaponReliabilityReductionPerRainIntensity * gbCurrentRainIntensity
+
+5、卡壳率等于：
+
+int jamChance = ( ( malfunctionRate * condition ) / malfunctionRateDivisor ) - gGameExternalOptions.ubWeaponReliabilityReductionPerRainIntensity * gbCurrentRainIntensity;
+
+也就是 （（故障率 × 完好率）/ 被除因子 ）- 下雨的影响
+
+举例
+
+故障率 = 10
+完好率 = 100
+除数因子 = 100
+下雨的影响 = 没下雨 = 0
+
+卡壳率 = （10 × 100）/ 100 = 10
+
+也就是有1/10的概率卡壳，那么我们可以看出xml里故障率=10是偏高的设置，嘿嘿
+
+被除因子是用来做全局调节的，调小一些可以降低故障率，比如上例如果除数因子是25，那么卡壳率 = (10 × 100）/ 25 = 40 ，变成1/40的卡壳率 
+
+----------------------------------------------------------------------------------
+
+计算卡壳率的代码
+
+int malfunctionRate = Weapon[pObj->usItem].MalfunctionRate;
+
+   if (malfunctionRate == 0)
+    malfunctionRate = 255;
+
+   int condition = (*pObj)[0]->data.gun.bGunStatus;
+
+   int malfunctionRateDivisor;
+
+   if ( !pSoldier->bDoBurst )
+   {
+    malfunctionRateDivisor = gGameExternalOptions.iMalfunctionRateDivisorBasic;
+   }
+   else
+   {
+    malfunctionRateDivisor = gGameExternalOptions.iMalfunctionRateDivisorBurst;
+   }
+
+   int jamChance = ( ( malfunctionRate * condition ) / malfunctionRateDivisor ) - gGameExternalOptions.ubWeaponReliabilityReductionPerRainIntensity * gbCurrentRainIntensity;
+
+   if (jamChance < 0)
+    jamChance = 0;
+
+
+大条件的判断，卡壳的故障排除等，都按原来的了
+
+
+
+
