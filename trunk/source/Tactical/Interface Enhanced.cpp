@@ -5472,7 +5472,7 @@ void DrawWeaponValues( OBJECTTYPE * gpItemDescObject )
 		}
 
 		//zwwooooo: IoV921+z.5 故障率 EDB 显示功能 : 显示位置在“REPAIR EASE”下面 -->
-		if( UsingNewCTHSystem() == true ){ //只在开启NCTH才工作（注：因为显示位置问题，取消未开启NCTH的显示）
+		if( UsingNewCTHSystem() == true ){ //只在开启NCTH才工作（注：因为显示位置问题，用“未开启NCTH才显示的MinRangeForAimBonus”的位置代替）
 			/////////////////// MalfunctionRate
 			{
 				// Set line to draw into
