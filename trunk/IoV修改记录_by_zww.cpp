@@ -1,3 +1,8 @@
+
+
+特别注明：这里的记录不代表最新，以 source 目录的源码文件为准！
+
+
 /*************************************************************
 IoV源码修改方法记录        by zwwooooo - 2011.10.28
 
@@ -44,13 +49,13 @@ Tactical\Weapons.cpp
 Tactical\Weapons.h
 Tactical\XML_LBEPocket.cpp
 
-Utils\Text.h
 Utils\_ChineseText.cpp
 Utils\_EnglishText.cpp
+Utils\Text.h
 
 gameloop.cpp
-GameSetting.h
 GameSettings.cpp
+GameSetting.h
 MainMenuScreen.cpp
 
 
@@ -1240,6 +1245,11 @@ BOOLEAN CheckForGunJamIoV( SOLDIERTYPE * pSoldier )
 					malfunctionRateDivisor = gGameExternalOptions.iMalfunctionRateDivisorBurst;
 				}
 
+				if (condition == 100) //zwwooooo IoV924 z.6b1: If condition is 100, then reduce half jamChance
+				{
+					malfunctionRateDivisor = ( malfunctionRateDivisor * 50 ) / 100;
+				}
+				
 				int jamChance = ( ( malfunctionRate * condition ) / malfunctionRateDivisor ) - gGameExternalOptions.ubWeaponReliabilityReductionPerRainIntensity * gbCurrentRainIntensity;
 
 				if (jamChance < 0) 
@@ -1901,6 +1911,58 @@ pArmour = &(pTarget->inv[ iSlot ]);
 }
 
 
+===================================================================================================================
+
+IoV921+ z.6b2 Test: 自定义 BR 每单购买数量 | by zwwoooooo
+注：测试用，未加入IoV
+
+===================================================================================================================
+
+------------------------------------------------------------------------------------
+\Laptop\LaptopSave.h
+------------------------------------------------------------------------------------
+#define		MAX_PURCHASE_AMOUNT								10   //定义BR每单最大购买数量
+\\\\\\\\改为
+#define		MAX_PURCHASE_AMOUNT								gGameExternalOptions.iMaxPurchaseAmountIoV
+
+
+------------------------------------------------------------------------------------
+\Laptop\BobbyRGuns.cpp
+------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>line 1021 BR物品订购清单只能显示10个物品，所以要限制显示前面10个
+	for(i=0; i<MAX_PURCHASE_AMOUNT; i++)
+\\\\\\\\改为
+	//for(i=0; i<MAX_PURCHASE_AMOUNT; i++)
+	//zwwooooo: IoV921+ z.6b2 : Custom MAX_PURCHASE_AMOUNT -->
+	int MAX_PURCHASE_AMOUNT_IoV = MAX_PURCHASE_AMOUNT;
+	if (MAX_PURCHASE_AMOUNT_IoV>10) MAX_PURCHASE_AMOUNT_IoV = 10; //limit MAX_PURCHASE_AMOUNT_IoV <= 10, because BR only display 10 purchased items
+	for(i=0; i<MAX_PURCHASE_AMOUNT_IoV; i++)
+	//IoV921+ z.6b2 <--
+
+------------------------------------------------------------------------------------
+\Laptop\BobbyRGuns.cpp
+------------------------------------------------------------------------------------
+BobbyRText[ BOBBYR_MORE_THEN_10_PURCHASES ] 购买数量大于10后的警告字句
+
+>>>>>>>>>>>>>>line 2974 和 3020
+DoLapTopMessageBox( MSG_BOX_LAPTOP_DEFAULT, BobbyRText[ BOBBYR_MORE_THEN_10_PURCHASES ], LAPTOP_SCREEN, MSG_BOX_FLAG_OK, NULL);
+\\\\\\\\改为
+					//DoLapTopMessageBox( MSG_BOX_LAPTOP_DEFAULT, BobbyRText[ BOBBYR_MORE_THEN_10_PURCHASES ], LAPTOP_SCREEN, MSG_BOX_FLAG_OK, NULL);
+					//zwwooooo: IoV921+ z.6b2 --> When Custom MAX_PURCHASE_AMOUNT message is change.
+					if (MAX_PURCHASE_AMOUNT>10)
+					{
+					#ifdef CHINESE
+						DoLapTopMessageBox( MSG_BOX_LAPTOP_DEFAULT, L"靠!  我们这里的在线订单一次只接受 60 件物品的订购。如果你想要订购更多东西（我们希望如此），请接受我们的歉意，再开一份订单。", LAPTOP_SCREEN, MSG_BOX_FLAG_OK, NULL);
+					#else
+						DoLapTopMessageBox( MSG_BOX_LAPTOP_DEFAULT, L"Darn!  This on-line order form will only accept 60 items per order.  If you're looking to order more stuff (and we hope you are), kindly make a separate order and accept our apologies.", LAPTOP_SCREEN, MSG_BOX_FLAG_OK, NULL);
+					#endif
+					}
+					else
+					{
+						DoLapTopMessageBox( MSG_BOX_LAPTOP_DEFAULT, BobbyRText[ BOBBYR_MORE_THEN_10_PURCHASES ], LAPTOP_SCREEN, MSG_BOX_FLAG_OK, NULL);
+					}
+					//IoV921+ z.6b2 <--
+
 
 
 ------------------------------------------------------------------------------------
@@ -1908,7 +1970,6 @@ pArmour = &(pTarget->inv[ iSlot ]);
 ------------------------------------------------------------------------------------
 
 >>>>>>>>>>>>>>line 
-
 
 
 

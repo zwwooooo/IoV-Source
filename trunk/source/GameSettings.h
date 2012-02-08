@@ -3,6 +3,12 @@
 
 #include "Types.h"
 
+#ifdef JA2UB
+	#define				GAME_INI_FILE					"Ja2_UB.ini"
+#else
+	#define				GAME_INI_FILE					"Ja2.ini"
+#endif
+
 
 //If you add any options, MAKE sure you add the corresponding string to the Options Screen string array.
 //	 look up : zOptionsScreenHelpText , zOptionsToggleText
@@ -125,9 +131,17 @@ typedef struct
 
 	BOOLEAN				fHideHelpInAllScreens;              // Controls Help "do not show help again" checkbox
 
+#ifdef JA2UB	
+	//JA25UB
+	BOOLEAN			fPlayerFinishedTheGame;
+#endif
+
 	UINT8				ubSizeOfDisplayCover;               // The number of grids the player designates thru "Delete + '=' or '-'"
 	UINT8				ubSizeOfLOS;                        // The number of grids the player designates thru "End    + '=' or '-'"
-
+                     // The number of grids the player designates thru "End    + '=' or '-'"
+#ifdef JA2UB
+	UINT8		ubFiller[17];
+#endif	
 }	GAME_SETTINGS;
 
 // CHRISL: New Enums to track inventory system
@@ -192,6 +206,7 @@ typedef struct
 	UINT8	ubBobbyRay;
 	UINT8	ubInventorySystem;
 	UINT8	ubAttachmentSystem;
+	UINT8	ubSquadSize;
 	// SANDRO - added variables
 	UINT8	ubMaxIMPCharacters;
 	BOOLEAN	fNewTraitSystem;
@@ -199,7 +214,8 @@ typedef struct
 	BOOLEAN	fEnemiesDropAllItems;
 	UINT8   ubProgressSpeedOfItemsChoices;
 	BOOLEAN fEnableAllWeaponCaches;
-	//UINT8	ubFiller[];
+	
+	UINT8	ubFiller[500];		// WANNE: Decrease this filler by 1, for each new UINT8 variable!
 
 } GAME_OPTIONS;
 
@@ -302,7 +318,16 @@ typedef struct
 	BOOLEAN fCamoRemoving;
 	BOOLEAN fEnhancedCloseCombatSystem;
 
+	BOOLEAN fImprovedInterruptSystem;
+	UINT8 ubBasicPercentRegisterValueIIS;
+	UINT8 ubPercentRegisterValuePerLevelIIS;
+	UINT8 ubBasicReactionTimeLengthIIS;
+	BOOLEAN fAllowCollectiveInterrupts;
+	BOOLEAN fAllowInstantInterruptsOnSight;
+
 	UINT16 usAwardSpecialExpForQuests;
+
+	BOOLEAN fAllowWalkingWithWeaponRaised;
 	////////////////////////////////////
 
 	// Kaiden: Vehicle Inventory change - Added for INI Option
@@ -640,6 +665,11 @@ typedef struct
 	// CHRISL: Skyrider and enemy occupied sectors
 	UINT8 ubSkyriderHotLZ;
 
+	// WANNE: Fast loading settings
+	BOOLEAN fDisableLaptopTransition;
+	BOOLEAN fFastWWWSitesLoading;
+	BOOLEAN fDisableStrategicTransition;
+
 	// CPT: Cover System Settings
 	UINT8 ubStealthTraitCoverValue;
 	UINT8 ubStealthEffectiveness;
@@ -955,6 +985,9 @@ typedef struct
 	// silversurfer: don't play quote when merc spots a mine? TRUE = shut up! FALSE = tell me that you found a mine!
 	BOOLEAN fMineSpottedNoTalk;
 
+	// WANNE: Don't stop and talk when spotting a new item in turn based mode
+	BOOLEAN fItemSpottedNoTalk;
+
 	// The_Bob - real time sneaking code 01/06/09
 	// Suport disabling/silencing real time sneaking via external .ini file
 	//BOOLEAN fAllowRealTimeSneak; // SANDRO - moved to preferences
@@ -994,6 +1027,10 @@ typedef struct
 	
 	BOOLEAN fShowCamouflageFaces;
 
+	BOOLEAN fHideEnemyHealthText;
+
+	UINT8 ubEnemyHitCount;
+
 	FLOAT gMercLevelUpSalaryIncreasePercentage;
 
 	UINT8 ubChanceTonyAvailable; // silversurfer/SANDRO
@@ -1002,12 +1039,21 @@ typedef struct
 	
 	INT32 iInitialMercArrivalLocation;
 	
+	BOOLEAN gBriefingRoom;
+	BOOLEAN gEncyclopedia;
+	
+	
+	
 } GAME_EXTERNAL_OPTIONS;
 
 typedef struct
 {
 	UINT8 ubMaxNumberOfTraits;
 	UINT8 ubNumberOfMajorTraitsAllowed;
+
+	BOOLEAN fAllowDrQTraitsException;
+
+	BOOLEAN fAllowAttributePrereq;
 
 	// GENERIC SETTINGS
 	INT8 bCtHModifierAssaultRifles;
@@ -1117,6 +1163,7 @@ typedef struct
 	UINT8 ubMAAPsChangeStanceReduction;
 	UINT8 ubMAApsTurnAroundReduction;
 	UINT8 ubMAAPsClimbOrJumpReduction;
+	UINT8 ubMAReducedAPsRegisteredWhenMoving;
 	UINT8 ubMAChanceToCkickDoors;
 	BOOLEAN fPermitExtraAnimationsOnlyToMA;
 
@@ -1127,6 +1174,7 @@ typedef struct
 	UINT8 ubSLBonusAPsPercent;
 	UINT8 ubSLEffectiveLevelInRadius;
 	UINT8 ubSLEffectiveLevelAsStandby;
+	UINT8 ubSLCollectiveInterruptsBonus;
 	UINT8 ubSLOverallSuppresionBonusPercent;
 	UINT8 ubSLMoraleGainBonus;
 	UINT8 ubSLMoraleLossReduction;
@@ -1205,6 +1253,7 @@ typedef struct
 	UINT8 ubSTStealthModeSpeedBonus;
 	UINT8 ubSTBonusToMoveQuietly;
 	UINT8 ubSTStealthBonus;
+	UINT8 ubSTReducedAPsRegistered;
 	UINT8 ubSTStealthPenaltyForMovingReduction;
 
 	// ATHLETICS
