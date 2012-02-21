@@ -964,6 +964,14 @@ void LoadIoVSettings()
 }
 //<-- IoV
 
+>>>>>>>>>>>>>>line 625
+
+	gGameExternalOptions.guiMaxWeaponSize							= iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 9, 0, 100);
+\\\\\\\\¸ÄÎª
+	// gGameExternalOptions.guiMaxWeaponSize							= iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 9, 0, 100);
+	gGameExternalOptions.guiMaxWeaponSize							= iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 11, 11, 100); //zwwooooo: IoV921+ z.6b2 - IoV's MAX_WEAPON_SIZE must >= 11
+
+
 ------------------------------------------------------------------------------------
 MainMenuScreen.cpp
 ------------------------------------------------------------------------------------

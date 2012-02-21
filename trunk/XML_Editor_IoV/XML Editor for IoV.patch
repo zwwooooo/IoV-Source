@@ -1,0 +1,12 @@
+Index: BackEnd/DatabaseCode.vb
+===================================================================
+--- BackEnd/DatabaseCode.vb	(revision 95)
++++ BackEnd/DatabaseCode.vb	(working copy)
+@@ -963,6 +963,7 @@
+         t.Columns.Add(MakeColumn("ubAimLevels", "Default Aim Levles", GetType(Integer), , , , , , , True))
+         t.Columns.Add(MakeColumn("ubRecoilDelay", "Recoil Delay", GetType(Integer), , , , , , , True))
+         t.Columns.Add(MakeColumn("Handling", "Weapon Handling", GetType(Integer), , , , , , , True))
++        t.Columns.Add(MakeColumn("MalfunctionRate", "Malfunction Rate", GetType(Integer), , , , , , , ))
+ 
+         Dim pk(0) As DataColumn
+         pk(0) = t.Columns("uiIndex")

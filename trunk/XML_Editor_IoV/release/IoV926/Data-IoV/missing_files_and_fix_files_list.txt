@@ -1,0 +1,13 @@
+Fix files
+- TableData\Attachments.xml
+
+Missing files
+- TableData\AttachmentInfo.xml
+- TableData\EnemyArmourDrops.xml
+- TableData\EnemyExplosiveDrops.xml
+- TableData\EnemyMiscDrops.xml
+- TableData\EnemyWeaponDrops.xml
+- TableData\ExplosionData.xml
+- TableData\NPCInventory\FredoInventory.xml
+- TableData\NPCInventory\MickeyInventory.xml
+- TableData\NPCInventory\PerkoInventory.xml

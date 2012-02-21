@@ -416,11 +416,11 @@ LBETYPE::~LBETYPE(){
 }
 POCKETTYPE::POCKETTYPE(){
 	memset(this, 0, SIZEOF_POCKETTYPE);
-	ItemCapacityPerSize.resize(55); //kenkenkenken: IoV921+z.3=55, 1.13=35 控制物品槽大小
+	ItemCapacityPerSize.resize(__max(55,gGameExternalOptions.guiMaxItemSize+1)); //kenkenkenken: IoV921+z.3=55, 1.13=35 控制物品槽大小 //zwwooooo: IoV921+z.6b2 - svn4913 edit
 }
 POCKETTYPE::POCKETTYPE(const POCKETTYPE& src){
 	memcpy(this, &src, SIZEOF_POCKETTYPE);
-	ItemCapacityPerSize.resize(55); //kenkenkenken: IoV921+z.3=55, 1.13=35 控制物品槽大小
+	ItemCapacityPerSize.resize(__max(55,gGameExternalOptions.guiMaxItemSize+1)); //kenkenkenken: IoV921+z.3=55, 1.13=35 控制物品槽大小 //zwwooooo: IoV921+z.6b2 - svn4913 edit
 	ItemCapacityPerSize = src.ItemCapacityPerSize;
 }
 POCKETTYPE& POCKETTYPE::operator=(const POCKETTYPE& src){

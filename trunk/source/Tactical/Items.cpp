@@ -1428,9 +1428,9 @@ UINT8 ItemSlotLimit( OBJECTTYPE * pObject, INT16 bSlot, SOLDIERTYPE *pSoldier, B
 		if (UsingNewInventorySystem() == false)
 			return (max(1, ubSlotLimit));
 		else if(pSoldier != NULL && (pSoldier->flags.uiStatusFlags & SOLDIER_VEHICLE))
-			return (max(1, LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(54,Item[pObject->usItem].ItemSize)])); //kenkenkenken: IoV 921+z.3=54, 1.13=34 根据LBEPocketType返回物品槽可放物品数量
+			return (max(1, LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(__max(54,gGameExternalOptions.guiMaxItemSize),Item[pObject->usItem].ItemSize)])); //kenkenkenken: IoV 921+z.3=54, 1.13=34 根据LBEPocketType返回物品槽可放物品数量 //zwwooooo: IoV921+z.6b2 - svn4913 edit
 		else
-			return (max(1, min(255,LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(54,Item[pObject->usItem].ItemSize)]*4))); //kenkenkenken: IoV 921+z.3=54, 1.13=34 根据LBEPocketType返回物品槽可放物品数量×4，有bug，如果物品太小导致数量达到128就溢出变成-128
+			return (max(1, min(255,LBEPocketType[VEHICLE_POCKET_TYPE].ItemCapacityPerSize[__min(__max(54,gGameExternalOptions.guiMaxItemSize),Item[pObject->usItem].ItemSize)]*4))); //kenkenkenken: IoV 921+z.3=54, 1.13=34 根据LBEPocketType返回物品槽可放物品数量×4，有bug，如果物品太小导致数量达到128就溢出变成-128 //zwwooooo: IoV921+z.6b2 - svn4913 edit
 	}
 
 	if (UsingNewInventorySystem() == false) {
@@ -5590,6 +5590,7 @@ BOOLEAN CanItemFitInPosition( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj, INT8 bPos
 		case MEDPOCK2POS:
 		case MEDPOCK3POS:
 		case MEDPOCK4POS:
+		case SMALLPOCK1POS:
 		case SMALLPOCK2POS:
 		case SMALLPOCK3POS:
 		case SMALLPOCK4POS:
