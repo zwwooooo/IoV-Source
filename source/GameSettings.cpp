@@ -207,7 +207,7 @@ BOOLEAN LoadGameSettings()
 		gGameSettings.fOptions[TOPTION_ALTERNATE_BULLET_GRAPHICS]       = iniReader.ReadBoolean("JA2 Game Settings","TOPTION_ALTERNATE_BULLET_GRAPHICS"        ,  TRUE );
 		
 		if (!is_networked)
-			gGameSettings.fOptions[TOPTION_USE_NCTH]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_USE_NCTH"						   ,  TRUE );
+			gGameSettings.fOptions[TOPTION_USE_NCTH]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_USE_NCTH"						   ,  FALSE );
 		else
 			gGameSettings.fOptions[TOPTION_USE_NCTH]					= FALSE;
 
@@ -500,7 +500,7 @@ void InitGameSettings()
 	gGameSettings.fOptions[ TOPTION_ALTERNATE_BULLET_GRAPHICS ]			= TRUE;
 
 	// CHRISL: HAM 4: Activate/Deactivate NCTH mode
-	gGameSettings.fOptions[ TOPTION_USE_NCTH ]							= TRUE;
+	gGameSettings.fOptions[ TOPTION_USE_NCTH ]							= FALSE;
 
 	// WANNE:
 	gGameSettings.fOptions[ TOPTION_SHOW_TACTICAL_FACE_GEAR ]			= TRUE;
@@ -622,6 +622,12 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.ubGameMaximumNumberOfCivilians				= iniReader.ReadInteger("System Limit Settings","MAX_NUMBER_CIVS_IN_TACTICAL", 32, 16, CODE_MAXIMUM_NUMBER_OF_CIVS);
 
 	gGameExternalOptions.iMaxEnemyGroupSize							= iniReader.ReadInteger("System Limit Settings","MAX_STRATEGIC_ENEMY_GROUP_SIZE",20, 10, 100);
+	//JMich
+	//gGameExternalOptions.guiMaxItemSize								= iniReader.ReadInteger("System Limit Settings","MAX_ITEM_SIZE",34, 0, 250);
+	//gGameExternalOptions.guiMaxWeaponSize							= iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 9, 0, 100);
+	gGameExternalOptions.guiMaxItemSize								= __max(54,iniReader.ReadInteger("System Limit Settings","MAX_ITEM_SIZE",34, 0, 250)); //zwwooooo: IoV921+ z.6b2 - IoV's MAX_WEAPON_SIZE must >= 54
+	gGameExternalOptions.guiMaxWeaponSize							= __max(11,iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 9, 0, 100)); //zwwooooo: IoV921+ z.6b2 - IoV's MAX_WEAPON_SIZE must >= 11
+	gGameExternalOptions.guiOIVSizeNumber							= iniReader.ReadInteger("System Limit Settings","OLD_INVENTORY_ITEM_NUMBER", 99, 0, 255);
 
 	//################# Data File Settings #################
 
@@ -2643,9 +2649,43 @@ void DisplayGameSettings( )
 			break;
 	}
 
-		// Kaiden: Following Line was commented out (Extra Bobby Rays Setting always displays Normal.
+	// Item Progress Speed Option
+	switch( gGameOptions.ubProgressSpeedOfItemsChoices )
+	{
+		case ITEM_PROGRESS_VERY_SLOW:
+			ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_PROGRESS_TITLE_TEXT ], gzGIOScreenText[ GIO_PROGRESS_VERY_SLOW_TEXT ] );
+			break;
+		case ITEM_PROGRESS_SLOW:
+			ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_PROGRESS_TITLE_TEXT ], gzGIOScreenText[ GIO_PROGRESS_SLOW_TEXT ] );
+			break;
+		case ITEM_PROGRESS_NORMAL:
+			ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_PROGRESS_TITLE_TEXT ], gzGIOScreenText[ GIO_PROGRESS_NORMAL_TEXT ] );
+			break;
+		case ITEM_PROGRESS_FAST:
+			ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_PROGRESS_TITLE_TEXT ], gzGIOScreenText[ GIO_PROGRESS_FAST_TEXT ] );
+			break;
+		case ITEM_PROGRESS_VERY_FAST:
+			ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_PROGRESS_TITLE_TEXT ], gzGIOScreenText[ GIO_PROGRESS_VERY_FAST_TEXT ] );
+			break;
+	}
+
+	// Kaiden: Following Line was commented out (Extra Bobby Rays Setting always displays Normal)
 	//ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_BR_QUALITY_TEXT ], gzGIOScreenText[ GIO_BR_GOOD_TEXT ] );
-//	ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_GAME_SAVE_STYLE_TEXT ], gzGIOScreenText[ GIO_SAVE_ANYWHERE_TEXT + gGameOptions.fIronManMode ] );
+	
+	// Iron Man Mode
+	//ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_GAME_SAVE_STYLE_TEXT ], gzGIOScreenText[ GIO_SAVE_ANYWHERE_TEXT + gGameOptions.fIronManMode ] );
+
+	// All Terrorists Option
+	if( gGameOptions.fEnableAllTerrorists )
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_TERRORISTS_TITLE_TEXT ], gzGIOScreenText[ GIO_TERRORISTS_ALL_TEXT ] );
+	else
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_TERRORISTS_TITLE_TEXT ], gzGIOScreenText[ GIO_TERRORISTS_RANDOM_TEXT ] );
+
+	// All Weapon Caches Option
+	if( gGameOptions.fEnableAllWeaponCaches )
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_CACHES_TITLE_TEXT ], gzGIOScreenText[ GIO_CACHES_ALL_TEXT ] );
+	else
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"%s: %s", gzGIOScreenText[ GIO_CACHES_TITLE_TEXT ], gzGIOScreenText[ GIO_CACHES_RANDOM_TEXT ] );
 
 	// Tons of Guns Option
 	if( gGameOptions.fGunNut )

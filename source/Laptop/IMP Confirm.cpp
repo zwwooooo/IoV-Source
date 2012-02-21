@@ -46,6 +46,8 @@
 #define OLD_IMP_FILENAME_SUFFIX ".dat"
 #define NEW_IMP_FILENAME_SUFFIX ".dat2"
 
+
+
 //CHRISL: structure needed to store temporary inventory information during IMP creation
 typedef struct
 {
@@ -479,7 +481,7 @@ void DistributeInitialGear(MERCPROFILESTRUCT *pProfile)
 		{
 			if((UsingNewInventorySystem() == true))
 			{
-				if(Item[pProfile->inv[i]].ItemSize != 99)
+				if(Item[pProfile->inv[i]].ItemSize != gGameExternalOptions.guiOIVSizeNumber) //JMich
 				{
 					tInv[count].inv = pProfile->inv[i];
 					tInv[count].iSize = Item[pProfile->inv[i]].ItemSize;
@@ -511,7 +513,7 @@ void DistributeInitialGear(MERCPROFILESTRUCT *pProfile)
 	length = count;
 	count = 0;
 	// Next sort list by size
-	for(j=54; j>=0; j--) //zwwooooo IoV921+z.3 = 54, 1.13 = 34 修改物品最大尺寸后，这里也需要修改，否则IMP/AIM等佣兵出场时携带的装备因为 ItemSize 不存在而且消失
+	for(j=__max(54,gGameExternalOptions.guiMaxItemSize); j>=0; j--) //zwwooooo IoV921+z.3 = 54, 1.13 = 34 修改物品最大尺寸后，这里也需要修改，否则IMP/AIM等佣兵出场时携带的装备因为 ItemSize 不存在而且消失 //zwwooooo: IoV921+ z.6b2 - svn4913 edit
 	{
 		for(i=0; i<length; i++)
 		{

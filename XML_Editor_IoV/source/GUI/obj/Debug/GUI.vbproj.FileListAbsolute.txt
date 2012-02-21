@@ -1,0 +1,2 @@
+J:\Game_Setup\Jagged Alliance 2=铁血联盟2\1.13\【0】113_源码编译_ja2_1.13_exe源代码\【2】ja2_113_xml_editor_95\GUI\bin\Debug\XML Editor.exe.config
+J:\Game_Setup\Jagged Alliance 2=铁血联盟2\1.13\【0】113_源码编译_ja2_1.13_exe源代码\【2】ja2_113_xml_editor_95\GUI\bin\Debug\XML Editor_IoV.exe.config

@@ -7,6 +7,7 @@
 	#include "Debug Control.h"
 	#include "expat.h"
 	#include "XML.h"
+	#include "GameSettings.h"
 #endif
 
 struct
@@ -23,8 +24,24 @@ struct
 }
 typedef lbepocketParseData;
 
-BOOLEAN onlyLocalizedText;
 
+BOOLEAN onlyLocalizedText;
+BOOLEAN lbepocketStartElementHandleLoop(const XML_Char *name, lbepocketParseData * pData) //Tais
+{
+	UINT8 i=0;
+	CHAR8 str1 [40] = "";
+	CHAR8 str2 [40] = "";
+	for (i=0; i<=__max(54,gGameExternalOptions.guiMaxItemSize);i++) //zwwooooo: IoV921+ z.6b2 - MaxItemSize max > 54
+	{
+		sprintf(str1,"ItemCapacityPerSize.%d",i);
+		sprintf(str2,"ItemCapacityPerSize%d",i);
+		if(strcmp(name, str1)==0||strcmp(name, str2)==0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 static void XMLCALL 
 lbepocketStartElementHandle(void *userData, const XML_Char *name, const XML_Char **atts)
 {
@@ -49,12 +66,14 @@ lbepocketStartElementHandle(void *userData, const XML_Char *name, const XML_Char
 
 			pData->maxReadDepth++; //we are not skipping this element
 		}
-		else if(pData->curElement == ELEMENT &&
+		else if(pData->curElement == ELEMENT &&	
 				(strcmp(name, "pIndex") == 0 ||
 				strcmp(name, "pName") == 0 ||
 				strcmp(name, "pSilhouette") == 0 ||
 				strcmp(name, "pType") == 0 ||
 				strcmp(name, "pRestriction") == 0 ||
+				lbepocketStartElementHandleLoop(name, pData)))
+				/*	JMich - These are no longer needed
 				strcmp(name, "ItemCapacityPerSize.0") == 0 || strcmp(name, "ItemCapacityPerSize0") == 0 ||
 				strcmp(name, "ItemCapacityPerSize.1") == 0 || strcmp(name, "ItemCapacityPerSize1") == 0 ||
 				strcmp(name, "ItemCapacityPerSize.2") == 0 || strcmp(name, "ItemCapacityPerSize2") == 0 ||
@@ -89,30 +108,7 @@ lbepocketStartElementHandle(void *userData, const XML_Char *name, const XML_Char
 				strcmp(name, "ItemCapacityPerSize.31") == 0 || strcmp(name, "ItemCapacityPerSize31") == 0 ||
 				strcmp(name, "ItemCapacityPerSize.32") == 0 || strcmp(name, "ItemCapacityPerSize32") == 0 ||
 				strcmp(name, "ItemCapacityPerSize.33") == 0 || strcmp(name, "ItemCapacityPerSize33") == 0 ||
-				// strcmp(name, "ItemCapacityPerSize.34") == 0 || strcmp(name, "ItemCapacityPerSize34") == 0 ))
-				//kenkenkenken: IoV921+z.3 add --> 增加物品尺寸
-				strcmp(name, "ItemCapacityPerSize.34") == 0 || strcmp(name, "ItemCapacityPerSize34") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.35") == 0 || strcmp(name, "ItemCapacityPerSize35") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.36") == 0 || strcmp(name, "ItemCapacityPerSize36") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.37") == 0 || strcmp(name, "ItemCapacityPerSize37") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.38") == 0 || strcmp(name, "ItemCapacityPerSize38") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.39") == 0 || strcmp(name, "ItemCapacityPerSize39") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.40") == 0 || strcmp(name, "ItemCapacityPerSize40") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.41") == 0 || strcmp(name, "ItemCapacityPerSize41") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.42") == 0 || strcmp(name, "ItemCapacityPerSize42") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.43") == 0 || strcmp(name, "ItemCapacityPerSize43") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.44") == 0 || strcmp(name, "ItemCapacityPerSize44") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.45") == 0 || strcmp(name, "ItemCapacityPerSize45") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.46") == 0 || strcmp(name, "ItemCapacityPerSize46") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.47") == 0 || strcmp(name, "ItemCapacityPerSize47") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.48") == 0 || strcmp(name, "ItemCapacityPerSize48") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.49") == 0 || strcmp(name, "ItemCapacityPerSize49") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.50") == 0 || strcmp(name, "ItemCapacityPerSize50") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.51") == 0 || strcmp(name, "ItemCapacityPerSize51") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.52") == 0 || strcmp(name, "ItemCapacityPerSize52") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.53") == 0 || strcmp(name, "ItemCapacityPerSize53") == 0 ||
-				strcmp(name, "ItemCapacityPerSize.54") == 0 || strcmp(name, "ItemCapacityPerSize54") == 0 ))
-				// IoV end <--
+				strcmp(name, "ItemCapacityPerSize.34") == 0 || strcmp(name, "ItemCapacityPerSize34") == 0 ))*/
 		{
 			pData->curElement = ELEMENT_PROPERTY;
 
@@ -142,7 +138,10 @@ lbepocketCharacterDataHandle(void *userData, const XML_Char *str, int len)
 static void XMLCALL
 lbepocketEndElementHandle(void *userData, const XML_Char *name)
 {
-	lbepocketParseData * pData = (lbepocketParseData *)userData;
+UINT8 i=0;
+CHAR8 str1 [40] = "";
+CHAR8 str2 [40] = "";
+lbepocketParseData * pData = (lbepocketParseData *)userData;
 
 	if(pData->currentDepth <= pData->maxReadDepth) //we're at the end of an element that we've been reading
 	{
@@ -193,7 +192,22 @@ lbepocketEndElementHandle(void *userData, const XML_Char *name)
 		{
 			pData->curElement = ELEMENT;
 			pData->curLBEPocket.pRestriction = (UINT32) atol(pData->szCharData);
+		}	//Tais fixed this.
+		else
+		{
+			for (i=0; i<=gGameExternalOptions.guiMaxItemSize;i++)
+			{
+				sprintf(str1,"ItemCapacityPerSize.%d",i);
+				sprintf(str2,"ItemCapacityPerSize%d",i);
+				if(strcmp(name, str1)==0||strcmp(name, str2)==0)
+				{
+					pData->curElement = ELEMENT;
+					pData->curLBEPocket.ItemCapacityPerSize[i] = (UINT8) atol(pData->szCharData);
+					break;
+				}
+			}
 		}
+		/*	JMich - these are no longer needed
 		else if(strcmp(name, "ItemCapacityPerSize.0") == 0 || strcmp(name, "ItemCapacityPerSize0") == 0)
 		{
 			pData->curElement = ELEMENT;
@@ -369,110 +383,7 @@ lbepocketEndElementHandle(void *userData, const XML_Char *name)
 			pData->curElement = ELEMENT;
 			pData->curLBEPocket.ItemCapacityPerSize[34] = (UINT8) atol(pData->szCharData);
 		}
-
-		//kenkenkenken: IoV921+z.3 add --> 增加物品尺寸
-		else if(strcmp(name, "ItemCapacityPerSize.35") == 0 || strcmp(name, "ItemCapacityPerSize35") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[35] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.36") == 0 || strcmp(name, "ItemCapacityPerSize36") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[36] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.37") == 0 || strcmp(name, "ItemCapacityPerSize37") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[37] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.38") == 0 || strcmp(name, "ItemCapacityPerSize38") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[38] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.39") == 0 || strcmp(name, "ItemCapacityPerSize39") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[39] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.40") == 0 || strcmp(name, "ItemCapacityPerSize40") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[40] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.41") == 0 || strcmp(name, "ItemCapacityPerSize41") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[41] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.42") == 0 || strcmp(name, "ItemCapacityPerSize42") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[42] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.43") == 0 || strcmp(name, "ItemCapacityPerSize43") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[43] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.44") == 0 || strcmp(name, "ItemCapacityPerSize44") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[44] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.45") == 0 || strcmp(name, "ItemCapacityPerSize45") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[45] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.46") == 0 || strcmp(name, "ItemCapacityPerSize46") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[46] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.47") == 0 || strcmp(name, "ItemCapacityPerSize47") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[47] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.48") == 0 || strcmp(name, "ItemCapacityPerSize48") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[48] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.49") == 0 || strcmp(name, "ItemCapacityPerSize49") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[49] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.50") == 0 || strcmp(name, "ItemCapacityPerSize50") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[50] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.51") == 0 || strcmp(name, "ItemCapacityPerSize51") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[51] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.52") == 0 || strcmp(name, "ItemCapacityPerSize52") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[52] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.53") == 0 || strcmp(name, "ItemCapacityPerSize53") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[53] = (UINT8) atol(pData->szCharData);
-		}
-		else if(strcmp(name, "ItemCapacityPerSize.54") == 0 || strcmp(name, "ItemCapacityPerSize54") == 0)
-		{
-			pData->curElement = ELEMENT;
-			pData->curLBEPocket.ItemCapacityPerSize[54] = (UINT8) atol(pData->szCharData);
-		}
-		// IoV end <--
-
+		*/
 		pData->maxReadDepth--;
 	}
 
@@ -549,6 +460,7 @@ BOOLEAN ReadInLBEPocketStats(STR fileName, BOOLEAN localizedVersion)
 }
 BOOLEAN WriteLBEPocketEquipmentStats()
 {
+	UINT8 i;
 	//DebugMsg (TOPIC_JA2,DBG_LEVEL_3,"writelbepocketsstats");
 	HWFILE		hFile;
 
@@ -571,6 +483,11 @@ BOOLEAN WriteLBEPocketEquipmentStats()
 			FilePrintf(hFile,"\t\t<pSilhouette>%d</pSilhouette>\r\n",								LBEPocketType[cnt].pSilhouette  );
 			FilePrintf(hFile,"\t\t<pType>%d</pType>\r\n",								LBEPocketType[cnt].pType   );
 			FilePrintf(hFile,"\t\t<pRestriction>%d</pRestriction>\r\n",						LBEPocketType[cnt].pRestriction	);
+			for(i=0;i<=gGameExternalOptions.guiMaxItemSize;i++)		//JMich
+			{
+				FilePrintf(hFile,"\t\t<ItemCapacityPerSize%d>%d</ItemCapacityPerSize%d>\r\n",								i,LBEPocketType[cnt].ItemCapacityPerSize[i],i   );
+			}
+			/*	JMich - these are no longer needed
 			FilePrintf(hFile,"\t\t<ItemCapacityPerSize0>%d</ItemCapacityPerSize0>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[0]   );
 			FilePrintf(hFile,"\t\t<ItemCapacityPerSize1>%d</ItemCapacityPerSize1>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[1]   );
 			FilePrintf(hFile,"\t\t<ItemCapacityPerSize2>%d</ItemCapacityPerSize2>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[2]   );
@@ -606,30 +523,7 @@ BOOLEAN WriteLBEPocketEquipmentStats()
 			FilePrintf(hFile,"\t\t<ItemCapacityPerSize32>%d</ItemCapacityPerSize32>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[32]   );
 			FilePrintf(hFile,"\t\t<ItemCapacityPerSize33>%d</ItemCapacityPerSize33>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[33]   );
 			FilePrintf(hFile,"\t\t<ItemCapacityPerSize34>%d</ItemCapacityPerSize34>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[34]   );
-
-			//kenkenkenken: IoV921+z.3 add --> 增加物品尺寸
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize35>%d</ItemCapacityPerSize35>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[35]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize36>%d</ItemCapacityPerSize36>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[36]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize37>%d</ItemCapacityPerSize37>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[37]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize38>%d</ItemCapacityPerSize38>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[38]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize39>%d</ItemCapacityPerSize39>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[39]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize40>%d</ItemCapacityPerSize40>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[40]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize41>%d</ItemCapacityPerSize41>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[41]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize42>%d</ItemCapacityPerSize42>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[42]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize43>%d</ItemCapacityPerSize43>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[43]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize44>%d</ItemCapacityPerSize44>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[44]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize45>%d</ItemCapacityPerSize45>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[45]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize46>%d</ItemCapacityPerSize46>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[46]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize47>%d</ItemCapacityPerSize47>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[47]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize48>%d</ItemCapacityPerSize48>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[48]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize49>%d</ItemCapacityPerSize49>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[49]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize50>%d</ItemCapacityPerSize50>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[50]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize51>%d</ItemCapacityPerSize51>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[51]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize52>%d</ItemCapacityPerSize52>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[52]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize53>%d</ItemCapacityPerSize53>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[53]   );
-			FilePrintf(hFile,"\t\t<ItemCapacityPerSize54>%d</ItemCapacityPerSize54>\r\n",								LBEPocketType[cnt].ItemCapacityPerSize[54]   );
-			//IoV end <--
-
+			*/
 			FilePrintf(hFile,"\t</POCKET>\r\n");
 		}
 		FilePrintf(hFile,"</POCKETLIST>\r\n");
