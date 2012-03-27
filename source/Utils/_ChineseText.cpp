@@ -212,7 +212,7 @@ STR16	pEncyclopediaShortCharacterText[] =
 	L"MERC",
 	L"RPC",
 	L"NPC",
-	L"Veh.",
+	L"车辆",
 	L"IMP",
 	L"EPC",
 	L"过滤",
@@ -240,12 +240,12 @@ STR16	pEncyclopediaSkrotyText[] =
 	L"SAM",
 	L"其它",
 	L"矿场",
-	L"军事.",
-	L"研究所.",
-	L"工厂.",
-	L"医院.",
+	L"军事",
+	L"研究所",
+	L"工厂",
+	L"医院",
 	L"监狱",
-	L"机场.",
+	L"机场",
 };
 
 STR16	pEncyclopediaShortInventoryText[] = 
@@ -253,14 +253,14 @@ STR16	pEncyclopediaShortInventoryText[] =
 	L"全部", //0
 	L"枪械",
 	L"弹药",
-	L"携行器",
-	L"附件",
+	L"携行具",
+	L"杂项",
 	
 	L"全部", //5
 	L"枪械",
 	L"弹药",
 	L"携行具",
-	L"附件",
+	L"杂项",
 };
 
 STR16			BoxFilter[] =
@@ -290,7 +290,7 @@ STR16			BoxFilter[] =
 	L"枪械",
 	L"护甲",
 	L"携行具",
-	L"附件", //20
+	L"杂项", //20
 
 	// Armour
 	L"头盔",
@@ -301,14 +301,14 @@ STR16			BoxFilter[] =
 	// Misc
 	L"刀具",
 	L"飞刀",
-	L"格斗武器",
-	L"手雷/榴弹",
+	L"格斗",
+	L"手雷等",
 	L"炸药",
-	L"医疗用品", //30
-	L"工具套装",
-	L"通讯/夜视",
+	L"医疗", //30
+	L"工具",
+	L"通讯等",
 	L"携行具",
-	L"附件", //34
+	L"杂项", //34
 };
 //-----------
 
@@ -870,7 +870,7 @@ STR16 pPasteMercPlacementText[] =
 {
 	L"Placement not pasted as no placement is saved in buffer.",
 	L"Placement pasted.",
-	L"Placement not pasted as the maximum number of placements for this team is already used.",
+	L"Placement not pasted as the maximum number of placements for this team is reached.",
 };
 
 //editscreen.cpp
@@ -995,8 +995,7 @@ STR16 pShowHighGroundText[] =
 };
 
 //Item Statistics.cpp
-/*
-CHAR16 gszActionItemDesc[ 34 ][ 30 ] =
+/*CHAR16 gszActionItemDesc[ 34 ][ 30 ] =
 {
 	L"Klaxon Mine",
 	L"Flare Mine",
@@ -1039,7 +1038,7 @@ STR16 pUpdateItemStatsPanelText[] =
 	L"Toggle hide flag", //0
 	L"No item selected.",
 	L"Slot available for",
-	L"random generation.",
+	L"Random generation.",
 	L"Keys not editable.",
 	L"ProfileID of owner",
 	L"Item class not implemented.",
@@ -2885,6 +2884,7 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"前往分区",
 	L"前往地图",
 	L"你不能从这边离开这个分区。",
+	L"你不能在回合制模式离开。",	// TODO.Translate
 	L"%s太远了。",
 	L"不显示树冠",
 	L"显示树冠",
@@ -4217,7 +4217,7 @@ STR16			MercHomePageText[] =
 	L"查看文件点击这里",	//"To view files press here",
 	// The version number on the video conferencing system that pops up when Speck is talking
 	L"Speck Com v3.2",
-	L"Transfer failed. No funds available.",	// TODO.Translate
+	L"转账失败，暂无可用资金。",	// TODO.Translate
 };
 
 // For use at MiGillicutty's Web Page.
@@ -4412,9 +4412,9 @@ STR16			BobbyRFilter[] =
 	L"炸药", //"Bombs",
 	L"医疗用品", //"Med. Kits",
 	L"工具套装", //"Kits",
-	L"通讯/夜视", //"Face Items",
+	L"头部装备", //"Face Items",
 	L"携行具", //"LBE Gear",
-	L"附件/瞄准具", //"Misc.",
+	L"杂项", //"Misc.",
 };
 
 
@@ -4463,7 +4463,8 @@ STR16			BobbyRText[] =
 
 	//Popup that tells the player that they can only order 10 items at a time
 
-	L"靠!  我们这里的在线订单一次只接受10件物品的订购。如果你想要订购更多东西（我们希望如此），请接受我们的歉意，再开一份订单。",
+	L"靠!  我们这里的在线订单一次只接受" ,//First part
+	L"件物品的订购。如果你想要订购更多东西（我们希望如此），请接受我们的歉意，再开一份订单。",
 
 	// A popup that tells the user that they are trying to order more items then the store has in stock
 
@@ -5074,10 +5075,13 @@ STR16		zOptionsToggleText[] =
 	L"属性进度条",	//L"Stat Progress Bars", // Show progress towards stat increase //ham3.6
 	L"替代战略地图颜色", // Change color scheme of Strategic Map
 	L"替代子弹图像", // Show alternate bullet graphics (tracers)
-	L"开启新的瞄准系统(NCTH)",				// use NCTH
+	//L"开启新的瞄准系统(NCTH)",				// use NCTH
+	L"显示佣兵军衔",	// shows mercs ranks
 	L"显示脸部装备图",				
 	L"显示脸部装备图标",
 	L"禁止光标切换",		            // Disable Cursor Swap
+	L"自动加速敌军回合",			// Automatic fast forward through AI turns
+	//L"武器过热",
 	L"--作弊模式选项--",				// TOPTION_CHEAT_MODE_OPTIONS_HEADER,
 	L"强制 Bobby Ray 送货",			// force all pending Bobby Ray shipments
 	L"-----------------",					// TOPTION_CHEAT_MODE_OPTIONS_END
@@ -5179,10 +5183,13 @@ STR16	zOptionsScreenHelpText[] =
 	L"打开时，显示各属性的增长进度。", // L"When ON, shows character progress towards gaining levels.", //ham3.6
 	L"打开时, 战略地图将会根据探索状态显示不同的着色。",
 	L"打开时, 当你射击时会显示间隔子弹图像。",
-	L"打开时, 使用新命中率系统（NCTH）和光标。",
+	//L"打开时, 使用新命中率系统（NCTH）和光标。",
+	L"打开时，在战略界面的佣兵名旁显示军衔。",
 	L"打开时, 显示佣兵脸部装备图。",
 	L"打开时, 佣兵肖像右下角显示脸部装备图标",
-	L"打开时，在交换位置和其它动作时光标不切换。键入 |x 可以快速切换。", // L"When ON, the cursor will not toggle between exchange position and other actions. Press |x to initiate quick exchange.",
+	L"打开时，在交换位置和其它动作时光标不切换。键入 |x 可以快速切换。",
+	L"打开时，敌军回合将被大幅加速。",
+	//L"打开时，武器连续射击时温度逐渐升高引起过热。",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_HEADER",
 	L"强制 Bobby Ray 出货",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_END",
@@ -5280,6 +5287,12 @@ STR16	gzGIOScreenText[] =
 	L"6",
 	L"8",
 	L"10",
+	//L"Bobby Ray 快速出货", //L"Faster Bobby Ray Shipments",
+	L"战斗时取放物品消耗AP", //L"Inventory Manipulation Costs AP",
+	// TODO: Translate
+	L"新命中率系统（NCTH）", //L"New Chance to Hit System",
+	L"改进的中断系统（IIS）", //L"Improved Interrupt System",
+	L"武器过热", //L"Weapon Overheating",
 };
 
 STR16	gzMPJScreenText[] =
@@ -5597,6 +5610,9 @@ STR16 pMessageStrings[] =
 	L"AutoSaveGame%02d.sav",	// 101
 	L"Auto%02d.sav",	// 102
 	L"SaveGame%02d.sav", //103
+	// Lock / release mouse in windowed mode (window boundary)
+	L"鼠标已锁定，鼠标移动范围强制限制在游戏窗口内部区域。",			// 104
+	L"鼠标已释放，鼠标移动范围不再受限于游戏窗口内部区域。",			// 105
 };
 
 
@@ -5662,7 +5678,7 @@ STR16 gzLaptopHelpText[] =
 	L"McGillicutty公墓",
 	L"联合花卉服务公司",
 	L"A.I.M指定保险代理人",
-	//New Bookmarks				// TODO.Translate
+	//New Bookmarks
 	L"",
 	L"百科全书",
 	L"简报室",
@@ -5975,6 +5991,8 @@ STR16 gzLateLocalizedString[] =
 	L"%s的陶瓷片已经粉碎了!",	//"%s's ceramic plates have been smashed!",
 	L"%s多打了%d发子弹！",	//"%s fires %d more rounds than intended!",
 	L"%s多打了1发子弹！",	//"%s fires %d more round than intended!",
+
+	L"你得先关闭物品信息界面！",
 };
 
 // HEADROCK HAM 3.5: Added sector name
@@ -6079,7 +6097,8 @@ STR16 New113Message[] =
 	L"%s 命根子中弹，痛苦的倒下了！",// L"%s is hit to groin and falls down in pain!",	
 	//////////////////////////////////////////////////////////////////////////////////////
 	L"注意: 敌人尸体被发现!!!",
-	L"%s [%d rnds]\n%s %1.1f %s",
+	L"%s [%d rnds]\n%s %1.1f %s",		
+	L"AP不够！需要%d，你只有%d。",	//L"Insufficient AP Points! Cost %d, you have %d.",
 };
 
 STR16 New113HAMMessage[] = 
@@ -6114,6 +6133,7 @@ STR16 New113HAMMessage[] =
 
 };
 
+// WANNE: This hardcoded text should not be used anymore in the game, because we now have those texts externalized in the "TableData\Email\EmailMercLevelUp.xml" file!
 // WANNE: This are the email texts, when one of the 4 new 1.13 MERC mercs have levelled up, that Speck sends
 // INFO: Do not replace the ± characters. They indicate the <B2> (-> Newline) from the edt files
 STR16	New113MERCMercMailTexts[] =
@@ -6128,6 +6148,7 @@ STR16	New113MERCMercMailTexts[] =
 	L"鉴于Biggins发挥有所提高， 他的价格也同时上涨。 ± ± Speck T. Kline ± ",
 };
 
+// WANNE: This hardcoded text should not be used anymore in the game, because we now have those texts externalized in the "TableData\Email\EmailMercAvailable.xml" file!
 // WANNE: This is email text (each 2 line), when we left a message on AIM and now the merc is back
 STR16	New113AIMMercMailTexts[] =
 {
@@ -6316,10 +6337,10 @@ STR16 MPClientMessage[] =
 	L"点击 '准备' 进入战术画面。",//	L"Press 'Ready' to enter tactical screen.",
 	L"不能连接到服务器，因为你的版本 %S 和服务器端的版本 %S 不同。",
 	L"你击毙了一个敌人。",
-	L"无法启动游戏，因为所有小队都一样。",	//L"Cannot start the game, because all teams are the same.",    // TODO.Translate
+	L"无法启动游戏，因为所有小队都一样。",	//L"Cannot start the game, because all teams are the same.",
 	L"The server has choosen New Inventory (NIV), but your screen resolution does not support NIV.",
-	// 70	// TODO.Translate
-	L"Could not save received file '%S'",
+	// 70	
+	L"Could not save received file '%S'",		// TODO.Translate
 	L"%s's bomb was disarmed by %s",
 	L"You loose, what a shame",	// All over red rover
 	L"Spectator mode disabled",
@@ -6329,7 +6350,7 @@ STR16 MPClientMessage[] =
 	L"Client failed to start. Terminating.",
 	L"Client disconnected and shutdown.",
 	L"Client is not running.",
-	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",	// TODO.Translate
+	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",
 };
 
 STR16 gszMPEdgesText[] =
@@ -6874,6 +6895,7 @@ STR16 szUDBGenAmmoStatsTooltipText[]=
 	L"|侵|彻|力|（|穿|甲|弹|）",
 	L"|翻|搅|力|（|开|花|弹|）",
 	L"|爆|炸|力|（|炸|子|儿|）",
+	L"|过|热|修|正",
 };
 
 STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
@@ -6881,6 +6903,7 @@ STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
 	L"\n \n即子弹穿透目标护甲的能力。\n \n该值大于1时，被子弹命中的护甲的防护值会成比例减少。\n \n反之，当该值小于1时，\n则增加了目标护甲的防护值。\n \n该数值越高越好。",
 	L"\n \n该值决定子弹打穿护甲击中身体时的伤害力\n加成。\n \n该值大于1时，子弹在穿过护甲后会增加伤害。\n \n当该值小于1时，子弹穿过护甲后会减少伤害。\n \n该数值越高越好。",
 	L"\n \n该值是子弹在击中目标前已经造成的潜在伤害的倍率。\n \n大于1的数值可以增加伤害，\n反之则减少伤害。\n \n该数值越高越好。",
+	L"\n \n子弹温度系数。\n \n该数值越低越好。",
 };
 
 STR16 szUDBGenExplosiveStatsTooltipText[]=
@@ -7037,6 +7060,14 @@ STR16 szUDBAdvStatsTooltipText[]=
 	L"|制|退|力|频|次",
 	L"|命|中|率|修|正",
 	L"|精|瞄|修|正",
+	L"|单|发|射|击|温|度",
+	L"|冷|却|参|数",
+	L"|卡|壳|阈|值",
+	L"|损|坏|阈|值",
+	L"|单|发|射|击|温|度",		// TODO.Translate
+	L"|冷|却|参|数",
+	L"|卡|壳|阈|值",
+	L"|损|坏|阈|值",
 };
 
 // Alternate tooltip text for weapon Advanced Stats. Just different wording, nothing spectacular.
@@ -7090,6 +7121,14 @@ STR16 szUDBAdvStatsExplanationsTooltipText[]=
 	L"\n \n这是射手在点射或者连发时，频繁评估\n制退力大小以应对后坐力的能力。\n \n较高的频率使连发的总体精度更高，此外，由于射手能\n正确制退后坐力，其长点射也更\n加准确。\n \n该数值越低越好。",
 	L"\n \n当安装于远程武器上时，该物品修正武器的命\n中率。\n \n命中率的提高使该武器在精瞄时更容易命中\n目标。\n \n该数值越高越好。",
 	L"\n \n当安装于远程武器上时，该物品修正武器的精\n瞄加成。\n \n精瞄加成的提高使该武器在精瞄时更容易命\n中远距离的目标。\n \n该数值越高越好。",
+	L"\n \n单发射击所造成的温度。\n所使用的子弹类型对本值有影响。",		// TODO.Translate
+	L"\n \n每回合自动冷却所降低的温度值。",
+	L"\n \n当武器温度超过卡壳阈值时，\n卡壳将更容易发生。",
+	L"\n \n当武器温度超过损坏阈值时，\n武器将更容易损坏。",
+	L"\n \n武器的单发射击温度增加了(百分比)。\n \n该数值越低越好。",
+	L"\n \n武器的冷却系数数增加了(百分比)。\n \n该数值越高越好。",
+	L"\n \n武器的卡壳阈值增加了(百分比)。\n \n该数值越高越好。",
+	L"\n \n武器的损坏阈值增加了(百分比)。\n \n该数值越高越好。",
 };
 
 STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=
@@ -7142,6 +7181,10 @@ STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=
 	L"\n \n这是射手频繁估量制退力大小以应对后坐力的能力。\n \n如果武器缺乏点射和连发功能，则此能力无\n效。\n \n低修正值能提高连发的总体精度，此外，由于射手能\n正确制退后坐力，其长点射也更\n加准确。\n \n该数值越低越好。",
 	L"\n \n由于所装的附件，弹药或其内置特性，这件武\n器的命中率得到了修正。\n \n命中率的提高使该武器在精瞄时\n更容易命中目标。\n \n该数值越高越好。",
 	L"\n \n由于所装的附件，弹药或其内置特性，这件武\n器的精瞄加成得到了修正。\n \n精瞄加成的提高能够使该武器在精瞄时更容易命\n中远距离的目标。\n \n该数值越高越好。",
+	L"\n \n单发射击所造成的温度。\n所使用的子弹类型对本值有影响。",
+	L"\n \n每回合自动冷却所降低的温度值。",
+	L"\n \n当武器温度超过卡壳阈值时，\n卡壳将更容易发生。",
+	L"\n \n当武器温度超过损坏阈值时，\n武器将更容易损坏。",
 };
 
 // HEADROCK HAM 4: Text for the new CTH indicator.
@@ -7153,6 +7196,36 @@ STR16 gzNCTHlabels[]=
 //////////////////////////////////////////////////////
 // HEADROCK HAM 4: End new UDB texts and tooltips
 //////////////////////////////////////////////////////
+
+// Flugente FTW 1: Temperature-based text similar to HAM 4's condition-based text.
+STR16 gTemperatureDesc[] =
+{
+	L"当前温度为: ",
+	L"很低",
+	L"低",
+	L"中等",
+	L"高",
+	L"很高",
+	L"危险",
+	L"很危险",
+	L"致命",
+	L"未知",
+	L"."
+};
+
+CHAR16* ranks[] = 
+{	L"",			//ExpLevel 0
+	L"列兵 ",	//L"Pvt. ",		//ExpLevel 1
+	L"下士 ",	//L"Pfc. ",		//ExpLevel 2
+	L"中士 ",	//L"Cpl. "		//ExpLevel 3
+	L"上士 ",	//L"Sgt. ",		//ExpLevel 4
+	L"少尉 ",	//L"Lt. ",		//ExpLevel 5
+	L"中尉 ",	//L"Cpt. ",		//ExpLevel 6
+	L"上尉 ",	//L"Maj. ",		//ExpLevel 7
+	L"少校 ",	//L"Lt.Col. ",	//ExpLevel 8
+	L"上校 ",	//L"Col. ",		//ExpLevel 9
+	L"将军 "	//L"Gen. "		//ExpLevel 10
+};
 
 
 STR16	gzNewLaptopMessages[]=
