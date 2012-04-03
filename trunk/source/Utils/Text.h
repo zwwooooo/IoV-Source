@@ -613,7 +613,7 @@ extern STR16		gConditionDesc[ 9 ];
 // Flugente FTW1: Added list of temperature descriptions
 extern STR16		gTemperatureDesc[ 11 ];
 
-extern CHAR16		gMoneyStatsDesc[][ 13 ];
+extern CHAR16		gMoneyStatsDesc[][ 14 ];
 // HEADROCK: Altered value to 16 //WarmSteel - And I need 17.
 extern CHAR16		gWeaponStatsDesc[][ 28 ]; //kenkenkenken: IoV921+z.5 = 28, 1.13 = 17
 
@@ -2063,6 +2063,9 @@ enum
 	MSG113_GL,
 	MSG113_GL_BRST,
 	MSG113_GL_AUTO,
+	MSG113_UB,
+	MSG113_UB_BRST,
+	MSG113_UB_AUTO,
 	MSG113_SNIPER,
 	MSG113_UNABLETOSPLITMONEY,
 	MSG113_ARRIVINGREROUTED,
@@ -2141,6 +2144,26 @@ enum
 extern STR16 Additional113Text[];
 extern STR16 ranks[];
 extern STR16 ranks[];
+
+// Enumeration support
+typedef struct Str8EnumLookupType {
+	int value;
+	const STR8 name;
+} Str8EnumLookupType;
+
+typedef struct Str16EnumLookupType {
+	int value;
+	const STR16 name;
+} Str16EnumLookupType;
+
+const STR8 EnumToString(int value, const Str8EnumLookupType *table);
+const STR16 EnumToString(int value, const Str16EnumLookupType *table);
+int StringToEnum(const STR8 value, const Str8EnumLookupType *table);
+int StringToEnum(const STR8 value, const Str16EnumLookupType *table);
+int StringToEnum(const STR16 value, const Str16EnumLookupType *table);
+
+void ParseCommandLine(const char *start,char **argv,char *args,int *numargs,int *numchars);
+void ParseCommandLine(const wchar_t *start,wchar_t **argv,wchar_t *args,int *numargs,int *numchars);
 
 #endif
 
