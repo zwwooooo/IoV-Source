@@ -1081,9 +1081,14 @@ typedef struct
 	FLOAT   iCooldownModificatorLonelyBarrel;		// Cooldown modificator for barrels alone in the landscape ;-)
 	BOOLEAN	fSetZeroUponNewSector;					// Should loading a new sector set the temperatures of all items in the old sector to zero? (this doesn't apply to inventories)
 	
+	// Flugente: Weapon Mounting
 	BOOLEAN	fWeaponResting;							// Should it be possible to rest your weapon on structures in crouched position?
 	BOOLEAN fDisplayWeaponRestingIndicator;			// Should a little indicator show if the weapon is currently rested on something?
 	UINT8	ubProneModifierPercentage;				// for boni, use ubProneModifierPercentage*boni[PRONE] + (100 - ubProneModifierPercentage)*boni[CROUCHED]
+
+	// Flugente: Scope Modes
+	BOOLEAN fScopeModes;							// allow the player to toggle between existing scopes/sights
+	BOOLEAN fDisplayScopeModes;						// allow display of scope modes
 	
 	BOOLEAN gBriefingRoom;
 	BOOLEAN gEncyclopedia;
@@ -1350,6 +1355,7 @@ typedef struct
 	FLOAT VERTICAL_BIAS;					// This float can be used to reduce the chance of missing too far upwards or downwards (compared to left/right).
 	FLOAT SCOPE_RANGE_MULTIPLIER;			// Adjusts the minimum effective range of scopes
 	FLOAT SIDE_FACING_DIVISOR;				// Deals with a visual error in NCTH relating to shooting at a target who is facing directly perpendicular to the shooters facing.
+	UINT16 BASIC_RELIABILITY_ODDS;			// Determines the base chance to lose one condition point when firing a gun.
 
 	FLOAT BASE_EXP;				// Importance of Experience for BASE CTH
 	FLOAT BASE_MARKS;				// Importance of Marksmanship for BASE CTH
