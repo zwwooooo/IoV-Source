@@ -2343,7 +2343,7 @@ BOOLEAN UseGunNCTH( SOLDIERTYPE *pSoldier , INT32 sTargetGridNo )
 	{
 		UINT16 usBaseChance = gGameCTHConstants.BASIC_RELIABILITY_ODDS;
 		FLOAT dReliabilityRatio = 3.0f * ((FLOAT)usBaseChance / (FLOAT)BASIC_DEPRECIATE_CHANCE); // Compare original odds to new odds.
-		uiDepreciateTest = usBaseChance + (INT16)( dReliabilityRatio * GetReliability( &(pSoldier->inv[pSoldier->ubAttackingHand]) - iOverheatReliabilityMalus) );
+		uiDepreciateTest = usBaseChance + (INT16)( dReliabilityRatio * GetReliability( &(pSoldier->inv[pSoldier->ubAttackingHand]) ) - iOverheatReliabilityMalus);
 		uiDepreciateTest = max(0, uiDepreciateTest);
 	}
 	else
@@ -4266,7 +4266,7 @@ void WeaponHit( UINT16 usSoldierID, UINT16 usWeaponIndex, INT16 sDamage, INT16 s
 	// CALLAHAN START BUGFIX
 	// Provisions for Fragments, which are resulting from a different weapon than the one we are holding in our hand.
 	UINT8 ubAmmoType = 0;
-	if ( pObj->usItem == usWeaponIndex )
+	if ( pObj->usItem == usWeaponIndex || EXPLOSIVE_GUN( usWeaponIndex ))	// WANNE: This fixes the bug, that ONE shot LAWs do not explode on a direct target hit!
 	{
 		ubAmmoType = (*pObj)[0]->data.gun.ubGunAmmoType;
 	}
@@ -5179,7 +5179,8 @@ UINT32 CalcNewChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTi
 					iTraitModifier -= 15;
 				}
 				// Small penalty for fear of insects in tropical sectors
-				else if ( (gMercProfiles[ pSoldier->ubProfile ].bDisability == FEAR_OF_INSECTS) && MercIsInTropicalSector( pSoldier ) )
+				// Flugente: drugs can temporarily cause a merc get a new disability
+				else if ( ( (gMercProfiles[ pSoldier->ubProfile ].bDisability == FEAR_OF_INSECTS) || MercUnderTheInfluence(pSoldier, DRUG_TYPE_FEAROFINSECTS) )&& MercIsInTropicalSector( pSoldier ) )
 				{
 					// fear of insects, and we are in tropical sector
 					iTraitModifier -= 5;
@@ -5201,7 +5202,8 @@ UINT32 CalcNewChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTi
 	else
 	{
 		// PSYCHO
-		if ( pSoldier->ubProfile != NO_PROFILE && gMercProfiles[ pSoldier->ubProfile ].bDisability == PSYCHO )
+		// Flugente: drugs can temporarily cause a merc to go psycho
+		if ( pSoldier->ubProfile != NO_PROFILE && (gMercProfiles[ pSoldier->ubProfile ].bDisability == PSYCHO || MercUnderTheInfluence(pSoldier, DRUG_TYPE_PSYCHO) ) )
 		{
 			iBaseModifier += (FLOAT)gGameCTHConstants.BASE_PSYCHO;
 		}
@@ -5508,7 +5510,8 @@ UINT32 CalcNewChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTi
 		}
 		else
 		{
-			if ( pSoldier->ubProfile != NO_PROFILE && gMercProfiles[ pSoldier->ubProfile ].bDisability == PSYCHO )
+			// Flugente: drugs can temporarily cause a merc to go psycho
+			if ( pSoldier->ubProfile != NO_PROFILE && (gMercProfiles[ pSoldier->ubProfile ].bDisability == PSYCHO || MercUnderTheInfluence(pSoldier, DRUG_TYPE_PSYCHO) ) )
 			{
 				iAimModifier += gGameCTHConstants.AIM_PSYCHO;
 			}
@@ -5747,11 +5750,11 @@ UINT32 CalcNewChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTi
 		
 		iCombinedSkill /= (gGameCTHConstants.AIM_EXP + gGameCTHConstants.AIM_MARKS + gGameCTHConstants.AIM_WIS + gGameCTHConstants.AIM_DEX);
 
-		UINT32 uiCap = (UINT32)iCombinedSkill;
+		INT32 uiCap = (INT32)iCombinedSkill;
 		// Add percent-based modifier from the gun and its attachments
-		UINT32 uimoda = (UINT32)(uiCap * GetPercentCapModifier( pInHand, stance )) / 100;
-		UINT32 uimodb = (UINT32)(uiCap * GetPercentCapModifier( pInHand, gAnimControl[ pSoldier->usAnimState ].ubEndHeight )) / 100;
-		uiCap += (UINT32)((gGameExternalOptions.ubProneModifierPercentage * uimoda + (100 - gGameExternalOptions.ubProneModifierPercentage) * uimodb)/100); 
+		INT32 uimoda = (INT32)(uiCap * GetPercentCapModifier( pInHand, stance )) / 100;
+		INT32 uimodb = (INT32)(uiCap * GetPercentCapModifier( pInHand, gAnimControl[ pSoldier->usAnimState ].ubEndHeight )) / 100;
+		uiCap += (INT32)((gGameExternalOptions.ubProneModifierPercentage * uimoda + (100 - gGameExternalOptions.ubProneModifierPercentage) * uimodb)/100); 
 
 		// Add bonuses from Sniper Skill. Applies only when using a scope at or above its "best" range.
 		INT16 sDifference = 99 - uiCap;
@@ -5796,7 +5799,7 @@ UINT32 CalcNewChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTi
 		// cover when applying the maximum number of aiming clicks for this gun.
 		INT32 iMaxAimBonus = uiCap - iChance;
 
-		iMaxAimBonus = (UINT32)((iMaxAimBonus * (100+iAimModifier)) / 100);
+		iMaxAimBonus = (INT32)((iMaxAimBonus * (100+iAimModifier)) / 100);
 		iMaxAimBonus = __max(0, iMaxAimBonus); // can't get less than 0 points for aiming...
 		
 		// factor in scopes under their range
@@ -6308,7 +6311,7 @@ UINT32 CalcChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTime,
 		accuracyheatmultiplicator = (FLOAT)max(0.0, 1.0 - accuracymalus);
 	}
 
-	iAccRangeMod = iRange * accuracyheatmultiplicator * Weapon[usItemUsed].bAccuracy / 100;
+	iAccRangeMod = (INT32)(iRange * accuracyheatmultiplicator * Weapon[usItemUsed].bAccuracy / 100);
 	/////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -6702,7 +6705,8 @@ UINT32 CalcChanceToHitGun(SOLDIERTYPE *pSoldier, INT32 sGridNo, INT16 ubAimTime,
 					iChance -= 15;
 				}
 				// Small penalty for fear of insects in tropical sectors
-				else if ( (gMercProfiles[ pSoldier->ubProfile ].bDisability == FEAR_OF_INSECTS) && MercIsInTropicalSector( pSoldier ) )
+				// Flugente: drugs can temporarily cause a merc get a new disability
+				else if ( ( (gMercProfiles[ pSoldier->ubProfile ].bDisability == FEAR_OF_INSECTS) || MercUnderTheInfluence(pSoldier, DRUG_TYPE_FEAROFINSECTS) )&& MercIsInTropicalSector( pSoldier ) )
 				{
 					// fear of insects, and we are in tropical sector
 					iChance -= 5;
@@ -8973,89 +8977,19 @@ INT32 BulletImpact( SOLDIERTYPE *pFirer, BULLET *pBullet, SOLDIERTYPE * pTarget,
 				iImpact += (INT32)(iImpact * (pFirer->aiData.bAimTime - gSkillTraitValues.ubSNDamageBonusFromNumClicks + 1) * gSkillTraitValues.ubSNDamageBonusPerClick * NUM_SKILL_TRAITS( pFirer, SNIPER_NT ))/100; // +5% per trait
 			}
 		}
-
-		////////////////////////////////////////////////////////////////////////////////////
-		// SANDRO - Damage resistance for Militia
-		if (!IsAutoResolveActive())
+				
+		// Flugente: moved the damage calculation into a separate function
+		BOOLEAN autoresolve = IsAutoResolveActive();	
+		// HEADROCK HAM 5.1: Oh sandro, you rendered zerominimumdamage moot...
+		if ( AmmoTypes[ubAmmoType].zeroMinimumDamage )
 		{
-			if (pTarget->ubSoldierClass == SOLDIER_CLASS_GREEN_MILITIA && gGameExternalOptions.bGreenMilitiaDamageResistance != 0)
-				iImpact -= ((iImpact * gGameExternalOptions.bGreenMilitiaDamageResistance) /100);
-			else if (pTarget->ubSoldierClass == SOLDIER_CLASS_REG_MILITIA && gGameExternalOptions.bRegularMilitiaDamageResistance != 0)
-				iImpact -= ((iImpact * gGameExternalOptions.bRegularMilitiaDamageResistance) /100);
-			else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ELITE_MILITIA && gGameExternalOptions.bVeteranMilitiaDamageResistance != 0)
-				iImpact -= ((iImpact * gGameExternalOptions.bVeteranMilitiaDamageResistance) /100);
-			// bonus for enemy too
-			else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ADMINISTRATOR && gGameExternalOptions.sEnemyAdminDamageResistance != 0)
-				iImpact -= ((iImpact * gGameExternalOptions.sEnemyAdminDamageResistance) /100);
-			else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ARMY && gGameExternalOptions.sEnemyRegularDamageResistance != 0)
-				iImpact -= ((iImpact * gGameExternalOptions.sEnemyRegularDamageResistance) /100);
-			else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ELITE && gGameExternalOptions.sEnemyEliteDamageResistance != 0)
-				iImpact -= ((iImpact * gGameExternalOptions.sEnemyEliteDamageResistance) /100);
-
-			// HEADROCK HAM 5.1: Oh sandro, you rendered zerominimumdamage moot...
-			if ( AmmoTypes[ubAmmoType].zeroMinimumDamage )
-			{
-				iImpact = __max( 0, iImpact );
-			}
-			else
-			{
-				iImpact = __max( 1, iImpact);
-			}
+			iImpact = __max( 0, (INT32)(iImpact * (100 - pTarget->GetDamageResistance(autoresolve, FALSE)) / 100 ) );
 		}
-		//////////////////////////////////////////////////////////////////////////////////////
-
-		////////////////////////////////////////////////////////////////////////////////////
-		// SANDRO - option to make special NPCs stronger - damage resistance
-		if (gGameExternalOptions.usSpecialNPCStronger > 0)
+		else
 		{
-			switch( pTarget->ubProfile )
-			{
-				case CARMEN:
-				case QUEEN:
-				case JOE:
-				case ANNIE:
-				case CHRIS:
-				case KINGPIN:
-				case TIFFANY:
-				case T_REX:
-				case DRUGGIST:
-				case GENERAL:
-				case JACK:
-				case OLAF:
-				case RAY:
-				case OLGA:
-				case TYRONE:
-				case MIKE:
-					// Only 1/2 of the bonus
-					iImpact -= (INT32)(iImpact * gGameExternalOptions.usSpecialNPCStronger / 200);
-					// HEADROCK HAM 5.1: Oh sandro, you rendered zerominimumdamage moot...
-					if ( AmmoTypes[ubAmmoType].zeroMinimumDamage )
-					{
-						iImpact = __max( 0, iImpact );
-					}
-					else
-					{
-						iImpact = __max( 1, iImpact);
-					}
-					break;
-			}
+			iImpact = __max( 1, (INT32)(iImpact * (100 - pTarget->GetDamageResistance(autoresolve, FALSE)) / 100 ) );
 		}
-		////////////////////////////////////////////////////////////////////////////////////
 
-		////////////////////////////////////////////////////////////////////////////////////
-		// STOMP traits - Bodybuilding damage resistance
-		if ( gGameOptions.fNewTraitSystem && HAS_SKILL_TRAIT( pTarget, BODYBUILDING_NT ) )
-			// HEADROCK HAM 5.1: Oh sandro, you rendered zerominimumdamage moot...
-			if ( AmmoTypes[ubAmmoType].zeroMinimumDamage )
-			{
-				iImpact = __max( 0, (INT32)(iImpact * (100 - gSkillTraitValues.ubBBDamageResistance) / 100)); 
-			}
-			else
-			{
-				iImpact = __max( 1, (INT32)(iImpact * (100 - gSkillTraitValues.ubBBDamageResistance) / 100)); 
-			}
-			
-		////////////////////////////////////////////////////////////////////////////////////
 
 		AdjustImpactByHitLocation( iImpact, ubHitLocation, &iImpact, &iImpactForCrits );
 
@@ -9666,62 +9600,9 @@ INT32 HTHImpact( SOLDIERTYPE * pSoldier, SOLDIERTYPE * pTarget, INT32 iHitBy, BO
 		iImpact = (INT32)((iImpact * 11 / 10) + 0.5); // +10%
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////
-	// SANDRO - Damage resistance for Militia
-	if (!IsAutoResolveActive())
-	{
-		if (pTarget->ubSoldierClass == SOLDIER_CLASS_GREEN_MILITIA && gGameExternalOptions.bGreenMilitiaDamageResistance != 0)
-			iImpact -= ((iImpact * gGameExternalOptions.bGreenMilitiaDamageResistance) /100);
-		else if (pTarget->ubSoldierClass == SOLDIER_CLASS_REG_MILITIA && gGameExternalOptions.bRegularMilitiaDamageResistance != 0)
-			iImpact -= ((iImpact * gGameExternalOptions.bRegularMilitiaDamageResistance) /100);
-		else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ELITE_MILITIA && gGameExternalOptions.bVeteranMilitiaDamageResistance != 0)
-			iImpact -= ((iImpact * gGameExternalOptions.bVeteranMilitiaDamageResistance) /100);
-		// bonus for enemy too
-		else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ADMINISTRATOR && gGameExternalOptions.sEnemyAdminDamageResistance != 0)
-			iImpact -= ((iImpact * gGameExternalOptions.sEnemyAdminDamageResistance) /100);
-		else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ARMY && gGameExternalOptions.sEnemyRegularDamageResistance != 0)
-			iImpact -= ((iImpact * gGameExternalOptions.sEnemyRegularDamageResistance) /100);
-		else if (pTarget->ubSoldierClass == SOLDIER_CLASS_ELITE && gGameExternalOptions.sEnemyEliteDamageResistance != 0)
-			iImpact -= ((iImpact * gGameExternalOptions.sEnemyEliteDamageResistance) /100);
-
-		iImpact = max( 1, iImpact);
-	}
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	////////////////////////////////////////////////////////////////////////////////////
-	// SANDRO - option to make special NPCs stronger - damage resistance
-	if (gGameExternalOptions.usSpecialNPCStronger > 0)
-	{
-		switch( pTarget->ubProfile )
-		{
-			case CARMEN:
-			case QUEEN:
-			case JOE:
-			case ANNIE:
-			case CHRIS:
-			case KINGPIN:
-			case TIFFANY:
-			case T_REX:
-			case DRUGGIST:
-			case GENERAL:
-			case JACK:
-			case OLAF:
-			case RAY:
-			case OLGA:
-			case TYRONE:
-			case MIKE:
-				iImpact -= (INT32)(iImpact * gGameExternalOptions.usSpecialNPCStronger / 200);
-				iImpact = max( 1, iImpact);
-				break;
-		}
-	}
-	////////////////////////////////////////////////////////////////////////////////////
-
-	////////////////////////////////////////////////////////////////////////////////////
-	// STOMP traits - Bodybuilding damage resistance
-	if ( gGameOptions.fNewTraitSystem && HAS_SKILL_TRAIT( pTarget, BODYBUILDING_NT ) )
-		iImpact = max( 1, (INT32)(iImpact * (100 - gSkillTraitValues.ubBBDamageResistance) / 100)); 
-	////////////////////////////////////////////////////////////////////////////////////
+	// Flugente: moved the damage calculation into a separate function
+	BOOLEAN autoresolve = IsAutoResolveActive();		
+	iImpact = max( 1, (INT32)(iImpact * (100 - pTarget->GetDamageResistance(autoresolve, FALSE)) / 100 ) );
 
 	return( iImpact );
 }
@@ -9867,7 +9748,8 @@ UINT32 CalcChanceHTH( SOLDIERTYPE * pAttacker,SOLDIERTYPE *pDefender, INT16 ubAi
 	iAttRating /= 6;  // convert from 6-600 to 1-100
 
 	// psycho bonus - only with old traits - SANDRO
-	if ( !( gGameOptions.fNewTraitSystem ) && pAttacker->ubProfile != NO_PROFILE && gMercProfiles[ pAttacker->ubProfile ].bDisability == PSYCHO )
+	// Flugente: drugs can temporarily cause a merc to go psycho
+	if ( !( gGameOptions.fNewTraitSystem ) && pAttacker->ubProfile != NO_PROFILE && (gMercProfiles[ pAttacker->ubProfile ].bDisability == PSYCHO || MercUnderTheInfluence(pAttacker, DRUG_TYPE_PSYCHO) ) )
 	{
 		iAttRating += AIM_BONUS_PSYCHO;
 	}
@@ -10562,8 +10444,8 @@ void HandleTacticalEffectsOfEquipmentChange( SOLDIERTYPE *pSoldier, UINT32 uiInv
 INT32 CalcMaxTossRange( SOLDIERTYPE * pSoldier, UINT16 usItem, BOOLEAN fArmed )
 {
 	DebugMsg (TOPIC_JA2,DBG_LEVEL_3,"calcmaxtossrange");
-	INT32 iRange;
-	UINT16	usSubItem;
+	INT32 iRange = 0;
+	UINT16	usSubItem = NOTHING;
 
 	if ( EXPLOSIVE_GUN( usItem ) )
 	{
@@ -11383,7 +11265,8 @@ void EstimateBulletsLeft( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj )
 	}
 
 	// Is this Soldier a psycho?
-	if ( pSoldier->ubProfile != NO_PROFILE && gMercProfiles[ pSoldier->ubProfile ].bDisability == PSYCHO )
+	// Flugente: drugs can temporarily cause a merc to go psycho
+	if ( pSoldier->ubProfile != NO_PROFILE && (gMercProfiles[ pSoldier->ubProfile ].bDisability == PSYCHO || MercUnderTheInfluence(pSoldier, DRUG_TYPE_PSYCHO) ) )
 	{
 		fPsycho = TRUE;
 	}

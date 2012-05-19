@@ -154,7 +154,7 @@ BOOLEAN ValidItemAttachment( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN fAt
 //Return true if usAttachment would fit on an item with usItem, without considering possible other attachments on this gun. This may be inaccurate for NAS, because slots can change.
 BOOLEAN ValidAttachment( UINT16 usAttachment, UINT16 usItem, UINT8* ubAPCost = NULL );
 //This function does the same as the above, but is more accurate.
-BOOLEAN ValidAttachment( UINT16 usAttachment, OBJECTTYPE * pObj, UINT8* ubAPCost = NULL, UINT8 subObject = 0, std::vector<UINT16> usAttachmentSlotIndexVector = std::vector<UINT16>() );
+BOOLEAN ValidAttachment( UINT16 usAttachment, OBJECTTYPE * pObj, UINT8* ubAPCost = NULL, UINT8 subObject = 0, std::vector<UINT16> usAttachmentSlotIndexVector = std::vector<UINT16>());
 BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN fAttemptingAttachment, BOOLEAN fDisplayMessage = TRUE, UINT8 subObject = 0, INT16 slotCount = -1, BOOLEAN fIgnoreAttachmentInSlot = FALSE, OBJECTTYPE ** ppAttachInSlot = NULL, std::vector<UINT16> usAttachmentSlotIndexVector = std::vector<UINT16>());
 
 // Determines if it is possible to merge an item with any item whose class 
@@ -375,12 +375,12 @@ INT16 GetAttachedArmourBonus( OBJECTTYPE * pObj );
 INT16 GetBulletSpeedBonus( OBJECTTYPE * pObj );
 INT8 FindGasMask( SOLDIERTYPE * pSoldier );
 INT8 FindLockBomb( SOLDIERTYPE * pSoldier );
-INT8 FindMetalDetector( SOLDIERTYPE * pSoldier );
+INT8 FindMetalDetectorInHand( SOLDIERTYPE * pSoldier );		// Flugente: changed, now only works if detector is in hands
 INT8 FindCannon( SOLDIERTYPE * pSoldier );
 INT8 FindUsableCrowbar( SOLDIERTYPE * pSoldier );
 INT8 FindToolkit( SOLDIERTYPE * pSoldier );
-BOOLEAN IsDetonatorAttached( OBJECTTYPE * pObj );
-BOOLEAN IsRemoteDetonatorAttached( OBJECTTYPE * pObj );
+BOOLEAN IsDetonatorAttached( OBJECTTYPE * pObj );			// Flugente: no more needed, use HasAttachmentOfClass( pObj, AC_DETONATOR ) instead
+BOOLEAN IsRemoteDetonatorAttached( OBJECTTYPE * pObj );		// Flugente: no more needed, use HasAttachmentOfClass( pObj, AC_REMOTEDET ) instead
 OBJECTTYPE* FindAttachedBatteries( OBJECTTYPE * pObj );
 INT8 FindMedKit( SOLDIERTYPE * pSoldier );
 INT8 FindFirstAidKit( SOLDIERTYPE * pSoldier );
@@ -452,6 +452,12 @@ void  GetScopeLists( OBJECTTYPE * pObj, std::map<INT8, OBJECTTYPE*>& arScopeMap 
 // check if item belongs to a specific attachemnt class
 BOOLEAN IsAttachmentClass( UINT16 usItem, UINT32 aFlag );
 BOOLEAN HasAttachmentOfClass( OBJECTTYPE * pObj, UINT32 aFlag );
+
+//Madd: Common Attachment Framework
+bool IsAttachmentPointAvailable( OBJECTTYPE * pObject, UINT8 subObject, UINT32 attachmentID );
+bool IsAttachmentPointAvailable( UINT32 itemID, UINT32 attachmentID );
+bool IsAttachmentPointAvailable( UINT64 point, UINT32 attachmentID, BOOLEAN onlyCheckAttachments );
+UINT64 GetAvailableAttachmentPoint ( OBJECTTYPE * pObject, UINT8 subObject );
 
 #endif
 

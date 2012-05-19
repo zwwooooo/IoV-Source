@@ -2119,7 +2119,7 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 						|| pSoldier->aiData.bAction == AI_ACTION_UNLOCK_DOOR
 						|| pSoldier->aiData.bAction == AI_ACTION_LOCK_DOOR	)
 					{
-						if ( pSoldier->usAnimState == PICKUP_ITEM || pSoldier->usAnimState == ADJACENT_GET_ITEM || pSoldier->usAnimState == DROP_ITEM || pSoldier->usAnimState == END_OPEN_DOOR || pSoldier->usAnimState == END_OPEN_DOOR_CROUCHED || pSoldier->usAnimState == CLOSE_DOOR || pSoldier->usAnimState == MONSTER_UP || pSoldier->usAnimState == AI_RADIO || pSoldier->usAnimState == AI_CR_RADIO || pSoldier->usAnimState == END_OPENSTRUCT || pSoldier->usAnimState == END_OPENSTRUCT_CROUCHED || pSoldier->usAnimState == QUEEN_CALL )
+						if ( pSoldier->usAnimState == PICKUP_ITEM || pSoldier->usAnimState == ADJACENT_GET_ITEM || pSoldier->usAnimState == ADJACENT_GET_ITEM_CROUCHED || pSoldier->usAnimState == DROP_ITEM || pSoldier->usAnimState == END_OPEN_DOOR || pSoldier->usAnimState == END_OPEN_DOOR_CROUCHED || pSoldier->usAnimState == CLOSE_DOOR || pSoldier->usAnimState == MONSTER_UP || pSoldier->usAnimState == AI_RADIO || pSoldier->usAnimState == AI_CR_RADIO || pSoldier->usAnimState == END_OPENSTRUCT || pSoldier->usAnimState == END_OPENSTRUCT_CROUCHED || pSoldier->usAnimState == QUEEN_CALL )
 						{
 							FreeUpNPCFromPendingAction( pSoldier );
 						}
@@ -3009,6 +3009,10 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 				PlaySoldierJA2Sample( pSoldier->ubID, FENCE_OPEN, RATE_11025, SoundVolume( HIGHVOLUME, pSoldier->sGridNo ), 1, SoundDir( pSoldier->sGridNo ), TRUE );
 				break;
 
+			case 792:
+
+				
+				break;
 			}
 			// Adjust frame control pos, and try again
 			pSoldier->usAniCode++;
@@ -3019,6 +3023,12 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 			// Go to start, by default
 			pSoldier->usAniCode = 0;
 
+		}
+		else if ( sNewAniFrame > 999 )
+		{
+			// Jump, to animation script ( in the 300+ range )
+			pSoldier->EVENT_InitNewSoldierAnim( (UINT16)(sNewAniFrame - 700 ), 0 , FALSE );
+			return( TRUE );
 		}
 
 		// Loop here until we break on a real item!
