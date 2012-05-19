@@ -58,6 +58,8 @@
 	// THE_BOB : added for pocket popup definitions
 	#include <map>
 	#include "popup_definition.h"
+
+	#include "drugs and alcohol.h"
 #endif
 
 #ifdef JA2UB
@@ -1251,6 +1253,8 @@ std::map<UINT8,popupDef> LBEPocketPopup;
 //	{	/* Knife Pocket */			5,	0,	1,	{0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0} }
 //};
 
+DRUGTYPE Drug[DRUG_TYPE_MAX];
+
 BOOLEAN ItemIsLegal( UINT16 usItemIndex, BOOLEAN fIgnoreCoolness )
 {
 	if ( Item[usItemIndex].ubCoolness == 0 && !fIgnoreCoolness )
@@ -1590,17 +1594,18 @@ INT8 FindBestWeaponIfCurrentIsOutOfRange(SOLDIERTYPE * pSoldier, INT8 bCurrentWe
 	return( bCurrentWeaponIndex );
 }
 
-INT8 FindMetalDetector( SOLDIERTYPE * pSoldier )
+INT8 FindMetalDetectorInHand( SOLDIERTYPE * pSoldier )
 {
-	INT8 bLoop;
-
-	for (bLoop = 0; bLoop < (INT8) pSoldier->inv.size(); bLoop++)
+	if ( (&(pSoldier->inv[HANDPOS] ))->exists() && Item[pSoldier->inv[HANDPOS].usItem].metaldetector )
 	{
-		if (Item[pSoldier->inv[bLoop].usItem].metaldetector && pSoldier->inv[bLoop].exists() == true)
-		{
-			return( bLoop );
-		}
+		return( HANDPOS );
 	}
+	
+	if ( (&(pSoldier->inv[SECONDHANDPOS] ))->exists() && Item[pSoldier->inv[SECONDHANDPOS].usItem].metaldetector )
+	{
+		return( SECONDHANDPOS );
+	}
+
 	return( NO_SLOT );
 }
 
@@ -2004,21 +2009,42 @@ OBJECTTYPE* FindNonSmokeLaunchableAttachment( OBJECTTYPE * pObj, UINT16 usWeapon
 	return( FindLaunchableAttachment(pObj,usWeapon) );
 }
 
-
 //Simple check to see if the item has any attachments
+//Madd: if there are only hidden attachments this will now return false, so the asterisk won't be display if the hiddenAttachment tag is true
 BOOLEAN ItemHasAttachments( OBJECTTYPE * pObj, SOLDIERTYPE * pSoldier, UINT8 iter )
 {
+	BOOLEAN attachmentHidden = TRUE;
 	if (pObj->exists() == true) {
 		if(pSoldier != NULL){
-			for (iter = 0; iter != pObj->objectStack.size(); ++iter) {
-				if((*pObj)[iter]->AttachmentListSize() > 0){
-					return TRUE;
+			for (iter = 0; iter != pObj->objectStack.size(); ++iter) 
+			{
+				if((*pObj)[iter]->AttachmentListSize() > 0)
+				{
+					for(attachmentList::iterator att = (*pObj)[iter]->attachments.begin(); att != (*pObj)[iter]->attachments.end(); ++att)
+					{
+						if ( att->usItem != 0 && !Item[att->usItem].hiddenattachment )
+						{
+							attachmentHidden = FALSE;
+							break;
+						}
+					}
+					return !attachmentHidden;
 				}
 			}
 		}
-		else{
-			if((*pObj)[iter]->AttachmentListSize() > 0){
-				return TRUE;
+		else
+		{
+			if((*pObj)[iter]->AttachmentListSize() > 0)
+			{
+				for(attachmentList::iterator att = (*pObj)[iter]->attachments.begin(); att != (*pObj)[iter]->attachments.end(); ++att)
+				{
+					if ( att->usItem != 0 && !Item[att->usItem].hiddenattachment )
+					{
+						attachmentHidden = FALSE;
+						break;
+					}
+				}
+				return !attachmentHidden;
 			}
 		}
 	}
@@ -2081,6 +2107,13 @@ BOOLEAN ValidAttachment( UINT16 usAttachment, UINT16 usItem, UINT8 * pubAPCost )
 		*pubAPCost = (UINT8)APBPConstants[AP_RELOAD_GUN]; //default value
 	}
 
+	//Madd: Common Attachment Framework
+	if ( IsAttachmentPointAvailable(usItem, usAttachment))
+	{
+		if (pubAPCost)
+			*pubAPCost = Item[usAttachment].ubAttachToPointAPCost;
+		return TRUE;
+	}
 	// look for the section of the array pertaining to this attachment...
 	while( 1 )
 	{
@@ -2117,7 +2150,7 @@ BOOLEAN ValidAttachment( UINT16 usAttachment, UINT16 usItem, UINT8 * pubAPCost )
 	return( TRUE );
 }
 
-BOOLEAN ValidAttachment( UINT16 usAttachment, OBJECTTYPE * pObj, UINT8 * pubAPCost, UINT8 subObject, std::vector<UINT16> usAttachmentSlotIndexVector )
+BOOLEAN ValidAttachment( UINT16 usAttachment, OBJECTTYPE * pObj, UINT8 * pubAPCost, UINT8 subObject, std::vector<UINT16> usAttachmentSlotIndexVector)
 {
 	if (pObj->exists() == false) {
 		return FALSE;
@@ -2137,16 +2170,22 @@ BOOLEAN ValidAttachment( UINT16 usAttachment, OBJECTTYPE * pObj, UINT8 * pubAPCo
 		if(usAttachmentSlotIndexVector.empty())
 			return FALSE;
 
-		//Check if the attachment is valid with the main item
-		foundValidAttachment = (ValidAttachment(usAttachment, pObj->usItem, pubAPCost) || ValidLaunchable(usAttachment, pObj->usItem));
-
-		//Loop through all attachment points on the main item
-		for(attachmentList::iterator iter = (*pObj)[subObject]->attachments.begin(); iter != (*pObj)[subObject]->attachments.end() && !foundValidAttachment; ++iter)
+		//Madd: Common Attachment Framework
+		foundValidAttachment = IsAttachmentPointAvailable(pObj, subObject, usAttachment);
+		if (foundValidAttachment && pubAPCost )
+			*pubAPCost = Item[usAttachment].ubAttachToPointAPCost;
+		else
 		{
-			if(iter->exists())
-				foundValidAttachment = (ValidAttachment(usAttachment, iter->usItem, pubAPCost) || ValidLaunchable(usAttachment, iter->usItem));
-		}
+			//Check if the attachment is valid with the main item
+			foundValidAttachment = (ValidAttachment(usAttachment, pObj->usItem, pubAPCost) || ValidLaunchable(usAttachment, pObj->usItem));
 
+			//Loop through all attachment points on the main item
+			for(attachmentList::iterator iter = (*pObj)[subObject]->attachments.begin(); iter != (*pObj)[subObject]->attachments.end() && !foundValidAttachment; ++iter)
+			{
+				if(iter->exists())
+					foundValidAttachment = (ValidAttachment(usAttachment, iter->usItem, pubAPCost) || ValidLaunchable(usAttachment, iter->usItem));
+			}
+		}
 		return ( foundValidAttachment );
 	}
 	else
@@ -2269,7 +2308,7 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 		ubSlotIndex = usAttachmentSlotIndexVector[slotCount];
 
 		//WarmSteel - does this particular slot already hold an item? :( If we have a pAttachInSlot we're trying to switch, so then it doesn't matter.
-		if(!fIgnoreAttachmentInSlot && pAttachment->exists() && fAttemptingAttachment && (!ppAttachInSlot || Item[pAttachment->usItem].inseparable)){
+		if(!fIgnoreAttachmentInSlot && pAttachment->exists() && fAttemptingAttachment && (!ppAttachInSlot || Item[pAttachment->usItem].inseparable == 1)){
 			//If we have a parameter to return pAttachment to, store it, else the item does not attach to this slot.
 			fSimilarItems = TRUE;
 			usSimilarItem = pAttachment->usItem;
@@ -2322,7 +2361,7 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 //Determine if this item can receive this attachment.  This is different, in that it may
 //be possible to have this attachment on this item, but may already have an attachment on
 //it which doesn't work simultaneously with the new attachment (like a silencer and duckbill).
-BOOLEAN ValidItemAttachment( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN fAttemptingAttachment, BOOLEAN fDisplayMessage, UINT8 subObject, std::vector<UINT16> usAttachmentSlotIndexVector )
+BOOLEAN ValidItemAttachment( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN fAttemptingAttachment, BOOLEAN fDisplayMessage, UINT8 subObject, std::vector<UINT16> usAttachmentSlotIndexVector)
 {
 	BOOLEAN		fSameItem = FALSE, fSimilarItems = FALSE;
 	UINT16		usSimilarItem = NOTHING;
@@ -2566,6 +2605,10 @@ BOOLEAN TwoHandedItem( UINT16 usItem )
 BOOLEAN ValidLaunchable( UINT16 usLaunchable, UINT16 usItem )
 {
 	INT32 iLoop = 0;
+	//Madd: Common Attachment Framework
+	if ( IsAttachmentPointAvailable(usItem, usLaunchable) )
+		return TRUE;
+
 	//DebugMsg(TOPIC_JA2, DBG_LEVEL_3, String("ValidLaunchable: launchable=%d, item=%d",usLaunchable,usItem));
 	// look for the section of the array pertaining to this launchable item...
 	while( 1 )
@@ -2606,7 +2649,8 @@ BOOLEAN ValidItemLaunchable( OBJECTTYPE * pObj, UINT16 usAttachment )
 	if (pObj->exists() == false) {
 		return FALSE;
 	}
-	if ( !ValidLaunchable( usAttachment, pObj->usItem ) )
+	//Madd: Common Attachment Framework
+	if ( !ValidLaunchable( usAttachment, pObj->usItem ) && !IsAttachmentPointAvailable(pObj, 0, usAttachment) )
 	{
 		return( FALSE );
 	}
@@ -4716,7 +4760,7 @@ BOOLEAN OBJECTTYPE::AttachObjectNAS( SOLDIERTYPE * pSoldier, OBJECTTYPE * pAttac
 
 		if ( pSoldier != NULL )
 			ApplyEquipmentBonuses(pSoldier);
-
+			
 		return( TRUE );
 	}
 	// check for merges
@@ -5000,33 +5044,51 @@ BOOLEAN OBJECTTYPE::AttachObjectNAS( SOLDIERTYPE * pSoldier, OBJECTTYPE * pAttac
 			}
 			if ( pSoldier != NULL )
 				ApplyEquipmentBonuses(pSoldier);
+
 			return( TRUE );
 	}
 	return( FALSE );
 }
 
 //CHRISL: Use this function to sort through Attachments.xml and Launchables.xml
-UINT32 SetAttachmentSlotsFlag(OBJECTTYPE* pObj){
-	UINT32		uiSlotFlag = 0;
+UINT64 SetAttachmentSlotsFlag(OBJECTTYPE* pObj){
+	UINT64		uiSlotFlag = 0;
 	UINT32		uiLoop = 0;
 	UINT32		fItem;
 
 	if(pObj->exists()==false)
 		return 0;
+
+	//Madd: Common Attachment Framework
+	UINT64 point = GetAvailableAttachmentPoint(pObj, 0);
+
 	while(1)
 	{
 		fItem = 0;
+		//Madd: Common Attachment Framework
+		if (IsAttachmentPointAvailable(point, uiLoop, TRUE))
+		{
+			fItem = uiLoop;
+			if(fItem && ItemIsLegal(fItem, TRUE))	// We've found a valid attachment.  Set the nasAttachmentSlots flag appropriately
+				uiSlotFlag |= Item[fItem].nasAttachmentClass;
+		}
+
 		if (Attachment[uiLoop][1] == pObj->usItem){
 			fItem = Attachment[uiLoop][0];
+
+			if(fItem && ItemIsLegal(fItem, TRUE))	
+				uiSlotFlag |= Item[fItem].nasAttachmentClass;
 		}
+
 		if (Launchable[uiLoop][1] == pObj->usItem ){
 			fItem = Launchable[uiLoop][0];
+
+			if(fItem && ItemIsLegal(fItem, TRUE))	
+				uiSlotFlag |= Item[fItem].nasAttachmentClass;
 		}
-		if(fItem && ItemIsLegal(fItem, TRUE)){	// We've found a valid attachment.  Set the nasAttachmentSlots flag appropriately
-			uiSlotFlag |= Item[fItem].nasAttachmentClass;
-		}
+
 		uiLoop++;
-		if (Attachment[uiLoop][0] == 0 && Launchable[uiLoop][0] == 0){
+		if (Attachment[uiLoop][0] == 0 && Launchable[uiLoop][0] == 0 && Item[uiLoop].usItemClass == 0 ){
 			// No more attachments to search
 			break;
 		}
@@ -5042,8 +5104,8 @@ std::vector<UINT16> GetItemSlots(OBJECTTYPE* pObj, UINT8 subObject, BOOLEAN fAtt
 	std::vector<UINT16>	tempSlots;
 	UINT8				numSlots = 0;
 	UINT16				magSize = 0;
-	UINT32				fItemSlots = 0;
-	UINT128				fItemLayout = 0;
+	UINT64				fItemSlots = 0; //MM: Bumped the NAS UINT32s to UINT64s
+	UINT64				fItemLayout = 0;
 
 	if(UsingNewAttachmentSystem()==false || !pObj->exists())
 		return tempItemSlots;
@@ -5057,8 +5119,8 @@ std::vector<UINT16> GetItemSlots(OBJECTTYPE* pObj, UINT8 subObject, BOOLEAN fAtt
 
 	//Next, let's figure out which slots the item gives us access to
 	if(fItemSlots){	//We don't need to do anything if the item gets no slots
-		for(UINT8 sClass = 0; sClass < 32; sClass++){	//go through each attachment class and find the slots the item should have
-			UINT32 uiClass = (UINT32)pow((double)2, (int)sClass);
+		for(UINT8 sClass = 0; sClass < 64; sClass++){	//go through each attachment class and find the slots the item should have
+			UINT64 uiClass = (UINT64)pow((double)2, (int)sClass);
 			UINT32 slotSize = tempItemSlots.size();
 			if(fItemSlots & uiClass){	//don't bother with this slot if it's not a valid class
 				for(UINT32 sCount = 1; sCount < MAXITEMS+1; sCount++){
@@ -5346,7 +5408,7 @@ void ReInitMergedItem(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usOldItem,
 		//I can't think of any reason why this would happen, and if it does the worst that can happen is your attachment disappearing.
 		for(slotCount = 0; slotCount < (*pObj)[ubStatusIndex]->attachments.size(); slotCount++){
 			UINT16 usAttach = (*pObj)[ubStatusIndex]->GetAttachmentAtIndex(slotCount)->usItem;
-			if(Item[usAttach].inseparable){
+			if(Item[usAttach].inseparable == 1){
 				for(UINT16 cnt = 0; cnt < MAX_DEFAULT_ATTACHMENTS && Item[usOldItem].defaultattachments[cnt] != 0; cnt++){
 					if(Item[usOldItem].defaultattachments[cnt] == usAttach){
 						(*pObj)[ubStatusIndex]->RemoveAttachmentAtIndex(slotCount);
@@ -5377,7 +5439,7 @@ void ReInitMergedItem(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usOldItem,
 	//Now add all default attachments, but add them with the same status as the gun. We don't want to make repairing guns easy :)
 	for(UINT16 cnt = 0; cnt < MAX_DEFAULT_ATTACHMENTS && Item[pObj->usItem].defaultattachments[cnt] != 0; cnt++){
 		//Only add inseparable default attachments, because they are likely "part" of the gun.
-		if(Item[Item[pObj->usItem].defaultattachments[cnt]].inseparable){
+		if(Item[Item[pObj->usItem].defaultattachments[cnt]].inseparable == 1){
 			static OBJECTTYPE defaultAttachment;
 			CreateItem(Item [ pObj->usItem ].defaultattachments[cnt],(*pObj)[ubStatusIndex]->data.objectStatus,&defaultAttachment);
 			AssertMsg(pObj->AttachObject(NULL,&defaultAttachment, FALSE, ubStatusIndex, -1, FALSE), "A default attachment could not be attached after merging, this should not be possible.");
@@ -5416,7 +5478,7 @@ void ReInitMergedItem(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usOldItem,
 
 	//drop all items we couldn't re-attach.
 	for (attachmentList::iterator iter = tempSlotChangingAttachList.begin(); iter != tempSlotChangingAttachList.end(); ++iter) {
-		if ( !Item[iter->usItem].inseparable )
+		if ( Item[iter->usItem].inseparable != 1)
 		{//WarmSteel - Couldn't re-attach this item, try to drop it.
 			if (pSoldier) {
 				if ( !AutoPlaceObject( pSoldier, &(*iter), FALSE ) )
@@ -5430,7 +5492,7 @@ void ReInitMergedItem(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usOldItem,
 	}
 	//and the rest too
 	for (attachmentList::iterator iter = tempAttachList.begin(); iter != tempAttachList.end(); ++iter) {
-		if ( !Item[iter->usItem].inseparable )
+		if ( Item[iter->usItem].inseparable != 1)
 		{//WarmSteel - Couldn't re-attach this item, try to drop it.
 			if (pSoldier) {
 				if ( !AutoPlaceObject( pSoldier, &(*iter), FALSE ) )
@@ -6382,7 +6444,8 @@ BOOLEAN AutoPlaceObjectToWorld(SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, INT8 b
 	if( guiCurrentScreen == MAP_SCREEN )
 	{
 		// the_bob : added the check for whether pSoldier actually points to something to handle calling this function with pSoldier = NULL
-		if (pSoldier){
+		if (pSoldier)
+		{
 			if(fShowMapInventoryPool && !IsMercInActiveSector(pSoldier) )
 			{
 				fShowMapInventoryPool = FALSE;
@@ -6392,7 +6455,11 @@ BOOLEAN AutoPlaceObjectToWorld(SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, INT8 b
 			 ChangeSelectedMapSector(pSoldier->sSectorX, pSoldier->sSectorY, pSoldier->bSectorZ);
 		}
 
-		if(!fShowMapInventoryPool)
+		// WANNE: This should fix the bug, that items get lost in the sector when switching between tactical sectors
+		// This bug was introduced in revision 4571 (2011-07-14)
+		
+		//if(!fShowMapInventoryPool)
+		if(fShowMapInventoryPool)
 		{
 			fShowMapInventoryPool = TRUE;
 			CreateDestroyMapInventoryPoolButtons(FALSE);
@@ -7309,7 +7376,7 @@ BOOLEAN CreateItem( UINT16 usItem, INT16 bStatus, OBJECTTYPE * pObj )
 				break;
 
 			//cannot use gTempObject
-			static OBJECTTYPE defaultAttachment;
+			OBJECTTYPE defaultAttachment;
 			CreateItem(Item [ usItem ].defaultattachments[cnt],100,&defaultAttachment);
 			pObj->AttachObject(NULL,&defaultAttachment, FALSE);
 		}
@@ -7358,6 +7425,12 @@ BOOLEAN ArmBomb( OBJECTTYPE * pObj, INT8 bSetting )
 	BOOLEAN fPressure = FALSE;
 	BOOLEAN fTimed = FALSE;
 	BOOLEAN	fSwitch = FALSE;
+	BOOLEAN fDefuse = FALSE;		// bomb can be defused remotely
+		
+	if ( HasAttachmentOfClass( pObj, AC_DEFUSE) )
+	{
+		fDefuse = TRUE;
+	}
 
 	if (pObj->usItem == ACTION_ITEM)
 	{
@@ -7373,11 +7446,11 @@ BOOLEAN ArmBomb( OBJECTTYPE * pObj, INT8 bSetting )
 
 		}
 	}
-	else if ( IsDetonatorAttached( pObj ) )
+	else if ( HasAttachmentOfClass( pObj, AC_DETONATOR ) )
 	{
 		fTimed = TRUE;
 	}
-	else if ( (IsRemoteDetonatorAttached( pObj ) ) || (pObj->usItem == ACTION_ITEM) )
+	else if ( HasAttachmentOfClass( pObj, (AC_REMOTEDET | AC_DEFUSE) ) || (pObj->usItem == ACTION_ITEM) )
 	{
 		fRemote = TRUE;
 	}
@@ -7405,22 +7478,74 @@ BOOLEAN ArmBomb( OBJECTTYPE * pObj, INT8 bSetting )
 		return( FALSE );
 	}
 
+	// Flugente TODO determine correct frequency and detonate/defuse stuff
+	// Flugente: decide how to interpret the bSetting we just got.
+	// Due to limitations in the message system, we only receive a single value to interpret, as we currently can't have a message box return 2 values
+	// It might be possible to have proper checkboxes, but I'll rather not research this right now.
+	// The remote defuse complicates things, as you'll see:
+	//
+	// If we are placing a bomb or mine (so no tripwire), consider the following: 
+	// a) if we have a timed detonator: time in turns until she blows': 1-4
+	// b) if we have a remote detonator: frequency on which the bomb will blow: 1-4
+	// c) if we have a timed detonator plus a remote defuse: time in turns until she blows plus frequency to defuse: 1-16
+	// d) if we have a remote detonator plus a remote defuse: frequency on which the bomb will blow plus frequency to defuse: 1-16
+	//
+	// I we are placing tripwire, consider this:
+	// e) if we palce tripwire: the tripwire network plus the hierachy in that network: 1-16
+	//
+	// It is clear that we only have to reinterpret the values if a defuse is equiped, or we are placing tripwire
+	INT8 detonatesetting = bSetting;
+	INT8 defusesetting	 = bSetting;
+
+	if ( fDefuse && bSetting > 0 && bSetting < 17 )	// checks for safety
+	{
+		// the bSetting consists of the 4 * (detonation frequency - 1) + defuse frequency
+		detonatesetting = 1;
+		defusesetting = bSetting % 4;
+		if ( defusesetting == 0 )
+			defusesetting = 4;
+
+		INT8 tmp = bSetting - defusesetting;		// now 0, 4, 8 or 12
+		if ( tmp > 0 )	++detonatesetting;
+		if ( tmp > 4 )	++detonatesetting;
+		if ( tmp > 8 )	++detonatesetting;			// defusesetting is now in 1-4
+	}
+
+	// tripwires
+	UINT32 ubWireNetworkFlag = 0;
+	if ( Item[pObj->usItem].tripwire == 1 && bSetting > 0 && bSetting < 17 ) // checks for safety
+	{
+		// the bSetting consists of the network number + 4 * (network hierarchy - 1)
+
+		// account for placement by the enemy
+		INT8 editoradj = 16;
+		//if ( editor ) editoradj = 0;	or something like that
+		ubWireNetworkFlag = 1 << (editoradj - 1 + bSetting);
+	}
+
+	if (fDefuse)	// TODO: doesn't work this way if both a detonator and a remote defuse is attached...
+	{
+		(*pObj)[0]->data.misc.bDetonatorType = BOMB_REMOTE;
+		(*pObj)[0]->data.bDefuseFrequency = defusesetting;
+	}
+
 	if (fRemote)
 	{
 		(*pObj)[0]->data.misc.bDetonatorType = BOMB_REMOTE;
-		(*pObj)[0]->data.misc.bFrequency = bSetting;
+		(*pObj)[0]->data.misc.bFrequency = detonatesetting;
 	}
 	else if (fPressure)
 	{
 		(*pObj)[0]->data.misc.bDetonatorType = BOMB_PRESSURE;
 		(*pObj)[0]->data.misc.bFrequency = 0;
+		(*pObj)[0]->data.ubWireNetworkFlag = ubWireNetworkFlag;
 	}
 	else if (fTimed)
 	{
 		(*pObj)[0]->data.misc.bDetonatorType = BOMB_TIMED;
 		// In realtime the player could choose to put down a bomb right before a turn expires, SO
 		// add 1 to the setting in RT
-		(*pObj)[0]->data.misc.bDelay = bSetting;
+		(*pObj)[0]->data.misc.bDelay = detonatesetting;
 		if ( !(gTacticalStatus.uiFlags & TURNBASED && gTacticalStatus.uiFlags & INCOMBAT) )
 		{
 			(*pObj)[0]->data.misc.bDelay++;
@@ -7430,12 +7555,16 @@ BOOLEAN ArmBomb( OBJECTTYPE * pObj, INT8 bSetting )
 	else if (fSwitch)
 	{
 		(*pObj)[0]->data.misc.bDetonatorType = BOMB_SWITCH;
-		(*pObj)[0]->data.misc.bFrequency = bSetting;
+		(*pObj)[0]->data.misc.bFrequency = detonatesetting;
 	}
 	else
 	{
 		return( FALSE );
 	}
+
+	// for safety, weird things happen
+	if ( (*pObj).fFlags & OBJECT_DISABLED_BOMB )
+		(*pObj).fFlags &= ~(OBJECT_DISABLED_BOMB);
 
 	(*pObj).fFlags |= OBJECT_ARMED_BOMB;
 	(*pObj)[0]->data.misc.usBombItem = pObj->usItem;
@@ -8010,11 +8139,11 @@ void CheckEquipmentForDamage( SOLDIERTYPE *pSoldier, INT32 iDamage )
 			// blow it up!
 			if ( gTacticalStatus.ubAttackBusyCount )
 			{
-				IgniteExplosion( pSoldier->ubAttackerID, CenterX( pSoldier->sGridNo ), CenterY( pSoldier->sGridNo ), 0, pSoldier->sGridNo, pSoldier->inv[ bSlot ].usItem, pSoldier->pathing.bLevel );
+				IgniteExplosion( pSoldier->ubAttackerID, CenterX( pSoldier->sGridNo ), CenterY( pSoldier->sGridNo ), 0, pSoldier->sGridNo, pSoldier->inv[ bSlot ].usItem, pSoldier->pathing.bLevel, pSoldier->ubDirection );
 			}
 			else
 			{
-				IgniteExplosion( pSoldier->ubID, CenterX( pSoldier->sGridNo ), CenterY( pSoldier->sGridNo ), 0, pSoldier->sGridNo, pSoldier->inv[ bSlot ].usItem, pSoldier->pathing.bLevel );
+				IgniteExplosion( pSoldier->ubID, CenterX( pSoldier->sGridNo ), CenterY( pSoldier->sGridNo ), 0, pSoldier->sGridNo, pSoldier->inv[ bSlot ].usItem, pSoldier->pathing.bLevel, pSoldier->ubDirection );
 			}
 
 			//ADB when something in a stack blows up the whole stack goes, so no need to worry about number of items
@@ -8079,7 +8208,7 @@ BOOLEAN DamageItemOnGround( OBJECTTYPE * pObject, INT32 sGridNo, INT8 bLevel, IN
 	if ( fBlowsUp )
 	{
 		// OK, Ignite this explosion!
-		IgniteExplosion( ubOwner, CenterX( sGridNo ), CenterY( sGridNo ), 0, sGridNo, pObject->usItem, bLevel );
+		IgniteExplosion( ubOwner, CenterX( sGridNo ), CenterY( sGridNo ), 0, sGridNo, pObject->usItem, bLevel, DIRECTION_IRRELEVANT );
 
 		// SANDRO - merc records
 		if ( (pObject->fFlags & OBJECT_ARMED_BOMB) && ((*pObject)[0]->data.misc.ubBombOwner > 1) )
@@ -10562,6 +10691,16 @@ INT16 GetTotalVisionRangeBonus( SOLDIERTYPE * pSoldier, UINT8 bLightLevel )
 		bonus += GetBrightLightVisionRangeBonus(pSoldier, bLightLevel);
 	}
 
+	// Flugente: drugs can alter our sight
+	if ( pSoldier->drugs.bDrugEffect[ DRUG_TYPE_VISION ] )
+	{
+		bonus += 10;
+	}
+	else if ( pSoldier->drugs.bDrugSideEffect[ DRUG_TYPE_VISION ] )
+	{
+		bonus -= 10;
+	}
+
 	// SANDRO - STOMP traits - Scouting bonus for sight range with binoculars and similar
 	if ( gGameOptions.fNewTraitSystem && HAS_SKILL_TRAIT( pSoldier, SCOUTING_NT ) && pSoldier->pathing.bLevel == 0 )
 	{
@@ -10698,6 +10837,12 @@ UINT8 GetPercentTunnelVision( SOLDIERTYPE * pSoldier )
 			bonus = __min(100,usActualCoweringTunnelVision);
 		}
 	}
+
+	// Flugente: drugs can alter our vision
+	if ( pSoldier->drugs.bDrugSideEffect[ DRUG_TYPE_TUNNELVISION ] )
+	{
+		bonus = __min(100, bonus + 25);
+	} 
 
 	if ( !PTR_OURTEAM ) // Madd: adjust tunnel vision by difficulty level
 		bonus /= gGameOptions.ubDifficultyLevel;
@@ -12637,8 +12782,8 @@ INT32 GetGunAccuracy( OBJECTTYPE *pObj )
 	if ( gGameOptions.fWeaponOverheating )
 	{
 		FLOAT overheatdamagepercentage = GetGunOverheatDamagePercentage( pObj );
-		FLOAT accuracymalus = (max(1.0, overheatdamagepercentage) - 1.0) * 0.1;
-		accuracyheatmultiplicator = max(0.0, 1.0 - accuracymalus);
+		FLOAT accuracymalus = (max((FLOAT)1.0, overheatdamagepercentage) - (FLOAT)1.0) * 0.1;
+		accuracyheatmultiplicator = max((FLOAT)0.0, (FLOAT)1.0 - accuracymalus);
 	}
 
 	if(UsingNewCTHSystem() == false)
@@ -13054,12 +13199,15 @@ BOOLEAN IsAttachmentClass( UINT16 usItem, UINT32 aFlag )
 
 BOOLEAN HasAttachmentOfClass( OBJECTTYPE * pObj, UINT32 aFlag )
 {
-	// check all attachments
-	attachmentList::iterator iterend = (*pObj)[0]->attachments.end();
-	for (attachmentList::iterator iter = (*pObj)[0]->attachments.begin(); iter != iterend; ++iter) 
+	if ( pObj->exists() )
 	{
-		if ( iter->exists() && IsAttachmentClass( iter->usItem, aFlag ) )
-			return( TRUE );
+		// check all attachments
+		attachmentList::iterator iterend = (*pObj)[0]->attachments.end();
+		for (attachmentList::iterator iter = (*pObj)[0]->attachments.begin(); iter != iterend; ++iter) 
+		{
+			if ( iter->exists() && IsAttachmentClass( iter->usItem, aFlag ) )
+				return( TRUE );
+		}
 	}
 
 	return( FALSE );
@@ -13400,3 +13548,51 @@ BOOLEAN OBJECTTYPE::TransformObject( SOLDIERTYPE * pSoldier, UINT8 ubStatusIndex
 	// Signal a successful transformation.
 	return TRUE;
 }
+
+//Madd: Common Attachment Framework - check if a given point is acceptable
+bool IsAttachmentPointAvailable( OBJECTTYPE * pObject, UINT8 subObject, UINT32 attachmentID )
+{
+	if (pObject)
+	{
+		if (Item[pObject->usItem].ulAvailableAttachmentPoint > 0 && (Item[attachmentID].attachment  || Item[attachmentID].usItemClass & IC_GRENADE || Item[attachmentID].usItemClass & IC_BOMB)&& Item[attachmentID].ulAttachmentPoint & GetAvailableAttachmentPoint(pObject, subObject))
+			return true;
+	}
+
+	return false;
+}
+
+//Madd: Common Attachment Framework - if we already know the point 
+bool IsAttachmentPointAvailable( UINT64 point, UINT32 attachmentID, BOOLEAN onlyCheckAttachments )
+{
+	if (point > 0 && (!onlyCheckAttachments || (Item[attachmentID].attachment || Item[attachmentID].usItemClass & IC_GRENADE || Item[attachmentID].usItemClass & IC_BOMB)) && Item[attachmentID].ulAttachmentPoint & point)
+		return true;
+	else
+		return false;
+}
+
+//Madd: Common Attachment Framework, doesn't look at attachments
+bool IsAttachmentPointAvailable( UINT32 itemID, UINT32 attachmentID )
+{
+	if (Item[itemID].ulAvailableAttachmentPoint > 0 && (Item[attachmentID].attachment || Item[attachmentID].usItemClass & IC_GRENADE || Item[attachmentID].usItemClass & IC_BOMB) && Item[attachmentID].ulAttachmentPoint & Item[itemID].ulAvailableAttachmentPoint) 
+		return true;
+	else
+		return false;
+}
+
+//Madd: Common Attachment Framework, get point value from object + attachments
+UINT64 GetAvailableAttachmentPoint (OBJECTTYPE * pObject, UINT8 subObject)
+{
+	UINT64 point = 0;
+	if (pObject) 
+	{
+		point = Item[pObject->usItem].ulAvailableAttachmentPoint;
+		for (attachmentList::iterator iter = (*pObject)[subObject]->attachments.begin(); iter != (*pObject)[subObject]->attachments.end(); ++iter) 
+		{
+			if(iter->exists() && Item[iter->usItem].ulAvailableAttachmentPoint > 0 )
+				point |= Item[iter->usItem].ulAvailableAttachmentPoint;
+		}
+	}
+
+	return point;
+}
+
