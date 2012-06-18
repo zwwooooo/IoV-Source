@@ -34,14 +34,10 @@ Namespace GUI
         Public Shared Sub LoadSettings()
             _settingsTable = MakeSettingsTable()
             Try
-                ' RoWa21: Renamed the settings file to an invalid file, because all the grid columns had a size of 0
-                ' So the default values are loaded.
-                ' It seems, that I messed something up by reflactoring the the lastest EXE
-                '_settingsTable.ReadXml("XMLEditorSettings.xml")
-                _settingsTable.ReadXml("XMLEditorSettings_dummy.xml")
-            Catch exception1 As FileNotFoundException
-                ProjectData.SetProjectError(exception1)
-                Dim exception As FileNotFoundException = exception1
+                _settingsTable.ReadXml("XMLEditorSettings.xml")
+            Catch ex As FileNotFoundException
+                ProjectData.SetProjectError(ex)
+                Dim exception As FileNotFoundException = ex
                 ProjectData.ClearProjectError()
             End Try
         End Sub

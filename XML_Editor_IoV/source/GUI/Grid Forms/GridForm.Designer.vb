@@ -22,18 +22,26 @@ Partial Class GridForm
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.components = New System.ComponentModel.Container
-        Dim DataGridViewCellStyle1 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle
-        Me.Grid = New System.Windows.Forms.DataGridView
+        Me.components = New System.ComponentModel.Container()
+        Dim DataGridViewCellStyle1 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
+        Me.Grid = New System.Windows.Forms.DataGridView()
         Me.GridContextMenu = New System.Windows.Forms.ContextMenuStrip(Me.components)
-        Me.SelectColumnsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-        Me.FilterToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
+        Me.SelectColumnsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.FilterToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.FilterBySelectedValueToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.RemoveFilterToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ApplyValueToSelectedColumnToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ValueAddToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ValueMultiplyToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ValueSetToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.FilterExcludingSelectedValueToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         CType(Me.Grid, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GridContextMenu.SuspendLayout()
         Me.SuspendLayout()
         '
         'Grid
         '
+        Me.Grid.AllowDrop = True
         Me.Grid.AllowUserToAddRows = False
         Me.Grid.AllowUserToDeleteRows = False
         Me.Grid.AllowUserToOrderColumns = True
@@ -44,7 +52,6 @@ Partial Class GridForm
         Me.Grid.Dock = System.Windows.Forms.DockStyle.Fill
         Me.Grid.EnableHeadersVisualStyles = False
         Me.Grid.Location = New System.Drawing.Point(0, 0)
-        Me.Grid.MultiSelect = False
         Me.Grid.Name = "Grid"
         Me.Grid.ReadOnly = True
         Me.Grid.RowHeadersVisible = False
@@ -55,21 +62,64 @@ Partial Class GridForm
         '
         'GridContextMenu
         '
-        Me.GridContextMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SelectColumnsToolStripMenuItem, Me.FilterToolStripMenuItem})
+        Me.GridContextMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SelectColumnsToolStripMenuItem, Me.FilterToolStripMenuItem, Me.FilterBySelectedValueToolStripMenuItem, Me.FilterExcludingSelectedValueToolStripMenuItem, Me.RemoveFilterToolStripMenuItem, Me.ApplyValueToSelectedColumnToolStripMenuItem})
         Me.GridContextMenu.Name = "ContextMenu"
-        Me.GridContextMenu.Size = New System.Drawing.Size(147, 48)
+        Me.GridContextMenu.Size = New System.Drawing.Size(245, 158)
         '
         'SelectColumnsToolStripMenuItem
         '
         Me.SelectColumnsToolStripMenuItem.Name = "SelectColumnsToolStripMenuItem"
-        Me.SelectColumnsToolStripMenuItem.Size = New System.Drawing.Size(146, 22)
+        Me.SelectColumnsToolStripMenuItem.Size = New System.Drawing.Size(244, 22)
         Me.SelectColumnsToolStripMenuItem.Text = "Select &Columns"
         '
         'FilterToolStripMenuItem
         '
         Me.FilterToolStripMenuItem.Name = "FilterToolStripMenuItem"
-        Me.FilterToolStripMenuItem.Size = New System.Drawing.Size(146, 22)
-        Me.FilterToolStripMenuItem.Text = "&Filter"
+        Me.FilterToolStripMenuItem.Size = New System.Drawing.Size(244, 22)
+        Me.FilterToolStripMenuItem.Text = "Custom &Filter"
+        '
+        'FilterBySelectedValueToolStripMenuItem
+        '
+        Me.FilterBySelectedValueToolStripMenuItem.Name = "FilterBySelectedValueToolStripMenuItem"
+        Me.FilterBySelectedValueToolStripMenuItem.Size = New System.Drawing.Size(244, 22)
+        Me.FilterBySelectedValueToolStripMenuItem.Text = "Filter by Selected &Value"
+        '
+        'RemoveFilterToolStripMenuItem
+        '
+        Me.RemoveFilterToolStripMenuItem.Name = "RemoveFilterToolStripMenuItem"
+        Me.RemoveFilterToolStripMenuItem.Size = New System.Drawing.Size(244, 22)
+        Me.RemoveFilterToolStripMenuItem.Text = "&Remove Filter"
+        '
+        'ApplyValueToSelectedColumnToolStripMenuItem
+        '
+        Me.ApplyValueToSelectedColumnToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ValueAddToolStripMenuItem, Me.ValueMultiplyToolStripMenuItem, Me.ValueSetToolStripMenuItem})
+        Me.ApplyValueToSelectedColumnToolStripMenuItem.Name = "ApplyValueToSelectedColumnToolStripMenuItem"
+        Me.ApplyValueToSelectedColumnToolStripMenuItem.Size = New System.Drawing.Size(244, 22)
+        Me.ApplyValueToSelectedColumnToolStripMenuItem.Text = "&Apply Value to Selected Column"
+        '
+        'ValueAddToolStripMenuItem
+        '
+        Me.ValueAddToolStripMenuItem.Name = "ValueAddToolStripMenuItem"
+        Me.ValueAddToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+        Me.ValueAddToolStripMenuItem.Text = "&Add"
+        '
+        'ValueMultiplyToolStripMenuItem
+        '
+        Me.ValueMultiplyToolStripMenuItem.Name = "ValueMultiplyToolStripMenuItem"
+        Me.ValueMultiplyToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+        Me.ValueMultiplyToolStripMenuItem.Text = "&Multiply"
+        '
+        'ValueSetToolStripMenuItem
+        '
+        Me.ValueSetToolStripMenuItem.Name = "ValueSetToolStripMenuItem"
+        Me.ValueSetToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+        Me.ValueSetToolStripMenuItem.Text = "&Set"
+        '
+        'FilterExcludingSelectedValueToolStripMenuItem
+        '
+        Me.FilterExcludingSelectedValueToolStripMenuItem.Name = "FilterExcludingSelectedValueToolStripMenuItem"
+        Me.FilterExcludingSelectedValueToolStripMenuItem.Size = New System.Drawing.Size(244, 22)
+        Me.FilterExcludingSelectedValueToolStripMenuItem.Text = "Filter E&xcluding Selected Value"
         '
         'GridForm
         '
@@ -89,4 +139,11 @@ Partial Class GridForm
     Friend WithEvents GridContextMenu As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents SelectColumnsToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents FilterToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents FilterBySelectedValueToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents RemoveFilterToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ApplyValueToSelectedColumnToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ValueAddToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ValueMultiplyToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ValueSetToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents FilterExcludingSelectedValueToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 End Class

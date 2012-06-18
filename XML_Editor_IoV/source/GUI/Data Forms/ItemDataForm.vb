@@ -1,8 +1,8 @@
 Public Class ItemDataForm
     Inherits BaseDataForm
 
-    Public Sub New(ByVal itemID As Integer, ByVal formText As String)
-        MyBase.New(itemID, formText)
+    Public Sub New(manager As DataManager, ByVal itemID As Integer, ByVal formText As String)
+        MyBase.New(manager, itemID, formText)
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
 
@@ -13,25 +13,25 @@ Public Class ItemDataForm
     Private Sub RemoveUnusedLanguageSpecificItemTabs()
         Dim baseItemName As String = "Items.xml"
 
-        If LanguageSpecificFileExist("German." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.German & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.GermanPage)
         End If
-        If LanguageSpecificFileExist("Russian." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.Russian & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.RussianPage)
         End If
-        If LanguageSpecificFileExist("Polish." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.Polish & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.PolishPage)
         End If
-        If LanguageSpecificFileExist("Italian." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.Italian & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.ItalianPage)
         End If
-        If LanguageSpecificFileExist("French." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.French & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.FrenchPage)
         End If
-        If LanguageSpecificFileExist("Chinese." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.Chinese & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.ChinesePage)
         End If
-        If LanguageSpecificFileExist("Dutch." & baseItemName) = False Then
+        If LanguageSpecificFileExist(OtherText.Dutch & "." & baseItemName) = False Then
             Me.TabControl2.Controls.Remove(Me.DutchPage)
         End If
 
@@ -40,7 +40,7 @@ Public Class ItemDataForm
     Private Function LanguageSpecificFileExist(ByVal filename As String) As Boolean
         Dim exists As Boolean = True
 
-        Dim filePath = XmlDB.GetLanguageSpecificBaseDirectory(filename) & filename
+        Dim filePath = _dm.GetLanguageSpecificTableDirectory(filename) & filename
 
         If System.IO.File.Exists(filePath) = False Then
             exists = False
@@ -52,16 +52,20 @@ Public Class ItemDataForm
 
     Protected Sub Initialize()
 
+        ItemSizeUpDown.Maximum = ItemSizeMax
+
         ' RoWa21: Only add the language specific Tabs for XML-files that exist
         RemoveUnusedLanguageSpecificItemTabs()
 
-        Bind(Tables.Items.Name, Tables.Items.Fields.ID & "=" & id)
+        Bind(Tables.Items.Name, Tables.Items.Fields.ID & "=" & _id)
 
         ClassNameLabel.DataBindings.Add("Text", usItemClassComboBox, "Text")
 
-        GraphicTypeCombo.SelectedIndex = view(0)(Tables.Items.Fields.GraphicType)
-        GraphicIndexUpDown.Maximum = ItemImages.SmallItems(GraphicTypeCombo.SelectedIndex).Length - 1
-        GraphicIndexUpDown.Value = view(0)(Tables.Items.Fields.GraphicIndex)
+        PopulateGraphicsTypeComboBox()
+
+        GraphicTypeComboBox.SelectedIndex = _view(0)(Tables.Items.Fields.GraphicType)
+        GraphicIndexUpDown.Maximum = _dm.ItemImages.SmallItems(GraphicTypeComboBox.SelectedIndex).Length - 1
+        GraphicIndexUpDown.Value = _view(0)(Tables.Items.Fields.GraphicIndex)
 
         DisplayTabs()
 
@@ -76,31 +80,35 @@ Public Class ItemDataForm
         LoadInventoryData()
     End Sub
 
-#Region " General Tab "
-    Private Sub ItemSizeUpDown_ValueChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ItemSizeUpDown.ValueChanged
-        'JMich
-        Dim MaxSize As Integer = ItemSizeMax
-        If ItemSizeUpDown.Value > MaxSize Then
-            ItemSizeUpDown.Value = ItemSizeUpDown.Maximum
-        End If
+    Protected Sub PopulateGraphicsTypeComboBox()
+        Me.GraphicTypeComboBox.Items.Clear()
+        For i As Integer = 0 To _dm.ImageTypeCount
+            If i = 0 Then
+                Me.GraphicTypeComboBox.Items.Add("Guns")
+            Else
+                Me.GraphicTypeComboBox.Items.Add(String.Format("P{0}Items", i))
+            End If
+        Next
     End Sub
+
+#Region " General Tab "
 #End Region
 
 #Region " Graphics Tab "
     Protected Sub LoadImages(ByVal type As Integer, ByVal index As Integer)
-        SmallItemImage.Image = ItemImages.SmallItemImage(type, index)
-        MediumItemImage.Image = ItemImages.MediumItemImage(type, index)
-        BigItemImage.Image = ItemImages.BigItemImage(type, index)
+        SmallItemImage.Image = _dm.ItemImages.SmallItemImage(type, index)
+        MediumItemImage.Image = _dm.ItemImages.MediumItemImage(type, index)
+        BigItemImage.Image = _dm.ItemImages.BigItemImage(type, index)
     End Sub
 
     Private Sub GraphicIndexUpDown_ValueChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GraphicIndexUpDown.ValueChanged
-        LoadImages(GraphicTypeCombo.SelectedIndex, GraphicIndexUpDown.Value)
+        LoadImages(GraphicTypeComboBox.SelectedIndex, GraphicIndexUpDown.Value)
     End Sub
 
-    Private Sub GraphicTypeCombo_SelectedIndexChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GraphicTypeCombo.SelectedIndexChanged
-        GraphicIndexUpDown.Maximum = ItemImages.SmallItems(GraphicTypeCombo.SelectedIndex).Length - 1
-        LoadImages(GraphicTypeCombo.SelectedIndex, GraphicIndexUpDown.Value)
-        ImageListBox.DataSource = ItemImages.BigItems(GraphicTypeCombo.SelectedIndex)
+    Private Sub GraphicTypeCombo_SelectedIndexChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GraphicTypeComboBox.SelectedIndexChanged
+        GraphicIndexUpDown.Maximum = _dm.ItemImages.SmallItems(GraphicTypeComboBox.SelectedIndex).Length - 1
+        LoadImages(GraphicTypeComboBox.SelectedIndex, GraphicIndexUpDown.Value)
+        ImageListBox.DataSource = _dm.ItemImages.BigItems(GraphicTypeComboBox.SelectedIndex)
     End Sub
 
     Private Sub ImageListBox_MeasureItem(ByVal sender As Object, ByVal e As System.Windows.Forms.MeasureItemEventArgs) Handles ImageListBox.MeasureItem
@@ -240,34 +248,37 @@ Public Class ItemDataForm
 #Region " Data Binding "
     Protected Overrides Function CommitData() As Boolean
         Try
-            Dim newID As Integer = view(0)(Tables.Items.Fields.ID)
-            Dim oldID As Integer = view(0).Row(Tables.Items.Fields.ID, DataRowVersion.Current)
-            Dim otherItem As DataRow = view.Table.Rows.Find(newID)
+            Dim newID As Integer = _view(0)(Tables.Items.Fields.ID)
+            Dim oldID As Integer = _view(0).Row(Tables.Items.Fields.ID, DataRowVersion.Current)
+            Dim otherItem As DataRow = _view.Table.Rows.Find(newID)
 
-            view(0)(Tables.Items.Fields.ItemImage) = BigItemImage.Image
-            view(0)(Tables.Items.Fields.GraphicIndex) = GraphicIndexUpDown.Value
-            view(0)(Tables.Items.Fields.GraphicType) = GraphicTypeCombo.SelectedIndex
+            _view(0)(Tables.Items.Fields.ItemImage) = BigItemImage.Image
+            _view(0)(Tables.Items.Fields.GraphicIndex) = GraphicIndexUpDown.Value
+            _view(0)(Tables.Items.Fields.GraphicType) = GraphicTypeComboBox.SelectedIndex
 
-            If otherItem IsNot Nothing AndAlso otherItem IsNot view(0).Row Then
+            If otherItem IsNot Nothing AndAlso otherItem IsNot _view(0).Row Then
                 If MessageBox.Show("The Item ID you have entered is already being used by """ & otherItem(Tables.Items.Fields.Name) & """.  Do you want to swap IDs?", "Swap IDs", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) = Windows.Forms.DialogResult.Yes Then
                     'swap ids
                     otherItem(Tables.Items.Fields.ID) = -1
-                    view(0).EndEdit()
+                    _view(0).EndEdit()
                     otherItem(Tables.Items.Fields.ID) = oldID
-                    id = newID
-                    view.RowFilter = Tables.Items.Fields.ID & "=" & id
-                    Me.Text = "Item - " & id & " - " & view(0)(Tables.Items.Fields.Name)
+                    _id = newID
+                    _view.RowFilter = Tables.Items.Fields.ID & "=" & _id
+                    Me.Text = String.Format(DisplayText.ItemDataFormText, _dm.Name, _id, _view(0)(Tables.Items.Fields.Name))
                     SaveInventoryData()
                 Else
                     ErrorHandler.ShowWarning("Please enter a different ID value.", MessageBoxIcon.Exclamation)
                     Return False
                 End If
             Else
-                view(0).EndEdit()
+                _view(0).EndEdit()
+                _id = newID
+                _view.RowFilter = Tables.Items.Fields.ID & "=" & _id
+                Me.Text = String.Format(DisplayText.ItemDataFormText, _dm.Name, _id, _view(0)(Tables.Items.Fields.Name))
                 SaveInventoryData()
             End If
 
-            view(0).Row.AcceptChanges()
+            _view(0).Row.AcceptChanges()
             AcceptGridChanges(AttachmentGrid)
             AcceptGridChanges(AttachToGrid)
             AcceptGridChanges(IncompatibleAttachmentGrid)
@@ -298,11 +309,11 @@ Public Class ItemDataForm
 #Region " Buttons "
 
     Protected Overrides Sub ApplyButtonClicked()
-        GraphicIndexUpDown.Value = view(0)(Tables.Items.Fields.GraphicIndex)
+        GraphicIndexUpDown.Value = _view(0)(Tables.Items.Fields.GraphicIndex)
     End Sub
 
     Private Sub ChangeClassButton_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ChangeClassButton.Click
-        Dim frm As New ChangeClassForm(view, Me)
+        Dim frm As New ChangeClassForm(_dm, _view, Me)
         frm.ShowDialog()
     End Sub
 
@@ -310,35 +321,30 @@ Public Class ItemDataForm
 
 #Region " Grids "
     Protected Sub SetupGrid(ByVal grid As DataGridView, ByVal tableName As String, Optional ByVal itemIndexField As String = Nothing)
-        Dim t As DataTable = DB.Table(tableName)
+        Dim t As DataTable = _dm.Database.Table(tableName)
         Dim rowFilter As String = Nothing
         If itemIndexField IsNot Nothing Then
-            rowFilter = itemIndexField & "=" & id
+            rowFilter = itemIndexField & "=" & _id
         End If
 
-        InitializeGrid(grid, New DataView(t, rowFilter, "", DataViewRowState.CurrentRows), , True)
-       
+        InitializeGrid(_dm.Database, grid, New DataView(t, rowFilter, "", DataViewRowState.CurrentRows), , True)
+
         grid.Tag = itemIndexField
         grid.Columns(itemIndexField).Visible = False
 
-        AddHandler grid.UserDeletingRow, AddressOf Grid_UserDeletingRow
         AddHandler grid.DefaultValuesNeeded, AddressOf Grid_DefaultValuesNeeded
-    End Sub
-
-    Protected Sub Grid_UserDeletingRow(ByVal sender As Object, ByVal e As System.Windows.Forms.DataGridViewRowCancelEventArgs)
-        DeleteGridRow(DirectCast(sender, DataGridView), e)
     End Sub
 
     Protected Sub Grid_DefaultValuesNeeded(ByVal sender As Object, ByVal e As System.Windows.Forms.DataGridViewRowEventArgs)
         Dim grid As DataGridView = DirectCast(sender, DataGridView)
         Dim itemIndexField As String = grid.Tag
-        e.Row.Cells(itemIndexField).Value = id
+        e.Row.Cells(itemIndexField).Value = _id
 
         'set primary key for single key grids, like the attachmentinfo one
         Dim v As DataView = DirectCast(grid.DataSource, DataView)
         If v.Table.PrimaryKey.Length = 1 Then
             Dim key As String = v.Table.PrimaryKey(0).ColumnName
-            Dim val As Integer = DB.GetNextPrimaryKeyValue(v.Table)
+            Dim val As Decimal = _dm.Database.GetNextPrimaryKeyValue(v.Table)
             e.Row.Cells(key).Value = val
         End If
     End Sub
@@ -388,10 +394,10 @@ Public Class ItemDataForm
     Private Sub GridOpenItem(ByVal grid As DataGridView, ByVal rowIndex As Integer, ByVal itemIDFieldName As String)
         Dim name As String = Nothing
         Dim id As Integer = grid.Rows(rowIndex).Cells(itemIDFieldName).Value
-        Dim r As DataRow = DB.Table(Tables.Items.Name).Rows.Find(id)
+        Dim r As DataRow = _dm.Database.Table(Tables.Items.Name).Rows.Find(id)
         If r IsNot Nothing Then
             name = r(Tables.Items.Fields.Name)
-            Open(id, name)
+            Open(_dm, id, name)
         End If
     End Sub
 #End Region
@@ -399,7 +405,7 @@ Public Class ItemDataForm
 #Region " Tabs "
     Protected Sub DisplayTabs()
         With ItemTab.TabPages
-            Select Case view(0)(Tables.Items.Fields.ItemClass)
+            Select Case _view(0)(Tables.Items.Fields.ItemClass)
                 Case ItemClass.Ammo
                     .Remove(WeaponPage)
                     .Remove(ArmourPage)
@@ -407,24 +413,27 @@ Public Class ItemDataForm
                     .Remove(AttachmentPage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.Armour
                     .Remove(WeaponPage)
                     .Remove(AmmoPage)
                     .Remove(ExplosivePage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.Bomb, ItemClass.Grenade
                     .Remove(WeaponPage)
                     .Remove(ArmourPage)
                     .Remove(AmmoPage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.Gun
                     WeaponTab.TabPages.Remove(LauncherPage)
                     .Remove(AmmoPage)
                     .Remove(ArmourPage)
                     .Remove(ExplosivePage)
-                    .Remove(AttachmentDataPage)
+                    '.Remove(AttachmentDataPage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
                 Case ItemClass.Launcher
@@ -441,12 +450,14 @@ Public Class ItemDataForm
                     .Remove(ExplosivePage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.Face
                     .Remove(AmmoPage)
                     .Remove(ArmourPage)
                     .Remove(ExplosivePage)
                     .Remove(WeaponPage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.Kit, ItemClass.MedKit, ItemClass.Misc
                     .Remove(AmmoPage)
                     .Remove(ArmourPage)
@@ -454,6 +465,7 @@ Public Class ItemDataForm
                     .Remove(WeaponPage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.Key
                     .Remove(AttachmentPage)
                     .Remove(AttachmentDataPage)
@@ -466,6 +478,7 @@ Public Class ItemDataForm
                     .Remove(ExplosivePage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case ItemClass.LBE
                     .Remove(AttachmentPage)
                     .Remove(AttachmentDataPage)
@@ -476,6 +489,7 @@ Public Class ItemDataForm
                     .Remove(ArmourPage)
                     .Remove(ExplosivePage)
                     .Remove(FacePage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
                 Case Else 'ItemClass.None, ItemClass.Money
                     .Remove(AttachmentPage)
                     .Remove(AttachmentDataPage)
@@ -489,16 +503,17 @@ Public Class ItemDataForm
                     .Remove(ExplosivePage)
                     .Remove(FacePage)
                     .Remove(LBEPage)
+                    OverheatingTabPage.Controls.Remove(WeaponTemperatureGroupBox)
             End Select
         End With
     End Sub
 #End Region
 
 #Region " Shared methods "
-    Public Shared Sub Open(ByVal id As Integer, ByVal name As String)
-        Dim formText As String = "Item - " & id & " - " & name
+    Public Shared Sub Open(manager As DataManager, ByVal id As Integer, ByVal name As String)
+        Dim formText As String = String.Format(DisplayText.ItemDataFormText, manager.Name, id, name)
         If Not MainWindow.FormOpen(formText) Then
-            Dim frm As New ItemDataForm(id, formText)
+            Dim frm As New ItemDataForm(manager, id, formText)
             MainWindow.ShowForm(frm)
         End If
     End Sub
@@ -556,7 +571,7 @@ Public Class ItemDataForm
     End Sub
 
     Protected Sub LoadShopkeeperData(ByVal shopKeeperName As String)
-        Dim rows() As DataRow = DB.Table(shopKeeperName & Tables.Inventory).Select(Tables.InventoryTableFields.ItemID & "=" & id)
+        Dim rows() As DataRow = _dm.Database.Table(shopKeeperName & Tables.Inventory).Select(Tables.InventoryTableFields.ItemID & "=" & _id)
         Dim cb As CheckBox = DirectCast(ShopkeepersPanel.Controls(shopKeeperName & "CheckBox"), CheckBox)
         Dim ud As NumericUpDown = DirectCast(ShopkeepersPanel.Controls(shopKeeperName & "UpDown"), NumericUpDown)
 
@@ -566,7 +581,7 @@ Public Class ItemDataForm
             ud.Enabled = True
         Else
             cb.Checked = False
-            ud.Value = DB.Table(shopKeeperName & Tables.Inventory).Columns(Tables.InventoryTableFields.Quantity).DefaultValue
+            ud.Value = _dm.Database.Table(shopKeeperName & Tables.Inventory).Columns(Tables.InventoryTableFields.Quantity).DefaultValue
             ud.Enabled = False
         End If
 
@@ -574,7 +589,7 @@ Public Class ItemDataForm
     End Sub
 
     Protected Sub SaveShopkeeperData(ByVal shopKeeperName As String)
-        Dim rows() As DataRow = DB.Table(shopKeeperName & Tables.Inventory).Select(Tables.InventoryTableFields.ItemID & "=" & id)
+        Dim rows() As DataRow = _dm.Database.Table(shopKeeperName & Tables.Inventory).Select(Tables.InventoryTableFields.ItemID & "=" & _id)
         Dim cb As CheckBox = DirectCast(ShopkeepersPanel.Controls(shopKeeperName & "CheckBox"), CheckBox)
         Dim ud As NumericUpDown = DirectCast(ShopkeepersPanel.Controls(shopKeeperName & "UpDown"), NumericUpDown)
 
@@ -582,9 +597,9 @@ Public Class ItemDataForm
             If rows.Length > 0 Then 'modify
                 rows(0)(Tables.InventoryTableFields.Quantity) = ud.Value
             Else 'new
-                Dim row As DataRow = DB.NewRow(shopKeeperName & Tables.Inventory)
+                Dim row As DataRow = _dm.Database.NewRow(shopKeeperName & Tables.Inventory)
                 'key value is set automatically
-                row(Tables.InventoryTableFields.ItemID) = id
+                row(Tables.InventoryTableFields.ItemID) = _id
                 row(Tables.InventoryTableFields.Quantity) = ud.Value
             End If
         Else 'delete

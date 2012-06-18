@@ -77,6 +77,9 @@ void HandleTacticalEffectsOfEquipmentChange( SOLDIERTYPE *pSoldier, UINT32 uiInv
 
 #define MIN_MORTAR_RANGE				150			// minimum range of a mortar
 
+// NB this is arbitrary, chances in DG ranged from 1 in 6 to 1 in 20
+#define BASIC_DEPRECIATE_CHANCE	15
+
 // WEAPON CLASSES
 enum
 {
@@ -211,6 +214,7 @@ typedef struct
 	INT16	lockBustingPower;
 	BOOLEAN tracerEffect;
 	FLOAT	temperatureModificator;	// Flugente FTW 1.1: modificator for weapon temperature
+	INT16	poisonPercentage;	// Flugente FTW 1.1: modificator for weapon temperature
 
 	//zilpin: pellet spread patterns externalized in XML
 	INT32 spreadPattern;
@@ -429,6 +433,8 @@ extern void GetTargetWorldPositions( SOLDIERTYPE *pSoldier, INT32 sTargetGridNo,
 
 extern BOOLEAN	OKFireWeapon( SOLDIERTYPE *pSoldier );
 extern BOOLEAN CheckForGunJam( SOLDIERTYPE * pSoldier );
+extern FLOAT   GetGunOverheatDamagePercentage( FLOAT usTemperature, UINT16 usIndx );	// Flugente FTW 1: Get percentage: temperature/damagethreshold
+extern FLOAT   GetGunOverheatJamPercentage( FLOAT usTemperature, UINT16 usIndx );		// Flugente FTW 1: Get percentage: temperature/jamthreshold
 extern BOOLEAN CheckForGunJamIoV( SOLDIERTYPE * pSoldier ); //kenkenkenken: IoV921+z.5
 
 extern INT32 CalcMaxTossRange( SOLDIERTYPE * pSoldier, UINT16 usItem, BOOLEAN fArmed );

@@ -22,7 +22,7 @@ Partial Class LoadingForm
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.InfoLabel = New System.Windows.Forms.Label
+        Me.InfoLabel = New System.Windows.Forms.Label()
         Me.SuspendLayout()
         '
         'InfoLabel
@@ -41,6 +41,7 @@ Partial Class LoadingForm
         'LoadingForm
         '
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None
+        Me.AutoSize = True
         Me.ClientSize = New System.Drawing.Size(148, 44)
         Me.ControlBox = False
         Me.Controls.Add(Me.InfoLabel)

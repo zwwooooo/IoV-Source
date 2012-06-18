@@ -12,7 +12,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("XML Editor for JA2 v1.13")> 
 <Assembly: AssemblyCompany("JA2 v1.13 Mod Team")> 
 <Assembly: AssemblyProduct("XML Editor")> 
-<Assembly: AssemblyCopyright("Copyright © JA2 v1.13 Mod Team 2008")> 
+<Assembly: AssemblyCopyright("Copyright © JA2 v1.13 Mod Team 2012")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
@@ -31,5 +31,6 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("0.60.0.0")> 
-<Assembly: AssemblyFileVersion("0.60.0.0")> 
+
+<Assembly: AssemblyVersion("0.97.0.0")> 
+<Assembly: AssemblyFileVersion("0.97.0.0")> 

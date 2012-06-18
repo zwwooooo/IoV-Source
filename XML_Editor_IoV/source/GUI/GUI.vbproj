@@ -15,7 +15,8 @@
     <OptionStrict>Off</OptionStrict>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <ApplicationRevision>0</ApplicationRevision>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
@@ -34,17 +35,19 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Game\JA2 1.13 EN %28Development%29\</OutputPath>
     <DocumentationFile>XML Editor_IoV.xml</DocumentationFile>
     <NoWarn>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036,42353,42354,42355</NoWarn>
     <WarningsAsErrors>
     </WarningsAsErrors>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -56,11 +59,17 @@
     <NoWarn>41999,42016,42017,42018,42019,42020,42021,42022,42032,42036,42353,42354,42355</NoWarn>
     <WarningsAsErrors>
     </WarningsAsErrors>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionCompare>Text</OptionCompare>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
@@ -68,11 +77,13 @@
   </ItemGroup>
   <ItemGroup>
     <Import Include="BackEnd" />
+    <Import Include="GUI.My.Resources" />
     <Import Include="Microsoft.VisualBasic" />
     <Import Include="System" />
     <Import Include="System.Collections" />
     <Import Include="System.Collections.Generic" />
     <Import Include="System.Data" />
+    <Import Include="System.Data.Linq" />
     <Import Include="System.Drawing" />
     <Import Include="System.Diagnostics" />
     <Import Include="System.Text" />
@@ -95,6 +106,12 @@
       <DependentUpon>MercGearDataForm.vb</DependentUpon>
     </Compile>
     <Compile Include="Data Forms\MercGearDataForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\BitCodeMakerForm.Designer.vb">
+      <DependentUpon>BitCodeMakerForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\BitCodeMakerForm.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Grid Forms\MercGearGridForm.Designer.vb">
@@ -211,8 +228,18 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Grid Forms\GridUtility.vb" />
+    <Compile Include="Resources\OtherText.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>OtherText.resx</DependentUpon>
+    </Compile>
     <Compile Include="SettingsUtility.vb">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Resources\DisplayText.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DisplayText.resx</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -227,6 +254,9 @@
     <EmbeddedResource Include="Data Forms\MercGearDataForm.resx">
       <SubType>Designer</SubType>
       <DependentUpon>MercGearDataForm.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\BitCodeMakerForm.resx">
+      <DependentUpon>BitCodeMakerForm.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ChangeClassForm.resx">
       <SubType>Designer</SubType>
@@ -290,6 +320,16 @@
       <SubType>Designer</SubType>
       <DependentUpon>SplashForm.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\DisplayText.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>DisplayText.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\OtherText.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>OtherText.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Project\Application.myapp">
@@ -325,11 +365,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.0">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4 %28x86 和 x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
@@ -338,7 +373,7 @@
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
+      <Install>true</Install>
     </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
       <Visible>False</Visible>

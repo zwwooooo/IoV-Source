@@ -1,17 +1,17 @@
 Public Class MercGearDataForm
     Inherits BaseDataForm
 
-    Public Sub New(ByVal recordID As Integer, ByVal formText As String)
-        MyBase.New(recordID, formText)
+    Public Sub New(manager As DataManager, ByVal recordID As Integer, ByVal formText As String)
+        MyBase.New(manager, recordID, formText)
         InitializeComponent()
-        Bind(Tables.MercStartingGear.Name, Tables.MercStartingGear.Fields.ID & "=" & id)
+        Bind(Tables.MercStartingGear.Name, Tables.MercStartingGear.Fields.ID & "=" & _id)
     End Sub
 
 #Region " Shared methods "
-    Public Shared Sub Open(ByVal id As Integer, ByVal name As String)
-        Dim formText As String = "Starting Gear - " & name
+    Public Shared Sub Open(manager As DataManager, ByVal id As Integer, ByVal name As String)
+        Dim formText As String = String.Format(DisplayText.MercGearDataFormText, manager.Name, name)
         If Not MainWindow.FormOpen(formText) Then
-            Dim frm As New MercGearDataForm(id, formText)
+            Dim frm As New MercGearDataForm(manager, id, formText)
             MainWindow.ShowForm(frm)
         End If
     End Sub
@@ -53,30 +53,30 @@ Public Class MercGearDataForm
         End If
     End Sub
     Private Sub MercGearDataForm_Activated(sender As System.Object, e As System.EventArgs) Handles MyBase.Activated
-        If view.Table.Rows(id).ItemArray(3).ToString.Length = 0 Then '3 is mGearkitName1
+        If _view.Table.Rows(_id).ItemArray(3).ToString.Length = 0 Then '3 is mGearkitName1
             GearKitPage1.Text = "GEARKIT 1"
         Else
-            GearKitPage1.Text = view.Table.Rows(id).ItemArray(3).ToString
+            GearKitPage1.Text = _view.Table.Rows(_id).ItemArray(3).ToString
         End If
-        If view.Table.Rows(id).ItemArray(68).ToString.Length = 0 Then '68 is mGearkitName2
+        If _view.Table.Rows(_id).ItemArray(68).ToString.Length = 0 Then '68 is mGearkitName2
             GearKitPage2.Text = "GEARKIT 2"
         Else
-            GearKitPage2.Text = view.Table.Rows(id).ItemArray(68).ToString
+            GearKitPage2.Text = _view.Table.Rows(_id).ItemArray(68).ToString
         End If
-        If view.Table.Rows(id).ItemArray(133).ToString.Length = 0 Then '133 is mGearkitName3
+        If _view.Table.Rows(_id).ItemArray(133).ToString.Length = 0 Then '133 is mGearkitName3
             GearKitPage3.Text = "GEARKIT 3"
         Else
-            GearKitPage3.Text = view.Table.Rows(id).ItemArray(133).ToString
+            GearKitPage3.Text = _view.Table.Rows(_id).ItemArray(133).ToString
         End If
-        If view.Table.Rows(id).ItemArray(198).ToString.Length = 0 Then '198 is mGearkitName4
+        If _view.Table.Rows(_id).ItemArray(198).ToString.Length = 0 Then '198 is mGearkitName4
             GearKitPage4.Text = "GEARKIT 4"
         Else
-            GearKitPage4.Text = view.Table.Rows(id).ItemArray(198).ToString
+            GearKitPage4.Text = _view.Table.Rows(_id).ItemArray(198).ToString
         End If
-        If view.Table.Rows(id).ItemArray(263).ToString.Length = 0 Then '263 is mGearkitName5
+        If _view.Table.Rows(_id).ItemArray(263).ToString.Length = 0 Then '263 is mGearkitName5
             GearKitPage5.Text = "GEARKIT 5"
         Else
-            GearKitPage5.Text = view.Table.Rows(id).ItemArray(263).ToString
+            GearKitPage5.Text = _view.Table.Rows(_id).ItemArray(263).ToString
         End If
     End Sub
 End Class

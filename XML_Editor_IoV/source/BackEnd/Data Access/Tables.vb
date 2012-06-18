@@ -18,6 +18,7 @@ Public Class Tables
             Public Const ItemImage As String = "ItemImage"
             Public Const GraphicType As String = "ubGraphicType"
             Public Const GraphicIndex As String = "ubGraphicNum"
+            Public Const Medical As String = "Medical"
         End Class
     End Class
     Public Class Weapons
@@ -27,6 +28,16 @@ Public Class Tables
             Public Const Name As String = "szWeaponName"
             Public Const Caliber As String = "ubCalibre"
             Public Const MagSize As String = "ubMagSize"
+            Public Const WeaponType As String = "ubWeaponType"
+            Public Const WeaponClass As String = "ubWeaponClass"
+
+            Public Const Sound As String = "sSound"
+            Public Const SilencedSound As String = "SilencedSound"
+            Public Const ReloadSound As String = "sReloadSound"
+            Public Const LockNLoadSound As String = "sLocknLoadSound"
+            Public Const ManualReloadSound As String = "ManualReloadSound"
+            Public Const SilencedBurstSound As String = "sSilencedBurstSound"
+            Public Const BurstSound As String = "sBurstSound"
         End Class
     End Class
 
@@ -38,6 +49,7 @@ Public Class Tables
             Public Const Caliber As String = "ubCalibre"
             Public Const MagSize As String = "ubMagSize"
             Public Const AmmoType As String = "ubAmmoType"
+            Public Const MagType As String = "ubMagType"
         End Class
     End Class
     Public Class Launchables
@@ -64,7 +76,12 @@ Public Class Tables
         End Class
     End Class
     Public Const AttachmentComboMerges As String = "ATTACHMENTCOMBOMERGE"
-    Public Const Armours As String = "ARMOUR"
+    Public Class Armours
+        Public Const Name As String = "ARMOUR"
+        Public Class Fields
+            Public Const ArmourClass As String = "ubArmourClass"
+        End Class
+    End Class
     Public Class CompatibleFaceItems
         Public Const Name As String = "COMPATIBLEFACEITEM"
         Public Class Fields
@@ -80,7 +97,16 @@ Public Class Tables
         End Class
     End Class
     Public Const ExplosionData As String = "EXPDATA"
-    Public Const Explosives As String = "EXPLOSIVE"
+    Public Class Explosives
+        Public Const Name As String = "EXPLOSIVE"
+        Public Class Fields
+            Public Const ID As String = "uiIndex"
+            Public Const Type As String = "ubType"
+            Public Const AnimationID As String = "ubAnimationID"
+            Public Const FragType As String = "ubFragType"
+        End Class
+    End Class
+
     Public Const MergeTypes As String = "MergeType"
     Public Const ExplosionTypes As String = "ExplosionType"
     Public Const ItemClasses As String = "ItemClass"
@@ -89,6 +115,8 @@ Public Class Tables
     Public Const WeaponTypes As String = "WeaponType"
     Public Const WeaponClasses As String = "WeaponClass"
     Public Const AttachmentClasses As String = "AttachmentClass"
+    Public Const NasAttachmentClasses As String = "NasAttachmentClass"
+    Public Const AttachmentPoints As String = "AttachmentPoint"
     Public Const AttachmentSystem As String = "AttachmentSystem"
     Public Const Cursors As String = "Cursor"
     Public Const GermanItems As String = "GermanItem"
@@ -168,8 +196,15 @@ Public Class Tables
     End Class
 
     Public Const Pockets As String = "POCKET"
-    Public Const LoadBearingEquipment As String = "LOADBEARINGEQUIPMENT"
-    Public Const LBEClasses As String = "LBEClass"
+    Public Const LbeClasses As String = "LBEClass"
+    Public Class LoadBearingEquipment
+        Public Const Name As String = "LOADBEARINGEQUIPMENT"
+        Public Class Fields
+            Public Const Silhouette As String = "pSilhouette"
+            Public Const LbeClass As String = "lbeClass"
+        End Class
+    End Class
+
     Public Const Silhouettes As String = "Silhouette"
     Public Class MercStartingGear
         Public Const Name As String = "MERCGEAR"
@@ -179,5 +214,9 @@ Public Class Tables
         End Class
     End Class
     Public Const AttachmentSlots As String = "ATTACHMENTSLOT"
-
+    Public Const MagazineTypes As String = "MagazineType"
+    Public Const ItemTransformations As String = "TRANSFORM"
+    Public Const Drugs As String = "DRUG"
+    Public Const DrugTypes As String = "DrugType"
+    Public Const SeparabilityStates As String = "Separability"
 End Class

@@ -23,11 +23,11 @@ Partial Class SplashForm
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(SplashForm))
-        Me.ApplicationTitle = New System.Windows.Forms.Label
-        Me.Version = New System.Windows.Forms.Label
-        Me.Loading = New System.Windows.Forms.Label
-        Me.PictureBox1 = New System.Windows.Forms.PictureBox
-        Me.DataDirectoryLabel = New System.Windows.Forms.Label
+        Me.ApplicationTitle = New System.Windows.Forms.Label()
+        Me.Version = New System.Windows.Forms.Label()
+        Me.Loading = New System.Windows.Forms.Label()
+        Me.PictureBox1 = New System.Windows.Forms.PictureBox()
+        Me.DataDirectoryLabel = New System.Windows.Forms.Label()
         CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
@@ -52,7 +52,7 @@ Partial Class SplashForm
         Me.Version.Name = "Version"
         Me.Version.Size = New System.Drawing.Size(162, 20)
         Me.Version.TabIndex = 4
-        Me.Version.Text = "Version 0.60"
+        Me.Version.Text = "Version {0}.{1}"
         '
         'Loading
         '

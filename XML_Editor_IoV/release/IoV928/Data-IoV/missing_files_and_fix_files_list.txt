@@ -1,0 +1,18 @@
+Fix files
+- TableData\Attachments.xml
+
+Missing files
+- TableData\AttachmentInfo.xml
+- TableData\AttachmentPoint.xml - 113d1261 IoV928
+- TableData\Drugs.xml - 113d1261 IoV928
+- TableData\EnemyArmourDrops.xml
+- TableData\EnemyExplosiveDrops.xml
+- TableData\EnemyMiscDrops.xml
+- TableData\EnemyWeaponDrops.xml
+- TableData\ExplosionData.xml
+- TableData\Silhouette.xml - 113d1261 IoV928（需要针对 Silhouette.sti 定义口袋类型，IoV有66个，1.13只有25个）
+- TableData\NPCInventory\FredoInventory.xml
+- TableData\NPCInventory\MickeyInventory.xml
+- TableData\NPCInventory\PerkoInventory.xml
+
+需要把 Ja2_Options.INI 放到 Data-IoV 目录下，同时修改物品/武器尺寸大小为：54 11 99

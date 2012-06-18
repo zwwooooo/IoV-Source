@@ -201,7 +201,7 @@ Public Class ErrorHandler
 
     Protected Shared Sub StartLogFile(ByVal MaintainLastLog As Boolean)
         'setup text file writer
-        strLogFilename = IO.Directory.GetCurrentDirectory & "\log.txt"
+        strLogFilename = IO.Directory.GetCurrentDirectory & "\XmlEditorLog.txt"
         objTxtWriter = New IO.StreamWriter(strLogFilename, MaintainLastLog)
 
         'write whatever shows in the debug window to the text file

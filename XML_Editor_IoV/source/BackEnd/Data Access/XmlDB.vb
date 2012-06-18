@@ -2,99 +2,84 @@ Public Class XmlDB
     Implements IDisposable
 
     Protected ds As DataSet
-    Private disposedValue As Boolean = False        ' To detect redundant calls
-    Public Shared DataDirectory As String = ""
 
-    Public Shared GameDirRussianPath As String = ""
-    Public Shared GameDirPolishPath As String = ""
-    Public Shared GameDirGermanPath As String = ""
-    Public Shared GameDirFrenchPath As String = ""
-    Public Shared GameDirItalianPath As String = ""
-    Public Shared GameDirChinesePath As String = ""
-    Public Shared GameDirDutchPath As String = ""
-    Public Shared GameDirTaiwanesePath As String = ""
+    Public Event BeforeLoadAll(sender As XmlDB)
+    Public Event AfterLoadAll(sender As XmlDB)
+    Public Event BeforeSaveAll(sender As XmlDB)
+    Public Event AfterSaveAll(sender As XmlDB)
+    Public Event LoadingTable(sender As XmlDB, ByVal fileName As String)
+    Public Event SavingTable(sender As XmlDB, ByVal fileName As String)
 
-    Public Event BeforeLoadAll()
-    Public Event AfterLoadAll()
-    Public Event BeforeSaveAll()
-    Public Event AfterSaveAll()
-    Public Event LoadingTable(ByVal fileName As String)
-    Public Event SavingTable(ByVal fileName As String)
+    Public Event BeforeLoadTable(sender As XmlDB, ByVal table As DataTable)
+    Public Event AfterLoadTable(sender As XmlDB, ByVal table As DataTable)
+    Public Event BeforeSaveTable(sender As XmlDB, ByVal table As DataTable)
+    Public Event AfterSaveTable(sender As XmlDB, ByVal table As DataTable)
 
-    Public Event BeforeLoadTable(ByVal table As DataTable)
-    Public Event AfterLoadTable(ByVal table As DataTable)
-    Public Event BeforeSaveTable(ByVal table As DataTable)
-    Public Event AfterSaveTable(ByVal table As DataTable)
+    Protected _schemaName As String
+    Protected _schemaFileName As String
+    Protected _dataManager As DataManager
 
-    ' IDisposable
-    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-        If Not Me.disposedValue Then
-            If disposing Then
-                ' TODO: free managed resources when explicitly called
-                ds.Dispose()
-            End If
+    Public Sub New(schemaName As String, schemaFileName As String, dataMgr As DataManager)
+        If String.IsNullOrEmpty(schemaName) Then Throw New ArgumentNullException("Missing schema name argument.")
+        If dataMgr Is Nothing Then Throw New ArgumentNullException("Missing data manager argument.")
 
-            ' TODO: free shared unmanaged resources
-        End If
-        Me.disposedValue = True
+        _schemaName = schemaName
+        _schemaFileName = schemaFileName
+        _dataManager = dataMgr
     End Sub
 
-    Public Shared ReadOnly Property BaseDirectory() As String
+    Public ReadOnly Property SchemaName As String
         Get
-            Return DataDirectory & "TableData\"
+            Return _schemaName
         End Get
     End Property
 
-    Public Shared Function GetLanguageSpecificBaseDirectory(ByVal filename As String) As String
-        Dim path = ""
+    Public ReadOnly Property SchemaFileName As String
+        Get
+            Return _schemaFileName
+        End Get
+    End Property
 
-        Dim dataDir As String = ""
-        Const tableData As String = "TableData\"
+    Public ReadOnly Property DataManager As DataManager
+        Get
+            Return _dataManager
+        End Get
+    End Property
 
-        ' TODO.RW: Sprachen ausbessern
-        Dim language As String = GetLanguageFromFile(filename)
-        If (language <> "") Then
-            Select Case language    ' e.g: C:\JA2_RUSSIAN_FILES\Data-1.13\TableData
-                Case "Russian"
-                    dataDir = System.IO.Path.Combine(GameDirRussianPath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "German"
-                    dataDir = System.IO.Path.Combine(GameDirGermanPath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "Polish"
-                    dataDir = System.IO.Path.Combine(GameDirPolishPath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "Italian"
-                    dataDir = System.IO.Path.Combine(GameDirItalianPath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "French"
-                    dataDir = System.IO.Path.Combine(GameDirFrenchPath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "Chinese"
-                    dataDir = System.IO.Path.Combine(GameDirChinesePath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "Dutch"
-                    dataDir = System.IO.Path.Combine(GameDirDutchPath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-                Case "Taiwanese"
-                    dataDir = System.IO.Path.Combine(GameDirTaiwanesePath, XmlDB.DataDirectory)
-                    path = System.IO.Path.Combine(dataDir, tableData)
-            End Select
-        End If
-
-        If path = "" Then
-            path = BaseDirectory()  ' e.g: Data-1.13\TableData
-        End If
-
-        Return path
-
-    End Function
-
-    Public ReadOnly Property DataSet() As DataSet
+    Public Property DataSet() As DataSet
         Get
             Return ds
         End Get
+        Set(value As DataSet)
+            ds = value
+            InitializeHandlers()
+        End Set
     End Property
+
+    Public Sub InitializeHandlers()
+        For Each t As DataTable In ds.Tables
+            Dim handler As DefaultTable
+            Dim handlerName As String = t.GetStringProperty(TableProperty.TableHandlerName)
+            If handlerName Is Nothing Then
+                handler = New DefaultTable(t, _dataManager)
+            Else
+                Dim obj As Object = Activator.CreateInstance(Type.GetType("BackEnd." & handlerName), t, _dataManager)
+                handler = DirectCast(obj, DefaultTable)
+            End If
+            If t.ExtendedProperties.Contains(TableProperty.TableHandler) Then t.ExtendedProperties.Remove(TableProperty.TableHandler)
+            t.ExtendedProperties.Add(TableProperty.TableHandler, handler)
+        Next
+    End Sub
+
+    Public Sub RemoveHandlers()
+        For Each t As DataTable In ds.Tables
+            If t.ExtendedProperties.Contains(TableProperty.TableHandler) Then
+                Dim handler As DefaultTable = t.ExtendedProperties(TableProperty.TableHandler)
+                handler.Dispose()
+                t.ExtendedProperties.Remove(TableProperty.TableHandler)
+            End If
+        Next
+    End Sub
 
     Public ReadOnly Property Table(ByVal tableName As String) As DataTable
         Get
@@ -120,15 +105,36 @@ Public Class XmlDB
         ds.ReadXmlSchema(schemaFileName)
         For Each t As DataTable In ds.Tables
             Dim handler As DefaultTable
-            Dim handlerName As String = GetStringProperty(t, TableProperty.TableHandlerName)
+            Dim handlerName As String = t.GetStringProperty(TableProperty.TableHandlerName)
             If handlerName Is Nothing Then
-                handler = New DefaultTable(t, Me)
+                handler = New DefaultTable(t, _dataManager)
             Else
-                Dim obj As Object = Activator.CreateInstance(Type.GetType("BackEnd." & handlerName), t, Me)
+                Dim obj As Object = Activator.CreateInstance(Type.GetType("BackEnd." & handlerName), t, _dataManager)
                 handler = DirectCast(obj, DefaultTable)
             End If
             If t.ExtendedProperties.Contains(TableProperty.TableHandler) Then t.ExtendedProperties.Remove(TableProperty.TableHandler)
             t.ExtendedProperties.Add(TableProperty.TableHandler, handler)
+        Next
+    End Sub
+
+    Public Sub LoadProperties(schemaFileName As String)
+        Dim tempDS As New DataSet
+        tempDS.ReadXmlSchema(schemaFileName)
+
+        For Each t As DataTable In ds.Tables
+            If tempDS.Tables.Contains(t.TableName) Then
+                Dim tempTable As DataTable = tempDS.Tables(t.TableName)
+                For Each c As DataColumn In t.Columns
+                    If tempTable.Columns.Contains(c.ColumnName) Then
+                        Dim tempCol As DataColumn = tempTable.Columns(c.ColumnName)
+                        c.SetProperty(ColumnProperty.Width, tempCol.GetStringProperty(ColumnProperty.Width))
+                        c.SetProperty(ColumnProperty.Grid_Hidden, tempCol.GetBooleanProperty(ColumnProperty.Grid_Hidden))
+
+                        'add more here later if required
+                    End If
+                Next
+
+            End If
         Next
     End Sub
 
@@ -153,8 +159,8 @@ Public Class XmlDB
             For Each t As DataTable In ds.Tables
                 If t.HasErrors Then
                     Dim errStr As New Text.StringBuilder("Details:" & vbCrLf & vbCrLf)
-                    Dim fileName As String = GetStringProperty(t, TableProperty.FileName)
-                    If fileName IsNot Nothing Then
+                    Dim fileName As String = t.GetStringProperty(TableProperty.FileName)
+                    If Not String.IsNullOrEmpty(fileName) Then
                         errStr.Append("File: " & fileName & vbCrLf)
                     Else
                         errStr.Append("Table: " & t.TableName & vbCrLf)
@@ -171,14 +177,14 @@ Public Class XmlDB
     End Sub
 
     Public Overridable Sub LoadAllData()
-        RaiseEvent BeforeLoadAll()
+        RaiseEvent BeforeLoadAll(Me)
         ds.Clear()
         BeginInit()
         For Each t As DataTable In ds.Tables
             LoadData(t)
         Next
         EndInit()
-        RaiseEvent AfterLoadAll()
+        RaiseEvent AfterLoadAll(Me)
     End Sub
 
     Public Overridable Sub LoadData(ByVal tableName As String)
@@ -188,79 +194,35 @@ Public Class XmlDB
 
     Public Overridable Sub LoadData(ByVal table As DataTable)
         Application.DoEvents()
-        RaiseEvent BeforeLoadTable(table)
-        Dim fileName As String = GetStringProperty(table, TableProperty.FileName)
+        RaiseEvent BeforeLoadTable(Me, table)
+        Dim fileName As String = table.GetStringProperty(TableProperty.FileName)
         If fileName IsNot Nothing Then
 
             Dim loadData As Boolean = True
 
-            ' This loads a special internal table that's generated using data from two other external tables
-            If table.TableName = "ITEMTOEXPLOSIVE" Then
-                GetTableHandler(table).LoadInternalData(ds.Tables.Item("ITEM"))
-                loadData = False
-            End If
-
             ' RoWa21: If we have a language specifix XML file, load from specific location if file exists
             If IsLanguageSpecificFile(fileName) Then
-                Dim filePath As String = XmlDB.GetLanguageSpecificBaseDirectory(fileName)
+                Dim filePath As String = _dataManager.GetLanguageSpecificTableDirectory(fileName)
                 If System.IO.File.Exists(filePath & fileName) = False Then
                     loadData = False
                 End If
             End If
 
-            If loadData = True Then
-                RaiseEvent LoadingTable(fileName)
-                GetTableHandler(table).LoadData()
+            If loadData Then
+                RaiseEvent LoadingTable(Me, fileName)
+                table.GetTableHandler.LoadData()
             End If
 
         End If
-        RaiseEvent AfterLoadTable(table)
+        RaiseEvent AfterLoadTable(Me, table)
     End Sub
 
-    Public Shared Function IsLanguageSpecificFile(ByVal filename As String) As Boolean
-        Dim langSpec = False
-
-        Dim language = GetLanguageFromFile(filename)
-        If (language <> "") Then
-            langSpec = True
-        End If
-
-        Return langSpec
-
-    End Function
-
-    Private Shared Function GetLanguageFromFile(ByVal filename As String) As String
-
-        Dim language = ""   ' English -> Language neutral
-
-        If filename.StartsWith("German.") Then
-            language = "German"
-        ElseIf filename.StartsWith("Russian.") Then
-            language = "Russian"
-        ElseIf filename.StartsWith("Polish.") Then
-            language = "Polish"
-        ElseIf filename.StartsWith("Italian.") Then
-            language = "Italian"
-        ElseIf filename.StartsWith("French.") Then
-            language = "French"
-        ElseIf filename.StartsWith("Chinese.") Then
-            language = "Chinese"
-        ElseIf filename.StartsWith("Taiwanese.") Then
-            language = "Taiwanese"
-        ElseIf filename.StartsWith("Dutch.") Then
-            language = "Dutch"
-        End If
-
-        Return language
-
-    End Function
-
     Public Overridable Sub SaveAllData()
-        RaiseEvent BeforeSaveAll()
+        RaiseEvent BeforeSaveAll(Me)
         For Each t As DataTable In ds.Tables
             SaveData(t)
         Next
-        RaiseEvent AfterSaveAll()
+        RaiseEvent AfterSaveAll(Me)
     End Sub
     Public Overridable Sub SaveData(ByVal tableName As String)
         Dim t As DataTable = ds.Tables(tableName)
@@ -271,64 +233,106 @@ Public Class XmlDB
 
     Public Overridable Sub SaveData(ByVal table As DataTable)
         Application.DoEvents()
-        RaiseEvent BeforeSaveTable(table)
-        Dim fileName As String = GetStringProperty(table, TableProperty.FileName)
+        RaiseEvent BeforeSaveTable(Me, table)
+        Dim fileName As String = table.GetStringProperty(TableProperty.FileName)
         If fileName IsNot Nothing Then
 
             Dim writeData As Boolean = True
 
-            Dim filePath = XmlDB.BaseDirectory & fileName
+            Dim filePath = _dataManager.TableDirectory & fileName
 
             If IsLanguageSpecificFile(fileName) Then
-                filePath = XmlDB.GetLanguageSpecificBaseDirectory(fileName) & fileName
+                filePath = _dataManager.GetLanguageSpecificTableDirectory(fileName) & fileName
 
-                If System.IO.File.Exists(filePath) = False Then
+                If Not System.IO.File.Exists(filePath) Then
                     writeData = False
                 End If
-
             End If
 
-            If writeData = True Then
-                RaiseEvent SavingTable(fileName)
-                GetTableHandler(table).SaveData()
+            If writeData Then
+                RaiseEvent SavingTable(Me, fileName)
+                table.GetTableHandler.SaveData()
             End If
-
         End If
-        RaiseEvent AfterSaveTable(table)
+
+        RaiseEvent AfterSaveTable(Me, table)
     End Sub
 
-    'these only work when the pk is an integer, which it should be 99% of the time in our xml files anyway
-    'they also just work on single pk tables for now
-    Public Function GetNextPrimaryKeyValue(ByVal tableName As String) As Integer
+    Public Overridable Sub LoadWorkingData(fileName As String)
+        RemoveHandlers()
+        ds = New DataSet
+        BeginInit()
+        ds.ReadXml(fileName, XmlReadMode.ReadSchema)
+        EndInit()
+        InitializeHandlers()
+    End Sub
+
+    Public Overridable Sub SaveWorkingData(fileName As String)
+        ds.WriteXml(fileName, XmlWriteMode.WriteSchema)
+        ds.AcceptChanges()
+    End Sub
+
+    'these just work on single pk tables for now
+    Public Function GetNextPrimaryKeyValue(ByVal tableName As String) As Decimal
         Return GetNextPrimaryKeyValue(ds.Tables(tableName))
     End Function
-    Public Function GetNextPrimaryKeyValue(ByVal table As DataTable) As Integer
-        Return GetTableHandler(table).GetNextPrimaryKeyValue
+    Public Function GetNextPrimaryKeyValue(ByVal table As DataTable) As Decimal
+        Return table.GetTableHandler.GetNextPrimaryKeyValue
     End Function
 
     Public Function NewRow(ByVal tableName As String) As DataRow
         Return NewRow(ds.Tables(tableName))
     End Function
     Public Function NewRow(ByVal table As DataTable) As DataRow
-        Return GetTableHandler(table).NewRow
+        Return table.GetTableHandler.NewRow
     End Function
 
-    Public Sub DeleteRow(ByVal tableName As String, ByVal key As Integer)
+    Public Sub DeleteRow(ByVal tableName As String, ByVal key As Decimal)
         DeleteRow(ds.Tables(tableName), key)
     End Sub
-    Public Sub DeleteRow(ByVal table As DataTable, ByVal key As Integer)
-        GetTableHandler(table).DeleteRow(key)
+    Public Sub DeleteRow(ByVal table As DataTable, ByVal key As Decimal)
+        table.GetTableHandler.DeleteRow(key)
     End Sub
 
-    Public Function DuplicateRow(ByVal tableName As String, ByVal key As Integer) As DataRow
+    Public Function DuplicateRow(ByVal tableName As String, ByVal key As Decimal) As DataRow
         Return DuplicateRow(ds.Tables(tableName), key)
     End Function
-    Public Function DuplicateRow(ByVal table As DataTable, ByVal key As Integer) As DataRow
-        Return GetTableHandler(table).DuplicateRow(key)
+    Public Function DuplicateRow(ByVal table As DataTable, ByVal key As Decimal) As DataRow
+        Return table.GetTableHandler.DuplicateRow(key)
     End Function
 
+    Public Function CopyRows(tableName As String, rows As DataRow(), source As XmlDB, Optional allowOverwrite As Boolean = True) As DataRow
+        Return CopyRows(ds.Tables(tableName), rows, source, allowOverwrite)
+    End Function
 
-#Region " IDisposable Support "
+    Public Function CopyRows(table As DataTable, rows As DataRow(), source As XmlDB, Optional allowOverwrite As Boolean = True) As DataRow
+        Return table.GetTableHandler.CopyRows(rows, source, allowOverwrite)
+    End Function
+
+#Region "IDisposable Support"
+    Private _disposedValue As Boolean ' To detect redundant calls
+
+    ' IDisposable
+    Protected Overridable Sub Dispose(disposing As Boolean)
+        If Not _disposedValue Then
+            If disposing Then
+                ' TODO: dispose managed state (managed objects).
+                ds.Dispose()
+            End If
+
+            ' TODO: free unmanaged resources (unmanaged objects) and override Finalize() below.
+            ' TODO: set large fields to null.
+        End If
+        _disposedValue = True
+    End Sub
+
+    ' TODO: override Finalize() only if Dispose(ByVal disposing As Boolean) above has code to free unmanaged resources.
+    'Protected Overrides Sub Finalize()
+    '    ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+    '    Dispose(False)
+    '    MyBase.Finalize()
+    'End Sub
+
     ' This code added by Visual Basic to correctly implement the disposable pattern.
     Public Sub Dispose() Implements IDisposable.Dispose
         ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.

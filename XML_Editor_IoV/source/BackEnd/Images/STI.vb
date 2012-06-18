@@ -11,7 +11,7 @@ Friend Class STI
     Private disposedValue As Boolean = False        ' To detect redundant calls
     Private stream As Stream
     Private br As BinaryReader
-    Private header As stiheader
+    Private header As StiHeader
     Private palette As Byte()
     Private frame As Image()
     Private frameHeader As StiSubImageHeader()
