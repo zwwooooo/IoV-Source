@@ -1,12 +1,16 @@
 Public Class SimpleFormBase
 
-    Public Sub New()
+    Protected _dm As DataManager
+
+    Public Sub New(manager As DataManager)
 
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
 
         ' Add any initialization after the InitializeComponent() call.
         Me.AcceptButton = btnOK
+
+        _dm = manager
     End Sub
 
     Private Sub CancelButton_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles btnCancel.Click

@@ -113,7 +113,7 @@ void InitItemAttachments(OBJECTTYPE* pObj);
 std::vector<UINT16> GetItemSlots(OBJECTTYPE* pObj, UINT8 subObject = 0, BOOLEAN fAttachment = FALSE);
 void RemoveProhibitedAttachments(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usItem, BOOLEAN fOnlyRemoveWhenSlotsChange = 1);
 // HEADROCK HAM 5: Added argument for statusindex.
-void ReInitMergedItem(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usOldItem, UINT8 ubStatusIndex);
+attachmentList ReInitMergedItem(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16 usOldItem, UINT8 ubStatusIndex); //Madd: return a list of attachments we couldn't reattach or drop, so the calling function can decide what to do with them
 void EjectAmmoAndPlace(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT8 subObject = 0);
 
 BOOLEAN CanItemFitInVehicle( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj, INT8 bPos, BOOLEAN fDoingPlacement );
@@ -225,6 +225,7 @@ void CheckEquipmentForFragileItemDamage( SOLDIERTYPE *pSoldier, INT32 iDamage );
 #define XRAY_TIME 5
 
 extern void ActivateXRayDevice( SOLDIERTYPE * pSoldier );
+extern void TurnOnXRayEffects( SOLDIERTYPE * pSoldier );
 extern void TurnOffXRayEffects( SOLDIERTYPE * pSoldier );
 OBJECTTYPE* FindLaunchableAttachment( OBJECTTYPE * pObj, UINT16 usWeapon );
 UINT16 FindLegalGrenade(UINT16 usItem);
@@ -449,7 +450,7 @@ BOOLEAN UseTotalMedicalKitPoints( SOLDIERTYPE * pSoldier, UINT16 usPointsToConsu
 FLOAT GetItemCooldownFactor( OBJECTTYPE * pObj );
 void  GetScopeLists( OBJECTTYPE * pObj, std::map<INT8, OBJECTTYPE*>& arScopeMap );
 
-// check if item belongs to a specific attachemnt class
+// check if item belongs to a specific attachment class
 BOOLEAN IsAttachmentClass( UINT16 usItem, UINT32 aFlag );
 BOOLEAN HasAttachmentOfClass( OBJECTTYPE * pObj, UINT32 aFlag );
 
@@ -459,7 +460,10 @@ bool IsAttachmentPointAvailable( UINT32 itemID, UINT32 attachmentID );
 bool IsAttachmentPointAvailable( UINT64 point, UINT32 attachmentID, BOOLEAN onlyCheckAttachments );
 UINT64 GetAvailableAttachmentPoint ( OBJECTTYPE * pObject, UINT8 subObject );
 
+// Flugente: check if and how a bomb has been set up
+void CheckBombSpecifics( OBJECTTYPE * pObj, INT8* detonatortype, INT8* setting, INT8* defusefrequency );
+
+// Flugente: check for specific flags
+BOOLEAN HasItemFlag( UINT16 usItem, UINT32 aFlag );
+
 #endif
-
-
-

@@ -3358,7 +3358,7 @@ void SaySeenQuote( SOLDIERTYPE *pSoldier, BOOLEAN fSeenCreature, BOOLEAN fVirgin
 	UINT8				ubNumEnemies = 0;
 	UINT8				ubNumAllies = 0;
 	UINT32			cnt;
-#ifdef JA2UB
+#if (defined JA2UB || defined JA113NODEMO) 
 //Ja25 No meanwhiles
 #else
 	if ( AreInMeanwhile( ) )
@@ -3969,13 +3969,13 @@ void DebugSoldierPage1( )
 		SetFontShade(LARGEFONT1, FONT_SHADE_GREEN);
 		gprintf( 200, LINE_HEIGHT * ubLine, L"Agility:");
 		SetFontShade(LARGEFONT1, FONT_SHADE_NEUTRAL);
-		gprintf( 350, LINE_HEIGHT * ubLine, L"%d ( %d )", pSoldier->stats.bAgility, EffectiveAgility( pSoldier ) );
+		gprintf( 350, LINE_HEIGHT * ubLine, L"%d ( %d )", pSoldier->stats.bAgility, EffectiveAgility( pSoldier, FALSE ) );
 		ubLine++;
 
 		SetFontShade(LARGEFONT1, FONT_SHADE_GREEN);
 		gprintf( 200, LINE_HEIGHT * ubLine, L"Dexterity:");
 		SetFontShade(LARGEFONT1, FONT_SHADE_NEUTRAL);
-		gprintf( 350, LINE_HEIGHT * ubLine, L"%d( %d )", pSoldier->stats.bDexterity, EffectiveDexterity( pSoldier ) );
+		gprintf( 350, LINE_HEIGHT * ubLine, L"%d( %d )", pSoldier->stats.bDexterity, EffectiveDexterity( pSoldier, FALSE ) );
 		ubLine++;
 
 		SetFontShade(LARGEFONT1, FONT_SHADE_GREEN);
@@ -4764,6 +4764,7 @@ void DebugSoldierPage4( )
 			case SOLDIER_CLASS_REG_MILITIA:			gprintf( 320, LINE_HEIGHT * ubLine, L"(Reg Militia)" );		break;
 			case SOLDIER_CLASS_ELITE_MILITIA:		gprintf( 320, LINE_HEIGHT * ubLine, L"(Elite Militia)" );	break;
 			case SOLDIER_CLASS_MINER:						gprintf( 320, LINE_HEIGHT * ubLine, L"(Miner)" );					break;
+			case SOLDIER_CLASS_ZOMBIE:						gprintf( 320, LINE_HEIGHT * ubLine, L"(Zombie)" );					break;
 			default:	break; //don't care (don't write anything)
 		}
 		ubLine++;
@@ -5234,7 +5235,7 @@ UINT8 MovementNoise( SOLDIERTYPE *pSoldier )
 
 	// CHANGED BY SANDRO - LET'S MAKE THE STEALTH BASED ON AGILITY LIKE IT SHOULD BE
 	//iStealthSkill = 20 + 4 * EffectiveExpLevel( pSoldier ) + ((EffectiveDexterity( pSoldier ) * 4) / 10); // 24-100
-	iStealthSkill = 20 + 4 * EffectiveExpLevel( pSoldier ) + ((EffectiveAgility( pSoldier ) * 4) / 10); // 24-100
+	iStealthSkill = 20 + 4 * EffectiveExpLevel( pSoldier ) + ((EffectiveAgility( pSoldier, FALSE ) * 4) / 10); // 24-100
 
 	// big bonus for those "extra stealthy" mercs
 	if ( pSoldier->ubBodyType == BLOODCAT )
@@ -6599,7 +6600,7 @@ void TellPlayerAboutNoise( SOLDIERTYPE *pSoldier, UINT8 ubNoiseMaker, INT32 sGri
 	// if the quote was faint, say something
 	if (ubVolumeIndex == 0)
 	{
-#ifdef JA2UB
+#if (defined JA2UB || defined JA113NODEMO) 
 //Ja25 No meanwhiles
 #else
 		if ( !AreInMeanwhile( ) && !( gTacticalStatus.uiFlags & ENGAGED_IN_CONV) && pSoldier->ubTurnsUntilCanSayHeardNoise == 0)

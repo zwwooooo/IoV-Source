@@ -1,9 +1,11 @@
 Imports System.Windows.Forms
 
 Public Class MainForm
-    Private WithEvents client As MdiClient
+    Private WithEvents _client As MdiClient
+    Private _activeDataSet As DataManager = GameData(0)
 
     Private Sub MainForm_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+        Me.Text = String.Format(DisplayText.MainFormTitle, _activeDataSet.Name)
 
         ' RoWa21: Remove unused language specific ammo strings
         RemoveUnusedLanguageSpecificAmmoStringMenuItems()
@@ -19,41 +21,49 @@ Public Class MainForm
             Me.WindowState = .MainForm_State
         End With
 
+        For Each item As ToolStripMenuItem In Me.SelectDataToolStripMenuItem.DropDownItems
+            If item.Tag > GameDataCount - 1 Then
+                item.Visible = False
+            Else
+                item.Text = String.Format(item.Text, GameData(CInt(item.Tag)).Name)
+            End If
+        Next
+
         For Each ctl As Control In Me.Controls
             If TypeOf ctl Is MdiClient Then
-                client = ctl
+                _client = ctl
                 Exit For
             End If
         Next
         If Me.BackgroundImageToolStripMenuItem.Checked Then
-            client.BackgroundImage = My.Resources.DESKTOP
-            client.BackgroundImageLayout = ImageLayout.Stretch
+            _client.BackgroundImage = My.Resources.DESKTOP
+            _client.BackgroundImageLayout = ImageLayout.Stretch
         End If
-        StatusLabel.Text = "Welcome to the JA2 v1.13 - XML Editor"
+        StatusLabel.Text = DisplayText.Welcome
     End Sub
 
     Private Sub RemoveUnusedLanguageSpecificAmmoStringMenuItems()
         Dim baseAmmoStrings As String = "AmmoStrings.xml"
 
-        If LanguageSpecificFileExist("German." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.German & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(GermanToolStripMenuItem)
         End If
-        If LanguageSpecificFileExist("Russian." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.Russian & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(RussianToolStripMenuItem)
         End If
-        If LanguageSpecificFileExist("Polish." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.Polish & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(PolishToolStripMenuItem)
         End If
-        If LanguageSpecificFileExist("Italian." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.Italian & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(ItalianToolStripMenuItem)
         End If
-        If LanguageSpecificFileExist("French." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.French & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(FrenchToolStripMenuItem)
         End If
-        If LanguageSpecificFileExist("Chinese." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.Chinese & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(ChineseToolStripMenuItem)
         End If
-        If LanguageSpecificFileExist("Dutch." & baseAmmoStrings) = False Then
+        If LanguageSpecificFileExist(OtherText.Dutch & "." & baseAmmoStrings) = False Then
             Me.CalibersToolStripMenuItem.DropDownItems.Remove(DutchToolStripMenuItem)
         End If
 
@@ -62,7 +72,7 @@ Public Class MainForm
     Private Function LanguageSpecificFileExist(ByVal filename As String) As Boolean
         Dim exists As Boolean = True
 
-        If System.IO.File.Exists(XmlDB.BaseDirectory & filename) = False Then
+        If System.IO.File.Exists(_activeDataSet.TableDirectory & filename) = False Then
             exists = False
         End If
 
@@ -75,6 +85,7 @@ Public Class MainForm
             .View_Background = Me.BackgroundImageToolStripMenuItem.Checked
             .View_Toolbar = Me.ToolBarToolStripMenuItem.Checked
             .View_StatusBar = Me.StatusBarToolStripMenuItem.Checked
+
             If Me.WindowState = FormWindowState.Normal Then
                 .MainForm_Location = Me.Location
                 .MainForm_Size = Me.Size
@@ -84,46 +95,40 @@ Public Class MainForm
         End With
     End Sub
 
-    Private Sub client_Paint(ByVal sender As Object, ByVal e As System.Windows.Forms.PaintEventArgs) Handles client.Paint
-        If client.BackgroundImage IsNot Nothing Then
+    Private Sub client_Paint(ByVal sender As Object, ByVal e As System.Windows.Forms.PaintEventArgs) Handles _client.Paint
+        If _client.BackgroundImage IsNot Nothing Then
             Static flag As Boolean
             If Not flag Then
                 Dim g As Graphics = e.Graphics
-                g.DrawImage(client.BackgroundImage, New RectangleF(0, 0, client.Size.Width, client.Size.Height))
+                g.DrawImage(_client.BackgroundImage, New RectangleF(0, 0, _client.Size.Width, _client.Size.Height))
             Else
                 flag = True
-                client.Invalidate()
+                _client.Invalidate()
             End If
         End If
     End Sub
 
-    Private Sub client_Resize(ByVal sender As Object, ByVal e As System.EventArgs) Handles client.Resize
-        client.Invalidate()
+    Private Sub client_Resize(ByVal sender As Object, ByVal e As System.EventArgs) Handles _client.Resize
+        _client.Invalidate()
     End Sub
 
     Private Sub ChildForm_Resized(ByVal sender As Object, ByVal e As EventArgs)
-        client.Invalidate()
+        _client.Invalidate()
     End Sub
 
     Private Sub OpenFile(ByVal sender As Object, ByVal e As EventArgs) Handles OpenToolStripMenuItem.Click, OpenToolStripButton.Click
         Windows.Forms.Cursor.Current = Cursors.WaitCursor
         Splash.Show()
-        Splash.UpdateLoadingText("Reloading Data...")
+        Splash.UpdateLoadingText(DisplayText.ReloadingData)
         Me.Hide()
         Application.DoEvents()
-        DB.LoadAllData()
+        For i As Integer = 0 To GameDataCount - 1
+            Splash.UpdateCurrentDirectory(GameData(i).Name)
+            GameData(i).LoadData()
+        Next
         Windows.Forms.Cursor.Current = Cursors.Arrow
         Splash.Hide()
         Me.Show()
-    End Sub
-
-    Private Sub SaveAsToolStripMenuItem_Click(ByVal sender As Object, ByVal e As EventArgs) Handles SaveToolStripMenuItem.Click, SaveToolStripButton.Click
-        Windows.Forms.Cursor.Current = Cursors.WaitCursor
-        LoadingForm.Show(True)
-        Application.DoEvents()
-        DB.SaveAllData()
-        Windows.Forms.Cursor.Current = Cursors.Arrow
-        LoadingForm.Close()
     End Sub
 
     Friend Function FormOpen(ByVal formText As String) As Boolean
@@ -189,397 +194,508 @@ Public Class MainForm
         Next
     End Sub
 
-    Private Sub ShowItemGridForm(ByVal text As String, ByVal filter As String, ByVal subTable As String, Optional ByVal customFilter As String = Nothing)
+    Private Function FormatFormText(text As String) As String
+        Return _activeDataSet.Name & ": " & text
+    End Function
+
+    Private Sub ShowItemGridForm(dm As DataManager, ByVal text As String, ByVal filter As String, ByVal subTable As String, Optional ByVal customFilter As String = Nothing)
+        text = FormatFormText(text)
         If Not FormOpen(text) Then
-            Dim frm As New ItemGridForm(text, New DataView(DB.Table(Tables.Items.Name), filter, Tables.Items.Fields.ID, DataViewRowState.CurrentRows), subTable)
-            If customFilter IsNot Nothing AndAlso customFilter.Length > 0 Then frm.Filter = customFilter
+            Dim frm As New ItemGridForm(dm, text, Tables.Items.Name, filter, , , subTable)
+            If Not String.IsNullOrEmpty(customFilter) Then frm.Filter = customFilter
             ShowForm(frm)
         End If
     End Sub
 
-    Private Sub ShowLookupGridForm(ByVal text As String, ByVal tableName As String)
+    Private Sub ShowLookupGridForm(dm As DataManager, ByVal text As String, ByVal tableName As String)
+        text = FormatFormText(text)
         If Not FormOpen(text) Then
-            Dim frm As New LookupGridForm(text, New DataView(DB.Table(tableName), "", DB.Table(tableName).PrimaryKey(0).ColumnName, DataViewRowState.CurrentRows))
+            Dim frm As New LookupGridForm(dm, text, tableName)
             ShowForm(frm)
         End If
     End Sub
 
-    Private Sub ShowMercGearGridForm(ByVal text As String, Optional ByVal filter As String = Nothing, Optional ByVal customFilter As String = Nothing)
+    Private Sub ShowMercGearGridForm(dm As DataManager, ByVal text As String, Optional ByVal filter As String = Nothing, Optional ByVal customFilter As String = Nothing)
+        text = FormatFormText(text)
         If Not FormOpen(text) Then
-            Dim frm As New MercGearGridForm(text, New DataView(DB.Table(Tables.MercStartingGear.Name), filter, Tables.MercStartingGear.Fields.ID, DataViewRowState.CurrentRows))
-            If customFilter IsNot Nothing AndAlso customFilter.Length > 0 Then frm.Filter = customFilter
+            Dim frm As New MercGearGridForm(dm, text, Tables.MercStartingGear.Name, filter)
+            If Not String.IsNullOrEmpty(customFilter) Then frm.Filter = customFilter
             ShowForm(frm)
         End If
     End Sub
 
-    Private Sub ShowDataGridForm(ByVal text As String, ByVal tableName As String, Optional ByVal sortByKey As Boolean = True)
+    Private Sub ShowDataGridForm(dm As DataManager, ByVal text As String, ByVal tableName As String)
+        text = FormatFormText(text)
         If Not FormOpen(text) Then
-            Dim sort As String = ""
-            If sortByKey Then sort = DB.Table(tableName).PrimaryKey(0).ColumnName
-            Dim frm As New DataGridForm(text, New DataView(DB.Table(tableName), "", sort, DataViewRowState.CurrentRows))
+            Dim frm As New DataGridForm(dm, text, tableName)
             ShowForm(frm)
         End If
     End Sub
 
-    Private Sub ShowChildDataGridForm(ByVal text As String, ByVal tableName As String, Optional ByVal sortByKey As Boolean = True)
+    Private Sub ShowChildDataGridForm(dm As DataManager, ByVal text As String, ByVal tableName As String)
+        text = FormatFormText(text)
         If Not FormOpen(text) Then
-            Dim sort As String = ""
-            If sortByKey Then sort = DB.Table(tableName).PrimaryKey(0).ColumnName
-            Dim frm As New ChildDataGridForm(text, New DataView(DB.Table(tableName), "", sort, DataViewRowState.CurrentRows))
+            Dim frm As New ChildDataGridForm(dm, text, tableName)
             ShowForm(frm)
         End If
     End Sub
 
     Private Sub AllItemsToolStripMenuItem_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles AllItemsToolStripMenuItem.Click
-        ShowItemGridForm("Items", "", Nothing)
+        ShowItemGridForm(_activeDataSet, DisplayText.Items, "", Nothing)
     End Sub
 
+    Private Function FormatItemClassText(itemClassName As String)
+        Return DisplayText.Items & " - " & itemClassName
+    End Function
+
+    Private Function FormatDataText(dataTableName As String)
+        Return DisplayText.Data & " - " & dataTableName
+    End Function
+
     Private Sub GunsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GunsToolStripMenuItem.Click
-        ShowItemGridForm("Items - Guns", Tables.Items.Fields.ItemClass & "=" & ItemClass.Gun & " AND " & Tables.Items.Fields.RocketLauncher & "= 0", Tables.Weapons.Name)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Guns), Tables.Items.Fields.ItemClass & "=" & ItemClass.Gun & " AND " & Tables.Items.Fields.RocketLauncher & "= 0", Tables.Weapons.Name)
     End Sub
 
     Private Sub AmmoToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AmmoToolStripMenuItem.Click
-        ShowItemGridForm("Items - Ammo", Tables.Items.Fields.ItemClass & "=" & ItemClass.Ammo, Tables.Magazines.Name)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Ammo), Tables.Items.Fields.ItemClass & "=" & ItemClass.Ammo, Tables.Magazines.Name)
     End Sub
 
     Private Sub LaunchersToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles LaunchersToolStripMenuItem.Click
-        ShowItemGridForm("Items - Launchers", Tables.Items.Fields.ItemClass & "=" & ItemClass.Launcher & " OR " & Tables.Items.Fields.RocketLauncher & "= 1", Tables.Weapons.Name)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Launchers), Tables.Items.Fields.ItemClass & "=" & ItemClass.Launcher & " OR " & Tables.Items.Fields.RocketLauncher & "= 1", Tables.Weapons.Name)
     End Sub
 
     Private Sub GrenadesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GrenadesToolStripMenuItem.Click
-        ShowItemGridForm("Items - Grenades", Tables.Items.Fields.ItemClass & "=" & ItemClass.Grenade, Tables.Explosives)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Grenades), Tables.Items.Fields.ItemClass & "=" & ItemClass.Grenade, Tables.Explosives.Name)
     End Sub
 
     Private Sub ExplosivesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ExplosivesToolStripMenuItem.Click
-        ShowItemGridForm("Items - Explosives", Tables.Items.Fields.ItemClass & "=" & ItemClass.Bomb, Tables.Explosives)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Explosives), Tables.Items.Fields.ItemClass & "=" & ItemClass.Bomb, Tables.Explosives.Name)
     End Sub
 
     Private Sub KnivesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles KnivesToolStripMenuItem.Click
-        ShowItemGridForm("Items - Knives", Tables.Items.Fields.ItemClass & "=" & ItemClass.Knife & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.ThrowingKnife, Tables.Weapons.Name)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Knives), Tables.Items.Fields.ItemClass & "=" & ItemClass.Knife & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.ThrowingKnife, Tables.Weapons.Name)
     End Sub
 
     Private Sub OtherWeaponsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles OtherWeaponsToolStripMenuItem.Click
-        ShowItemGridForm("Items - Other Weapons", Tables.Items.Fields.ItemClass & "=" & ItemClass.Thrown & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Punch & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Tentacle, Tables.Weapons.Name)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.OtherWeapons), Tables.Items.Fields.ItemClass & "=" & ItemClass.Thrown & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Punch & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Tentacle, Tables.Weapons.Name)
     End Sub
 
     Private Sub ArmourToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ArmourToolStripMenuItem.Click
-        ShowItemGridForm("Items - Armours", Tables.Items.Fields.ItemClass & "=" & ItemClass.Armour, Tables.Armours)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Armours), Tables.Items.Fields.ItemClass & "=" & ItemClass.Armour, Tables.Armours.Name)
     End Sub
 
     Private Sub FaceToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles FaceToolStripMenuItem.Click
-        ShowItemGridForm("Items - Facial Gear", Tables.Items.Fields.ItemClass & "=" & ItemClass.Face, Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.FaceGear), Tables.Items.Fields.ItemClass & "=" & ItemClass.Face, Nothing)
     End Sub
 
     Private Sub KitsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles KitsToolStripMenuItem.Click
-        ShowItemGridForm("Items - Kits", Tables.Items.Fields.ItemClass & "=" & ItemClass.MedKit & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Kit, Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Kits), Tables.Items.Fields.ItemClass & "=" & ItemClass.MedKit & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Kit, Nothing)
     End Sub
 
     Private Sub KeysToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles KeysToolStripMenuItem.Click
-        ShowItemGridForm("Items - Keys", Tables.Items.Fields.ItemClass & "=" & ItemClass.Key, Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Keys), Tables.Items.Fields.ItemClass & "=" & ItemClass.Key, Nothing)
     End Sub
 
     Private Sub LoadBearingToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles LoadBearingToolStripMenuItem.Click
-        ShowItemGridForm("Items - Load Bearing", Tables.Items.Fields.ItemClass & "=" & ItemClass.LBE, Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.LoadBearing), Tables.Items.Fields.ItemClass & "=" & ItemClass.LBE, Nothing)
     End Sub
 
     Private Sub MiscToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MiscToolStripMenuItem.Click
-        ShowItemGridForm("Items - Miscellaneous", Tables.Items.Fields.ItemClass & "=" & ItemClass.Misc & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Money, Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Misc), Tables.Items.Fields.ItemClass & "=" & ItemClass.Misc & " OR " & Tables.Items.Fields.ItemClass & "=" & ItemClass.Money, Nothing)
     End Sub
 
     Private Sub NoneItemToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles NoneItemToolStripMenuItem.Click
-        ShowItemGridForm("Items - None", Tables.Items.Fields.ItemClass & "=" & ItemClass.None, Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.None), Tables.Items.Fields.ItemClass & "=" & ItemClass.None, Nothing)
     End Sub
 
     Private Sub AttachmentsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AttachmentsToolStripMenuItem.Click
-        ShowItemGridForm("Items - Attachments", Tables.Items.Fields.Attachment & "= 1", Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Attachments), Tables.Items.Fields.Attachment & "= 1", Nothing)
     End Sub
 
     Private Sub TonsOfGunsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TonsOfGunsToolStripMenuItem.Click
-        ShowItemGridForm("Items - Tons of Guns Mode", Tables.Items.Fields.TonsOfGuns & "= 1", Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.TonsOfGunsMode), Tables.Items.Fields.TonsOfGuns & "= 1", Nothing)
     End Sub
 
     Private Sub NormalGunsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles NormalGunsToolStripMenuItem.Click
-        ShowItemGridForm("Items - Normal Guns Mode", Tables.Items.Fields.TonsOfGuns & "= 0", Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.NormalGunsMode), Tables.Items.Fields.TonsOfGuns & "= 0", Nothing)
     End Sub
 
     Private Sub SciFiToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles SciFiToolStripMenuItem.Click
-        ShowItemGridForm("Items - Sci-Fi Mode", Tables.Items.Fields.SciFi & "= 1", Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.SciFiMode), Tables.Items.Fields.SciFi & "= 1", Nothing)
     End Sub
 
     Private Sub NonSciFiToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles NonSciFiToolStripMenuItem.Click
-        ShowItemGridForm("Items - Normal Mode", Tables.Items.Fields.SciFi & "= 0", Nothing)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.RealisticMode), Tables.Items.Fields.SciFi & "= 0", Nothing)
     End Sub
 
     Private Sub ArmourClassesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ArmourClassesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Armour Classes", Tables.ArmourClasses)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.ArmourClasses), Tables.ArmourClasses)
     End Sub
 
     Private Sub LBEClassesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles LBEClassesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Load Bearing Equipment Classes", Tables.LBEClasses)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.LbeClasses), Tables.LBEClasses)
     End Sub
 
     Private Sub InventorySilhouettesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles InventorySilhouettesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Inventory Silhouettes", Tables.Silhouettes)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.InventorySilhouettes), Tables.Silhouettes)
     End Sub
 
-    Private Sub AttachmentClassesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AttachmentClassesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Attachment Classes", Tables.AttachmentClasses)
+    Private Sub NasAttachmentClassesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles NasAttachmentClassesToolStripMenuItem.Click
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.NasAttachmentClasses), Tables.NasAttachmentClasses)
+    End Sub
+
+    Private Sub CommonAttachmentPointsToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles CommonAttachmentPointsToolStripMenuItem.Click
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AttachmentPoints), Tables.AttachmentPoints)
+    End Sub
+
+    Private Sub AttachmentClassCodeMakerToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles AttachmentClassCodeMakerToolStripMenuItem.Click
+        Dim text = FormatFormText("NAS Attachment Class Code Maker")
+        If Not FormOpen(text) Then
+            Dim frm As New BitCodeMakerForm(_activeDataSet, text, Tables.AttachmentPoints)
+            ShowForm(frm)
+        End If
+    End Sub
+
+    Private Sub AttachmentPointCodeMakerToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles AttachmentPointCodeMakerToolStripMenuItem.Click
+        Dim text = FormatFormText("Attachment Point Code Maker")
+        If Not FormOpen(text) Then
+            Dim frm As New BitCodeMakerForm(_activeDataSet, text, Tables.AttachmentPoints)
+            ShowForm(frm)
+        End If
+    End Sub
+
+    Private Sub AttachmentClassesToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles AttachmentClassesToolStripMenuItem.Click
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.AttachmentClasses), Tables.AttachmentClasses)
     End Sub
 
     Private Sub AttachmentSystemToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AttachmentSystemToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Attachment System", Tables.AttachmentSystem)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.AttachmentSystem), Tables.AttachmentSystem)
     End Sub
 
     Private Sub CursorsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles CursorsToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Cursors", Tables.Cursors)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.Cursors), Tables.Cursors)
     End Sub
 
     Private Sub ExplosionTypesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ExplosionTypesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Explosion Types", Tables.ExplosionTypes)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.ExplosionTypes), Tables.ExplosionTypes)
     End Sub
 
     Private Sub ItemClassesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ItemClassesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Item Classes", Tables.ItemClasses)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.ItemClasses), Tables.ItemClasses)
     End Sub
 
     Private Sub MergeTypesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MergeTypesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Merge Types", Tables.MergeTypes)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.MergeTypes), Tables.MergeTypes)
     End Sub
 
     Private Sub SkillChecksToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles SkillChecksToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Skill Checks", Tables.SkillCheckTypes)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.SkillChecks), Tables.SkillCheckTypes)
     End Sub
 
     Private Sub WeaponClassesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles WeaponClassesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Weapon Classes", Tables.WeaponClasses)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.WeaponClasses), Tables.WeaponClasses)
     End Sub
 
     Private Sub WeaponTypesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles WeaponTypesToolStripMenuItem.Click
-        ShowLookupGridForm("Data - Weapon Types", Tables.WeaponTypes)
+        ShowLookupGridForm(_activeDataSet, FormatDataText(DisplayText.WeaponTypes), Tables.WeaponTypes)
     End Sub
 
     Private Sub ExplosionsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ExplosionsToolStripMenuItem.Click
-        ShowDataGridForm("Data - Explosions", Tables.ExplosionData)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.Explosions), Tables.ExplosionData)
     End Sub
 
     Private Sub TypesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TypesToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Types", Tables.AmmoTypes)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoTypes), Tables.AmmoTypes)
     End Sub
 
     Private Sub StandardToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles StandardToolStripMenuItem.Click
-        ShowDataGridForm("Data - Sounds", Tables.Sounds)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.Sounds), Tables.Sounds)
     End Sub
 
     Private Sub BurstToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles BurstToolStripMenuItem.Click
-        ShowDataGridForm("Data - Burst Sounds", Tables.BurstSounds)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.BurstSounds), Tables.BurstSounds)
     End Sub
 
     Private Sub PocketTypesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles PocketTypesToolStripMenuItem.Click
-        ShowDataGridForm("Data - Pocket Types", Tables.Pockets)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.PocketTypes), Tables.Pockets)
     End Sub
 
-    Private Sub AttachmentSlotsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AttachmentSlotsToolStripMenuItem.Click
-        ShowDataGridForm("Data - Attachment Slots", Tables.AttachmentSlots)
+    Private Sub NasAttachmentSlotsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles NasAttachmentSlotsToolStripMenuItem.Click
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AttachmentSlots), Tables.AttachmentSlots)
     End Sub
 
     Private Sub ToolStripMenuItem2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ToolStripMenuItem2.Click
-        Dim frm As New EnterItemIDForm()
+        Dim frm As New EnterItemIDForm(_activeDataSet)
         If Not FormOpen(frm.Text) Then ShowForm(frm)
     End Sub
 
     Private Sub CreateNewToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles CreateNewToolStripMenuItem.Click
-        Dim frm As New NewItemForm()
+        Dim frm As New NewItemForm(_activeDataSet)
         If Not FormOpen(frm.Text) Then ShowForm(frm)
     End Sub
 
     Private Sub StandardToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles StandardToolStripMenuItem1.Click
-        ShowDataGridForm("Standard Merges", Tables.Merges, False)
+        ShowDataGridForm(_activeDataSet, DisplayText.StandardMerges, Tables.Merges)
     End Sub
 
     Private Sub AttachmentToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AttachmentToolStripMenuItem.Click
-        ShowDataGridForm("Attachment Merges", Tables.AttachmentComboMerges)
+        ShowDataGridForm(_activeDataSet, DisplayText.AttachmentMerges, Tables.AttachmentComboMerges)
     End Sub
 
     Private Sub ListingToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ListingToolStripMenuItem.Click
-        ShowChildDataGridForm("Attachment Listing", Tables.Attachments.Name, False)
+        ShowChildDataGridForm(_activeDataSet, FormatDataText(DisplayText.AttachmentList), Tables.Attachments.Name)
     End Sub
 
     Private Sub InfoToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles InfoToolStripMenuItem.Click
-        ShowDataGridForm("Attachment Info", Tables.AttachmentInfo.Name)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AttachmentInfo), Tables.AttachmentInfo.Name)
     End Sub
 
     Private Sub IncompatibleToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles IncompatibleToolStripMenuItem.Click
-        ShowChildDataGridForm("Incompatible Attachments", Tables.IncompatibleAttachments.Name, False)
+        ShowChildDataGridForm(_activeDataSet, FormatDataText(DisplayText.IncompatibleAttachments), Tables.IncompatibleAttachments.Name)
     End Sub
 
     Private Sub LaunchablesToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles LaunchablesToolStripMenuItem.Click
-        ShowChildDataGridForm("Launchables", Tables.Launchables.Name, False)
+        ShowChildDataGridForm(_activeDataSet, FormatDataText(DisplayText.Launchables), Tables.Launchables.Name)
     End Sub
 
     Private Sub CompatibleFaceItemsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles CompatibleFaceItemsToolStripMenuItem.Click
-        ShowChildDataGridForm("Compatible Face Items", Tables.CompatibleFaceItems.Name, False)
+        ShowChildDataGridForm(_activeDataSet, FormatDataText(DisplayText.CompatibleFaceItems), Tables.CompatibleFaceItems.Name)
+    End Sub
+
+    Private Sub TransformationsToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles TransformationsToolStripMenuItem.Click
+        ShowChildDataGridForm(_activeDataSet, FormatDataText(DisplayText.ItemTransformations), Tables.ItemTransformations)
     End Sub
 
     Private Sub EnglishToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnglishToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (English)", Tables.AmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.English & ")"), Tables.AmmoStrings)
     End Sub
 
     Private Sub GermanToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GermanToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (German)", Tables.GermanAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.German & ")"), Tables.GermanAmmoStrings)
     End Sub
 
     Private Sub RussianToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RussianToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (Russian)", Tables.RussianAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.Russian & ")"), Tables.RussianAmmoStrings)
     End Sub
 
     Private Sub PolishToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RussianToolStripMenuItem.Click, PolishToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (Polish)", Tables.PolishAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.Polish & ")"), Tables.PolishAmmoStrings)
     End Sub
 
     Private Sub FrenchToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RussianToolStripMenuItem.Click, PolishToolStripMenuItem.Click, FrenchToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (French)", Tables.FrenchAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.French & ")"), Tables.FrenchAmmoStrings)
     End Sub
 
     Private Sub ItalianToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ItalianToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (Italian)", Tables.ItalianAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.Italian & ")"), Tables.ItalianAmmoStrings)
     End Sub
 
     Private Sub DutchToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles DutchToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (Dutch)", Tables.DutchAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.Dutch & ")"), Tables.DutchAmmoStrings)
     End Sub
 
     Private Sub ChineseToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ChineseToolStripMenuItem.Click
-        ShowDataGridForm("Data - Ammo Calibers (Chinese)", Tables.ChineseAmmoStrings)
+        ShowDataGridForm(_activeDataSet, FormatDataText(DisplayText.AmmoCalibers & "(" & OtherText.Chinese & ")"), Tables.ChineseAmmoStrings)
     End Sub
 
+    Private Function FormatInvText(inventoryTableName As String)
+        Return DisplayText.Inventory & " - " & inventoryTableName
+    End Function
+
     Private Sub AlbertoToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles AlbertoToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Alberto", Tables.AlbertoInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Alberto), Tables.AlbertoInventory)
     End Sub
 
     Private Sub ArnieToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ArnieToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Arnie", Tables.ArnieInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Arnie), Tables.ArnieInventory)
     End Sub
 
     Private Sub CarloToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles CarloToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Carlo", Tables.CarloInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Carlo), Tables.CarloInventory)
     End Sub
 
     Private Sub DevinToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles DevinToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Devin", Tables.DevinInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Devin), Tables.DevinInventory)
     End Sub
 
     Private Sub ElginToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ElginToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Elgin", Tables.ElginInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Elgin), Tables.ElginInventory)
     End Sub
 
     Private Sub FrankToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles FrankToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Frank", Tables.FrankInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Frank), Tables.FrankInventory)
     End Sub
 
     Private Sub FranzToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles FranzToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Franz", Tables.FranzInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Franz), Tables.FranzInventory)
     End Sub
 
     Private Sub FredoToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles FredoToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Fredo", Tables.FredoInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Fredo), Tables.FredoInventory)
     End Sub
 
     Private Sub GabbyToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles GabbyToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Gabby", Tables.GabbyInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Gabby), Tables.GabbyInventory)
     End Sub
 
     Private Sub HerveToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles HerveToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Herve", Tables.HerveInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Herve), Tables.HerveInventory)
     End Sub
 
     Private Sub HowardToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles HowardToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Howard", Tables.HowardInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Howard), Tables.HowardInventory)
     End Sub
 
     Private Sub JakeToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles JakeToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Jake", Tables.JakeInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Jake), Tables.JakeInventory)
     End Sub
 
     Private Sub KeithToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles KeithToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Keith", Tables.KeithInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Keith), Tables.KeithInventory)
     End Sub
 
     Private Sub MannyToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MannyToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Manny", Tables.MannyInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Manny), Tables.MannyInventory)
     End Sub
 
     Private Sub MickeyToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MickeyToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Mickey", Tables.MickeyInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Mickey), Tables.MickeyInventory)
     End Sub
 
     Private Sub PerkoToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles PerkoToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Perko", Tables.PerkoInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Perko), Tables.PerkoInventory)
     End Sub
 
     Private Sub PeterToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles PeterToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Peter", Tables.PeterInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Peter), Tables.PeterInventory)
     End Sub
 
     Private Sub SamToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles SamToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Sam", Tables.SamInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Sam), Tables.SamInventory)
     End Sub
 
     Private Sub TonyToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TonyToolStripMenuItem.Click
-        ShowDataGridForm("Inventory - Tony", Tables.TonyInventory)
+        ShowDataGridForm(_activeDataSet, FormatInvText(DisplayText.Tony), Tables.TonyInventory)
     End Sub
 
     Private Sub IMPItemsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles IMPItemsToolStripMenuItem.Click
-        ShowLookupGridForm("IMP Item Choices", Tables.IMPItems)
+        ShowLookupGridForm(_activeDataSet, DisplayText.ImpItems, Tables.IMPItems)
     End Sub
 
     Private Sub MercStartingGearToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MercStartingGearToolStripMenuItem.Click
-        ShowMercGearGridForm("Merc Starting Gear")
+        ShowMercGearGridForm(_activeDataSet, DisplayText.MercStartingGear)
     End Sub
 
     Private Sub CustomFilterToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles CustomFilterToolStripMenuItem.Click
-        Dim frm As New CustomFilterForm
+        Dim frm As New CustomFilterForm(_activeDataSet)
         frm.ShowDialog(Me)
-        ShowItemGridForm("Items - Custom Filter", "", "", frm.Filter)
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.CustomFilter), Nothing, Nothing, frm.Filter)
     End Sub
 
     Private Sub EnemyGunsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyGunsToolStripMenuItem.Click
-        ShowLookupGridForm("Enemy Gun Choices", Tables.EnemyGuns)
+        ShowLookupGridForm(_activeDataSet, DisplayText.EnemyGuns, Tables.EnemyGuns)
     End Sub
 
     Private Sub EnemyItemsToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyItemsToolStripMenuItem.Click
-        ShowLookupGridForm("Enemy Item Choices", Tables.EnemyItems)
+        ShowLookupGridForm(_activeDataSet, DisplayText.EnemyItems, Tables.EnemyItems)
     End Sub
 
     Private Sub EnemyAmmoToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyAmmoToolStripMenuItem.Click
-        ShowLookupGridForm("Enemy Ammo Choices", Tables.EnemyAmmo)
+        ShowLookupGridForm(_activeDataSet, DisplayText.EnemyAmmo, Tables.EnemyAmmo)
     End Sub
 
     Private Sub EnemyWeaponDropRateToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyWeaponDropRateToolStripMenuItem.Click
-        ShowLookupGridForm("Weapon Drop Rates", Tables.EnemyWeaponDrops)
+        ShowLookupGridForm(_activeDataSet, DisplayText.WeaponDropRates, Tables.EnemyWeaponDrops)
     End Sub
 
     Private Sub EnemyAmmoDropRateToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyAmmoDropRateToolStripMenuItem.Click
-        ShowDataGridForm("Ammo Drop Rates", Tables.EnemyAmmoDrops)
+        ShowDataGridForm(_activeDataSet, DisplayText.AmmoDropRates, Tables.EnemyAmmoDrops)
     End Sub
 
     Private Sub EnemyArmourDropRateToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyArmourDropRateToolStripMenuItem.Click
-        ShowLookupGridForm("Armour Drop Rates", Tables.EnemyArmourDrops)
+        ShowLookupGridForm(_activeDataSet, DisplayText.ArmourDropRates, Tables.EnemyArmourDrops)
     End Sub
 
     Private Sub EnemyExplosiveDropRateToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyExplosiveDropRateToolStripMenuItem.Click
-        ShowLookupGridForm("Explosive Drop Rates", Tables.EnemyExplosiveDrops)
+        ShowLookupGridForm(_activeDataSet, DisplayText.ExplosiveDropRates, Tables.EnemyExplosiveDrops)
     End Sub
 
     Private Sub EnemyMiscDropRateToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles EnemyMiscDropRateToolStripMenuItem.Click
-        ShowLookupGridForm("Misc. Item Drop Rates", Tables.EnemyMiscDrops)
+        ShowLookupGridForm(_activeDataSet, DisplayText.MiscItemDropRates, Tables.EnemyMiscDrops)
     End Sub
 
     Private Sub BackgroundImageToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles BackgroundImageToolStripMenuItem.Click
         If BackgroundImageToolStripMenuItem.Checked Then
-            client.BackgroundImage = My.Resources.DESKTOP
-            client.BackgroundImageLayout = ImageLayout.Stretch
+            _client.BackgroundImage = My.Resources.DESKTOP
+            _client.BackgroundImageLayout = ImageLayout.Stretch
         Else
-            client.BackgroundImage = Nothing
+            _client.BackgroundImage = Nothing
         End If
+    End Sub
+
+    Private Sub DataToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles Data1ToolStripMenuItem.Click, Data2ToolStripMenuItem.Click, Data3ToolStripMenuItem.Click, Data4ToolStripMenuItem.Click, Data5ToolStripMenuItem.Click, Data6ToolStripMenuItem.Click, Data7ToolStripMenuItem.Click, Data8ToolStripMenuItem.Click, Data9ToolStripMenuItem.Click, Data10ToolStripMenuItem.Click
+        Dim menuItem As ToolStripMenuItem = DirectCast(sender, ToolStripMenuItem)
+        Dim index As Integer = CInt(menuItem.Tag)
+        If index < GameDataCount Then
+            _activeDataSet = GameData(index)
+            Me.Text = String.Format(DisplayText.MainFormTitle, _activeDataSet.Name)
+
+            For Each item As ToolStripMenuItem In Me.SelectDataToolStripMenuItem.DropDownItems
+                If item IsNot sender Then
+                    item.Checked = False
+                End If
+            Next
+        End If
+    End Sub
+
+    Private Sub SaveToolStripMenuItem_Click(ByVal sender As Object, ByVal e As EventArgs) Handles SaveToolStripMenuItem.Click, SaveToolStripButton.Click
+        Save(False)
+    End Sub
+
+    Private Sub SaveAllToolStripMenuItem_Click(sender As Object, e As System.EventArgs) Handles SaveAllToolStripMenuItem.Click, SaveAllToolStripButton.Click
+        Save(True)
+    End Sub
+
+    Protected Sub Save(saveAll As Boolean)
+        Windows.Forms.Cursor.Current = Cursors.WaitCursor
+        LoadingForm.Show(True)
+        Application.DoEvents()
+        If saveAll Then
+            For i As Integer = 0 To GameDataCount - 1
+                LoadingForm.SetDataName(GameData(i).Name)
+                GameData(i).SaveData()
+            Next
+        Else
+            LoadingForm.SetDataName(_activeDataSet.Name)
+            _activeDataSet.SaveData()
+        End If
+
+        'conditional to ensure that there's no accidental loading of working data when some of the data sets aren't up to date
+        If saveAll OrElse GameDataCount = 1 Then
+            With My.Settings
+                .Last_Version_Major = My.Application.Info.Version.Major
+                .Last_Version_Minor = My.Application.Info.Version.Minor
+                .Save()
+            End With
+        End If
+
+        Windows.Forms.Cursor.Current = Cursors.Arrow
+        LoadingForm.Close()
+    End Sub
+
+    Private Sub DrugTypesToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles DrugTypesToolStripMenuItem.Click
+        ShowDataGridForm(_activeDataSet, DisplayText.DrugTypes, Tables.DrugTypes)
+    End Sub
+
+    Private Sub DrugsToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles DrugsToolStripMenuItem.Click
+        ShowDataGridForm(_activeDataSet, DisplayText.Drugs, Tables.Drugs)
+    End Sub
+
+    Private Sub DrugsItemFilterToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles DrugsItemFilterToolStripMenuItem.Click
+        ShowItemGridForm(_activeDataSet, FormatItemClassText(DisplayText.Drugs), Tables.Items.Fields.Medical & "= 1", Nothing)
+    End Sub
+
+    Private Sub SeparabilityStatesToolStripMenuItem_Click(sender As System.Object, e As System.EventArgs) Handles SeparabilityStatesToolStripMenuItem.Click
+        ShowLookupGridForm(_activeDataSet, DisplayText.Separability, Tables.SeparabilityStates)
     End Sub
 End Class

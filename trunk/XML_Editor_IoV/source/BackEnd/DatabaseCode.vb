@@ -1,44 +1,10 @@
 Public Module DatabaseCode
-    'this file creates the xsd from scratch
-    'we don't want a typed-dataset, because it's less flexible
-    'once we have a flexible way to do the GUI, this format should pay off
-    Public Const SchemaName As String = "JA2Data"
-    Public Const SchemaFileName As String = SchemaName & ".xsd"
     'JMich
     Public ItemSizesRead As Boolean = False
     Public ItemSizeMax As Integer
-    Private ModDir As String = ""
 
-    Public Sub ReadItemSizes()
-        Dim xr As New Xml.XmlTextReader("XMLEditorInit.xml")
-        Dim curNode As String = ""
-        Dim curValue As String = ""
-        While xr.Read
-            If xr.NodeType = Xml.XmlNodeType.Element Then
-                curNode = xr.Name
-            ElseIf xr.NodeType = Xml.XmlNodeType.Text Then
-                curValue = xr.Value
-                Select Case curNode
-                    Case "Data_Directory"
-                        ModDir = curValue
-                        If Not ModDir.EndsWith("\") Then ModDir &= "\"
-                End Select
-            End If
-        End While
-        xr.Close()
-        Dim ja2() As String = System.IO.File.ReadAllLines(ModDir & "ja2_options.ini")
-        For Each line As String In ja2
-            Dim arr As String() = line.Split("=")
-            If arr(0).Trim = "MAX_ITEM_SIZE" Then
-                ItemSizeMax = arr(1)
-                ItemSizesRead = True
-            End If
-        Next
-        If Not ItemSizesRead Then ItemSizeMax = 34
-    End Sub
-
-    Public Sub MakeDB()
-        Dim ds As New DataSet(SchemaName)
+    Public Function MakeDB(baseDir As String, tableDir As String, schemaName As String, schemaFileName As String) As DataSet
+        Dim ds As New DataSet(schemaName)
 
         'standard tables
         Dim items As DataTable = MakeItemsTable()
@@ -82,10 +48,15 @@ Public Module DatabaseCode
         Dim enemyMiscDrop As DataTable = MakeEnemyMiscItemDropTable()
         Dim enemyWeaponDrop As DataTable = MakeEnemyWeaponDropTable()
         Dim loadBearingEquipment As DataTable = MakeLoadBearingEquipmentTable()
-        Dim pockets As DataTable = MakePocketsTable()
+        Dim pockets As DataTable = MakePocketsTable(baseDir)
+        Dim silhouettes As DataTable = MakeSilhouetteTable()
         Dim mercStartingGear As DataTable = MakeMercStartingGearTable()
         Dim attachmentSlots As DataTable = MakeAttachmentSlotsTable()
+        Dim nasAttachmentClasses As DataTable = MakeNasAttachmentClassTable()
+        Dim attachmentPoints As DataTable = MakeAttachmentPointTable()
         Dim itemsToExplosives As DataTable = MakeITETable()
+        Dim transform As DataTable = MakeTransformTable()
+        Dim drugs As DataTable = MakeDrugsTable()
 
         Dim albertoControl As DataTable = MakeShopKeeperControlTable(ShopKeepers.Alberto)
         Dim arnieControl As DataTable = MakeShopKeeperControlTable(ShopKeepers.Arnie)
@@ -207,26 +178,33 @@ Public Module DatabaseCode
         ds.Tables.Add(enemyWeaponDrop)
         ds.Tables.Add(loadBearingEquipment)
         ds.Tables.Add(pockets)
+        ds.Tables.Add(silhouettes)
         ds.Tables.Add(mercStartingGear)
         ds.Tables.Add(attachmentSlots)
+        ds.Tables.Add(nasAttachmentClasses)
         ds.Tables.Add(itemsToExplosives)
-        'ds.Tables.Add(spreadPatterns)
+        ds.Tables.Add(transform)
+        ds.Tables.Add(attachmentPoints)
+        ds.Tables.Add(drugs)
 
         'lookup tables
-        Dim mergeTypes As DataTable = MakeLookupTable("MergeType")
-        Dim explosionTypes As DataTable = MakeLookupTable("ExplosionType")
-        Dim explosionSize As DataTable = MakeLookupTable("ExplosionSize")
-        Dim itemClasses As DataTable = MakeLookupTable("ItemClass")
-        Dim skillCheckTypes As DataTable = MakeLookupTable("SkillCheckType")
-        Dim armourClasses As DataTable = MakeLookupTable("ArmourClass")
-        Dim weaponTypes As DataTable = MakeLookupTable("WeaponType")
-        Dim weaponClasses As DataTable = MakeLookupTable("WeaponClass")
-        Dim cursors As DataTable = MakeLookupTable("Cursor")
-        Dim lbeClasses As DataTable = MakeLookupTable("LBEClass")
-        Dim silhouettes As DataTable = MakeLookupTable("Silhouette")
-        Dim pocketSizes As DataTable = MakeLookupTable("PocketSize")
-        Dim AttachmentClasses As DataTable = MakeLookupTable("AttachmentClass")
-        Dim AttachmentSystem As DataTable = MakeLookupTable("AttachmentSystem")
+        Dim mergeTypes As DataTable = MakeLookupTable(Of Integer)("MergeType")
+        Dim explosionTypes As DataTable = MakeLookupTable(Of Integer)("ExplosionType")
+        Dim explosionSize As DataTable = MakeLookupTable(Of Integer)("ExplosionSize")
+        Dim itemClasses As DataTable = MakeLookupTable(Of Integer)("ItemClass")
+        Dim skillCheckTypes As DataTable = MakeLookupTable(Of Integer)("SkillCheckType")
+        Dim armourClasses As DataTable = MakeLookupTable(Of Integer)("ArmourClass")
+        Dim weaponTypes As DataTable = MakeLookupTable(Of Integer)("WeaponType")
+        Dim weaponClasses As DataTable = MakeLookupTable(Of Integer)("WeaponClass")
+        Dim cursors As DataTable = MakeLookupTable(Of Integer)("Cursor")
+        Dim lbeClasses As DataTable = MakeLookupTable(Of Integer)("LBEClass")
+        Dim pocketSizes As DataTable = MakeLookupTable(Of Integer)("PocketSize")
+        Dim attachmentSystem As DataTable = MakeLookupTable(Of Integer)("AttachmentSystem")
+        Dim magazineType As DataTable = MakeLookupTable(Of Integer)("MagazineType")
+        Dim attachmentClass As DataTable = MakeLookupTable(Of ULong)("AttachmentClass")
+        Dim drugType As DataTable = MakeLookupTable(Of ULong)("DrugType")
+        Dim separability As DataTable = MakeLookupTable(Of Integer)("Separability")
+        Dim itemFlags As DataTable = MakeLookupTable(Of Integer)("ItemFlag")
 
         ds.Tables.Add(mergeTypes)
         ds.Tables.Add(explosionTypes)
@@ -238,10 +216,13 @@ Public Module DatabaseCode
         ds.Tables.Add(weaponClasses)
         ds.Tables.Add(cursors)
         ds.Tables.Add(lbeClasses)
-        ds.Tables.Add(silhouettes)
         ds.Tables.Add(pocketSizes)
-        ds.Tables.Add(AttachmentClasses)
-        ds.Tables.Add(AttachmentSystem)
+        ds.Tables.Add(attachmentSystem)
+        ds.Tables.Add(magazineType)
+        ds.Tables.Add(attachmentClass)
+        ds.Tables.Add(drugType)
+        ds.Tables.Add(separability)
+        ds.Tables.Add(itemFlags)
 
         ' -------------------------
         'relations
@@ -251,6 +232,11 @@ Public Module DatabaseCode
         ds.Relations.Add(MakeRelation(items, merges, "uiIndex", "firstResultingItemIndex"))
         ds.Relations.Add(MakeRelation(items, merges, "uiIndex", "secondResultingItemIndex"))
         ds.Relations.Add(MakeRelation(mergeTypes, merges, "id", "mergeType"))
+
+        ds.Relations.Add(MakeRelation(items, transform, "uiIndex", "usItem"))
+        For i As Integer = 1 To 10
+            ds.Relations.Add(MakeRelation(items, transform, "uiIndex", "usResult" & i))
+        Next
 
         ds.Relations.Add(MakeRelation(ammoTypes, magazines, "uiIndex", "ubAmmoType"))
         ds.Relations.Add(MakeRelation(ammoStrings, magazines, "uiIndex", "ubCalibre"))
@@ -275,8 +261,9 @@ Public Module DatabaseCode
         ds.Relations.Add(MakeRelation(skillCheckTypes, attachmentInfo, "id", "bAttachmentSkillCheck"))
 
         ds.Relations.Add(MakeRelation(items, attachmentComboMerges, "uiIndex", "usItem"))
-        ds.Relations.Add(MakeRelation(items, attachmentComboMerges, "uiIndex", "usAttachment1"))
-        ds.Relations.Add(MakeRelation(items, attachmentComboMerges, "uiIndex", "usAttachment2"))
+        For i As Integer = 1 To 20
+            ds.Relations.Add(MakeRelation(items, attachmentComboMerges, "uiIndex", "usAttachment" & i))
+        Next
         ds.Relations.Add(MakeRelation(items, attachmentComboMerges, "uiIndex", "usResult"))
 
         ds.Relations.Add(MakeRelation(items, attachments, "uiIndex", "attachmentIndex"))
@@ -333,8 +320,8 @@ Public Module DatabaseCode
         Dim lookupFilename As String
 
         ' SkillCheckTypes
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + skillCheckTypes.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + skillCheckTypes.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(skillCheckTypes, 0, "None")
             AddLookupData(skillCheckTypes, 1, "Lockpick")
             AddLookupData(skillCheckTypes, 2, "Elec. Lockpick")
@@ -351,28 +338,33 @@ Public Module DatabaseCode
             AddLookupData(skillCheckTypes, 13, "Attach Special Item")
             AddLookupData(skillCheckTypes, 14, "Attach Special Elec. Item")
             AddLookupData(skillCheckTypes, 15, "Disarm Elec. Trap")
+            AddLookupData(skillCheckTypes, 16, "Attach Power Pack")
         Else
             LookupFile.AddLookupData(lookupFilename, skillCheckTypes)
         End If
 
         ' MergeTypes
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + mergeTypes.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + mergeTypes.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(mergeTypes, 0, "Destruction")
             AddLookupData(mergeTypes, 1, "Combine")
             AddLookupData(mergeTypes, 2, "Treat Armour")
-            AddLookupData(mergeTypes, 3, "Explosive")
+            AddLookupData(mergeTypes, 3, "Explosive (Hard)")
             AddLookupData(mergeTypes, 4, "Easy")
             AddLookupData(mergeTypes, 5, "Electronic")
             AddLookupData(mergeTypes, 6, "Use Item")
             AddLookupData(mergeTypes, 7, "Use Item (Hard)")
+            AddLookupData(mergeTypes, 8, "Swap Barrel")
+            AddLookupData(mergeTypes, 9, "Explosive (Easy)")
+            AddLookupData(mergeTypes, 10, "Mechanical (Easy)")
+            AddLookupData(mergeTypes, 11, "Mechanical (Hard)")
         Else
             LookupFile.AddLookupData(lookupFilename, mergeTypes)
         End If
 
         'ExplosionTypes
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + explosionTypes.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + explosionTypes.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(explosionTypes, 0, "Normal")
             AddLookupData(explosionTypes, 1, "Stun")
             AddLookupData(explosionTypes, 2, "Tear Gas")
@@ -388,8 +380,8 @@ Public Module DatabaseCode
         End If
 
         'ExplosionSize
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + explosionSize.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + explosionSize.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(explosionSize, 0, "None")
             AddLookupData(explosionSize, 1, "Standard")
             AddLookupData(explosionSize, 2, "HighExplosive")
@@ -398,8 +390,8 @@ Public Module DatabaseCode
         End If
 
         'ArmourClasses
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + armourClasses.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + armourClasses.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(armourClasses, 0, "Helmet")
             AddLookupData(armourClasses, 1, "Vest")
             AddLookupData(armourClasses, 2, "Leggings")
@@ -411,8 +403,8 @@ Public Module DatabaseCode
         End If
 
         'WeaponClasses
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + weaponClasses.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + weaponClasses.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(weaponClasses, 0, "None")
             AddLookupData(weaponClasses, 1, "Handgun")
             AddLookupData(weaponClasses, 2, "Submachinegun")
@@ -426,8 +418,8 @@ Public Module DatabaseCode
         End If
 
         'WeaponTypes
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + weaponTypes.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + weaponTypes.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(weaponTypes, 0, "None")
             AddLookupData(weaponTypes, 1, "Pistol")
             AddLookupData(weaponTypes, 2, "Machine Pistol")
@@ -442,8 +434,8 @@ Public Module DatabaseCode
         End If
 
         'Cursors
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + cursors.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + cursors.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(cursors, 0, "Invalid")
             AddLookupData(cursors, 1, "Quest")
             AddLookupData(cursors, 2, "Punch")
@@ -472,8 +464,8 @@ Public Module DatabaseCode
         End If
 
         'ItemClasses
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + itemClasses.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + itemClasses.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(itemClasses, 1, "Nothing")
             AddLookupData(itemClasses, 2, "Gun")
             AddLookupData(itemClasses, 4, "Knife")
@@ -492,15 +484,18 @@ Public Module DatabaseCode
             AddLookupData(itemClasses, 32768, "Face Item")
             AddLookupData(itemClasses, 65536, "Key")
             AddLookupData(itemClasses, 131072, "Load Bearing Equipment")
+            'AddLookupData(itemClasses, 262144, "Belt Clip")
             AddLookupData(itemClasses, 268435456, "Misc")
             AddLookupData(itemClasses, 536870912, "Money")
+            AddLookupData(itemClasses, 1280, "Ammo / Grenade")
+            AddLookupData(itemClasses, 268435712, "Grenade / Misc")
         Else
             LookupFile.AddLookupData(lookupFilename, itemClasses)
         End If
 
         'LBEClasses
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + lbeClasses.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + lbeClasses.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(lbeClasses, 0, "Nothing")
             AddLookupData(lbeClasses, 1, "Thigh Pack")
             AddLookupData(lbeClasses, 2, "Vest")
@@ -510,42 +505,9 @@ Public Module DatabaseCode
             LookupFile.AddLookupData(lookupFilename, lbeClasses)
         End If
 
-        'Silhouettes
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + silhouettes.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
-            AddLookupData(silhouettes, 0, "Vest")
-            AddLookupData(silhouettes, 1, "Right Thigh")
-            AddLookupData(silhouettes, 2, "Left Thigh")
-            AddLookupData(silhouettes, 3, "Backpack")
-            AddLookupData(silhouettes, 4, "Combat Pack")
-            AddLookupData(silhouettes, 5, "Gun")
-            AddLookupData(silhouettes, 6, "Rocket Launcher")
-            AddLookupData(silhouettes, 7, "Big Bag")
-            AddLookupData(silhouettes, 8, "Medium Bag")
-            AddLookupData(silhouettes, 9, "SMG")
-            AddLookupData(silhouettes, 10, "Explosive")
-            AddLookupData(silhouettes, 11, "Knife")
-            AddLookupData(silhouettes, 12, "Small Bag")
-            AddLookupData(silhouettes, 13, "Pistol")
-            AddLookupData(silhouettes, 14, "GL Grenade")
-            AddLookupData(silhouettes, 15, "Hand Grenade")
-            AddLookupData(silhouettes, 16, "Pistol Ammo")
-            AddLookupData(silhouettes, 17, "SMG Ammo")
-            AddLookupData(silhouettes, 18, "Rifle Ammo")
-            AddLookupData(silhouettes, 19, "Large Ammo")
-            AddLookupData(silhouettes, 20, "Shirt Pocket")
-            AddLookupData(silhouettes, 21, "Belt Clip")
-            AddLookupData(silhouettes, 22, "Huge/Belt Ammo")
-            AddLookupData(silhouettes, 23, "Revolver Ammo")
-            AddLookupData(silhouettes, 24, "Large Medical Cross")
-            AddLookupData(silhouettes, 25, "Small Medical Cross")
-        Else
-            LookupFile.AddLookupData(lookupFilename, silhouettes)
-        End If
-
         'PocketSizes
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + pocketSizes.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
+        lookupFilename = tableDir + "\\Lookup\\" + pocketSizes.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
             AddLookupData(pocketSizes, 0, "None")
             AddLookupData(pocketSizes, 1, "Small")
             AddLookupData(pocketSizes, 2, "Medium")
@@ -554,52 +516,148 @@ Public Module DatabaseCode
             LookupFile.AddLookupData(lookupFilename, pocketSizes)
         End If
 
-        'AttachmentClass
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + AttachmentClasses.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
-            AddLookupData(AttachmentClasses, 0, "None")
-            AddLookupData(AttachmentClasses, 1, "Default")
-            AddLookupData(AttachmentClasses, 2, "Barrel")
-            AddLookupData(AttachmentClasses, 4, "Laser")
-            AddLookupData(AttachmentClasses, 8, "Sight")
-            AddLookupData(AttachmentClasses, 16, "Scope")
-            AddLookupData(AttachmentClasses, 32, "Stock")
-            AddLookupData(AttachmentClasses, 64, "Ammo")
-            AddLookupData(AttachmentClasses, 128, "Internal")
-            AddLookupData(AttachmentClasses, 256, "External")
-            AddLookupData(AttachmentClasses, 512, "Underbarrel")
-            AddLookupData(AttachmentClasses, 1024, "Grenade")
-            AddLookupData(AttachmentClasses, 2048, "Rocket")
+        'AttachmentSystem
+        lookupFilename = tableDir + "\\Lookup\\" + attachmentSystem.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
+            AddLookupData(attachmentSystem, 0, "Any")
+            AddLookupData(attachmentSystem, 1, "OAS Only")
+            AddLookupData(attachmentSystem, 2, "NAS Only")
         Else
-            LookupFile.AddLookupData(lookupFilename, AttachmentClasses)
+            LookupFile.AddLookupData(lookupFilename, attachmentSystem)
         End If
 
-        'AttachmentSystem
-        lookupFilename = XmlDB.BaseDirectory + "\\Lookup\\" + AttachmentSystem.TableName + ".xml"
-        If System.IO.File.Exists(lookupFilename) = False Then
-            AddLookupData(AttachmentSystem, 0, "Any")
-            AddLookupData(AttachmentSystem, 1, "OAS Only")
-            AddLookupData(AttachmentSystem, 2, "NAS Only")
+        'MagazineType
+        lookupFilename = tableDir + "\\Lookup\\" + magazineType.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
+            AddLookupData(magazineType, 0, "Magazine")
+            AddLookupData(magazineType, 1, "Bullet(s)")
+            AddLookupData(magazineType, 2, "Box")
+            AddLookupData(magazineType, 3, "Crate")
         Else
-            LookupFile.AddLookupData(lookupFilename, AttachmentSystem)
+            LookupFile.AddLookupData(lookupFilename, magazineType)
+        End If
+
+        'AttachmentClass
+        lookupFilename = tableDir + "\\Lookup\\" + attachmentClass.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
+            AddLookupData(attachmentClass, 0, "Default")
+            AddLookupData(attachmentClass, 1, "Bipod")
+            AddLookupData(attachmentClass, 2, "Suppressor")
+            AddLookupData(attachmentClass, 4, "Laser")
+            AddLookupData(attachmentClass, 8, "Sight")
+            AddLookupData(attachmentClass, 16, "Scope")
+            AddLookupData(attachmentClass, 32, "Stock")
+            AddLookupData(attachmentClass, 64, "Magwell")
+            AddLookupData(attachmentClass, 128, "Internal")
+            AddLookupData(attachmentClass, 256, "External")
+            AddLookupData(attachmentClass, 512, "Underbarrel")
+            AddLookupData(attachmentClass, 1024, "Grenade")
+            AddLookupData(attachmentClass, 2048, "Rocket")
+            AddLookupData(attachmentClass, 4096, "Foregrip")
+            AddLookupData(attachmentClass, 8192, "Helmet")
+            AddLookupData(attachmentClass, 16384, "Vest")
+            AddLookupData(attachmentClass, 32768, "Pants")
+            AddLookupData(attachmentClass, 65536, "Detonator")
+            AddLookupData(attachmentClass, 131072, "Battery")
+            AddLookupData(attachmentClass, 262144, "Extender")
+            AddLookupData(attachmentClass, 524288, "Sling")
+            AddLookupData(attachmentClass, 1048576, "Remote Detonator")
+            AddLookupData(attachmentClass, 2097152, "Defuser")
+            AddLookupData(attachmentClass, 4194304, "Iron Sight")
+            AddLookupData(attachmentClass, 4097, "Bipod + Foregrip")
+            AddLookupData(attachmentClass, 12, "Laser + Sight")
+            AddLookupData(attachmentClass, 24, "Sight + Scope")
+            AddLookupData(attachmentClass, 20, "Laser + Scope") ' some new unused ones here
+            AddLookupData(attachmentClass, 28, "Laser + Sight + Scope")
+            AddLookupData(attachmentClass, 513, "Bipod + Underbarrel")
+            AddLookupData(attachmentClass, 4608, "Foregrip + Underbarrel")
+            AddLookupData(attachmentClass, 3145728, "Remote Detonator + Defuser")
+            AddLookupData(attachmentClass, 2162688, "Detonator + Defuser")
+        Else
+            LookupFile.AddLookupData(lookupFilename, attachmentClass)
+        End If
+
+        'DrugType
+        lookupFilename = tableDir + "\\Lookup\\" + drugType.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
+            AddLookupData(drugType, 0, "None")
+            AddLookupData(drugType, 1, "Adrenaline")
+            AddLookupData(drugType, 2, "Alcohol")
+            AddLookupData(drugType, 4, "Regeneration")
+            AddLookupData(drugType, 8, "Damage Resistance")
+            AddLookupData(drugType, 16, "Strength")
+            AddLookupData(drugType, 32, "Agility")
+            AddLookupData(drugType, 64, "Dexterity")
+            AddLookupData(drugType, 128, "Wisdom")
+            AddLookupData(drugType, 256, "Perception")
+            AddLookupData(drugType, 512, "Psychosis")
+            AddLookupData(drugType, 1024, "Nervousness")
+            AddLookupData(drugType, 2048, "Claustrophobia")
+            AddLookupData(drugType, 4096, "Heat Intolerance")
+            AddLookupData(drugType, 8192, "Fear of Insects")
+            AddLookupData(drugType, 16384, "Forgetfulness")
+            AddLookupData(drugType, 32768, "Blindness")
+            AddLookupData(drugType, 65536, "Unconsciousness")
+            AddLookupData(drugType, 131072, "Vision")
+            AddLookupData(drugType, 262144, "Tunnel Vision")
+            AddLookupData(drugType, 30824, "Stim")
+            AddLookupData(drugType, 425984, "Occulin")
+            AddLookupData(drugType, 1280, "Reflex")
+            AddLookupData(drugType, 66064, "Barrage")
+            AddLookupData(drugType, 1048576, "Cure")
+            AddLookupData(drugType, 1081324, "Cure+Regen+Dmg Resist+Agl+Dex+Wis+Per+Psycho+Nerv+Claus+Heat Int+Fear Ins+Forget")
+        Else
+            LookupFile.AddLookupData(lookupFilename, drugType)
+        End If
+
+        'Separability
+        lookupFilename = tableDir + "\\Lookup\\" + separability.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
+            AddLookupData(separability, 0, "Removable")
+            AddLookupData(separability, 1, "Inseparable")
+            AddLookupData(separability, 2, "Replaceable")
+
+        Else
+            LookupFile.AddLookupData(lookupFilename, separability)
+        End If
+
+        'ItemFlag
+        lookupFilename = tableDir + "\\Lookup\\" + itemFlags.TableName + ".xml"
+        If Not System.IO.File.Exists(lookupFilename) Then
+            AddLookupData(itemFlags, 0, "None")
+            AddLookupData(itemFlags, 1, "Empty Sandbag")
+            AddLookupData(itemFlags, 2, "Full Sandbag")
+            AddLookupData(itemFlags, 4, "Shovel")
+            AddLookupData(itemFlags, 8, "Concertina")
+        Else
+            LookupFile.AddLookupData(lookupFilename, itemFlags)
         End If
 
         'write out to xml
-        ds.WriteXmlSchema(SchemaFileName)
+        If Not System.IO.File.Exists(schemaFileName) Then
+            ds.WriteXmlSchema(schemaFileName)
+        End If
+
+        If Not IO.Directory.Exists(tableDir & "Lookup") Then IO.Directory.CreateDirectory(tableDir & "Lookup")
 
         For Each t As DataTable In ds.Tables
-            Dim lookupFile As String = XmlDB.BaseDirectory + CStr(t.ExtendedProperties(TableProperty.FileName))
+            Dim lookupFile As String = tableDir + CStr(t.ExtendedProperties(TableProperty.FileName))
             ' RoWa21: Only create the file if it does not exist
-            If System.IO.File.Exists(lookupFile) = False Then
+            If Not System.IO.File.Exists(lookupFile) Then
                 If t.Rows.Count > 0 Then
-                    t.WriteXml(XmlDB.BaseDirectory & CStr(t.ExtendedProperties(TableProperty.FileName)))
+                    t.WriteXml(tableDir & CStr(t.ExtendedProperties(TableProperty.FileName)))
                 End If
             End If
         Next
-    End Sub
+
+        Return ds
+    End Function
 
     Private Function MakeColumn(ByVal columnName As String, ByVal caption As String, ByVal type As Type, Optional ByVal defaultValue As Integer = 0, _
-    Optional ByVal Lookup_Table As String = "", Optional ByVal Lookup_ValueColumn As String = "", Optional ByVal Lookup_TextColumn As String = "", Optional ByVal Lookup_AddBlank As Boolean = False, Optional ByVal Lookup_Filter As String = "", Optional ByVal HideInGrid As Boolean = False, Optional ByVal maxLength As Integer = 0, Optional ByVal Lookup_Sort As String = "", Optional ByVal tooltipText As String = "") As DataColumn
+    Optional ByVal lookup_Table As String = Nothing, Optional ByVal lookup_ValueColumn As String = Nothing, Optional ByVal lookup_TextColumn As String = Nothing, _
+    Optional ByVal lookup_AddBlank As Boolean = False, Optional ByVal lookup_Filter As String = Nothing, Optional ByVal hideInGrid As Boolean = False, _
+    Optional ByVal maxLength As Integer = 0, Optional ByVal lookup_Sort As String = Nothing, Optional ByVal tooltipText As String = Nothing, Optional ReferenceRequired As Boolean = False,
+    Optional lookup_FirstValuePrefix As String = Nothing, Optional sourceColumnName As String = Nothing) As DataColumn
         Dim c As DataColumn
         c = New DataColumn(columnName)
         With c
@@ -607,30 +665,34 @@ Public Module DatabaseCode
             .DataType = type
             .AllowDBNull = False
 
-            If type.Equals(GetType(Integer)) Or type.Equals(GetType(Boolean)) Or type.Equals(GetType(Decimal)) Or type.Equals(GetType(Byte)) Then
+            If type.Equals(GetType(Integer)) Or type.Equals(GetType(Boolean)) Or type.Equals(GetType(ULong)) Or type.Equals(GetType(Decimal)) Or type.Equals(GetType(Byte)) Or type.Equals(GetType(Long)) Then
                 .DefaultValue = defaultValue
             Else
                 .DefaultValue = ""
                 If maxLength > 0 Then .MaxLength = maxLength
             End If
-            If Lookup_Table.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.Lookup_Table, Lookup_Table)
-            If Lookup_ValueColumn.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.Lookup_ValueColumn, Lookup_ValueColumn)
-            If Lookup_TextColumn.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.Lookup_TextColumn, Lookup_TextColumn)
-            If Lookup_Filter.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.Lookup_Filter, Lookup_Filter)
-            If Lookup_Sort.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.Lookup_Sort, Lookup_Sort)
-            If Lookup_Table.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.Lookup_AddBlank, Lookup_AddBlank)
-            If HideInGrid Then .ExtendedProperties.Add(ColumnProperty.Grid_Hidden, HideInGrid)
+            If Not String.IsNullOrEmpty(lookup_Table) Then .ExtendedProperties.Add(ColumnProperty.Lookup_Table, lookup_Table)
+            If Not String.IsNullOrEmpty(lookup_ValueColumn) Then .ExtendedProperties.Add(ColumnProperty.Lookup_ValueColumn, lookup_ValueColumn)
+            If Not String.IsNullOrEmpty(lookup_TextColumn) Then .ExtendedProperties.Add(ColumnProperty.Lookup_TextColumn, lookup_TextColumn)
+            If Not String.IsNullOrEmpty(lookup_Filter) Then .ExtendedProperties.Add(ColumnProperty.Lookup_Filter, lookup_Filter)
+            If Not String.IsNullOrEmpty(lookup_Sort) Then .ExtendedProperties.Add(ColumnProperty.Lookup_Sort, lookup_Sort)
+            If Not String.IsNullOrEmpty(lookup_AddBlank) Then .ExtendedProperties.Add(ColumnProperty.Lookup_AddBlank, lookup_AddBlank)
+            If Not String.IsNullOrEmpty(lookup_FirstValuePrefix) Then .ExtendedProperties.Add(ColumnProperty.Lookup_FirstValuePrefix, lookup_FirstValuePrefix)
+            If hideInGrid Then .ExtendedProperties.Add(ColumnProperty.Grid_Hidden, True)
+            If ReferenceRequired Then .ExtendedProperties.Add(ColumnProperty.ReferenceRequired, True)
 
-            If tooltipText.Length > 0 Then .ExtendedProperties.Add(ColumnProperty.ToolTip, tooltipText)
+            If Not String.IsNullOrEmpty(tooltipText) Then .ExtendedProperties.Add(ColumnProperty.ToolTip, tooltipText)
+            If Not String.IsNullOrEmpty(sourceColumnName) Then .ExtendedProperties.Add(ColumnProperty.SourceColumnName, sourceColumnName)
         End With
         Return c
     End Function
 
-    Private Function MakeLookupTable(ByVal tableName As String) As DataTable
+    Private Function MakeLookupTable(Of idType)(ByVal tableName As String) As DataTable
         Dim t As New DataTable(tableName)
         t.ExtendedProperties.Add(TableProperty.FileName, "Lookup\" & tableName & ".xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
-        t.Columns.Add(MakeColumn("id", "ID", GetType(Integer)))
+        t.Columns.Add(MakeColumn("id", "ID", GetType(idType)))
         t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
 
         t.Columns("id").ReadOnly = True
@@ -639,6 +701,49 @@ Public Module DatabaseCode
         pk(0) = t.Columns("id")
         t.PrimaryKey = pk
 
+        Return t
+    End Function
+
+    Private Function MakeSilhouetteTable() As DataTable
+        Dim t As New DataTable("Silhouette")
+        t.ExtendedProperties.Add(TableProperty.FileName, "Silhouette.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
+
+        t.Columns.Add(MakeColumn("id", "ID", GetType(Integer)))
+        t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
+
+        Dim pk(0) As DataColumn
+        pk(0) = t.Columns("id")
+        t.PrimaryKey = pk
+
+        Return t
+    End Function
+
+    Private Function MakeNasAttachmentClassTable() As DataTable
+        Dim t As New DataTable("NasAttachmentClass")
+        t.ExtendedProperties.Add(TableProperty.FileName, "NasAttachmentClass.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
+
+        t.Columns.Add(MakeColumn("id", "ID", GetType(ULong)))
+        t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
+
+        Dim pk(0) As DataColumn
+        pk(0) = t.Columns("id")
+        t.PrimaryKey = pk
+        Return t
+    End Function
+
+    Private Function MakeAttachmentPointTable() As DataTable
+        Dim t As New DataTable("AttachmentPoint")
+        t.ExtendedProperties.Add(TableProperty.FileName, "AttachmentPoint.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
+
+        t.Columns.Add(MakeColumn("id", "ID", GetType(ULong)))
+        t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
+
+        Dim pk(0) As DataColumn
+        pk(0) = t.Columns("id")
+        t.PrimaryKey = pk
         Return t
     End Function
 
@@ -666,8 +771,9 @@ Public Module DatabaseCode
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("ubCalibre", "Caliber", GetType(Integer), , "AMMO", "uiIndex", "AmmoCaliber"))
-        t.Columns.Add(MakeColumn("ubMagSize", "Size", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubMagSize", "Mag Size", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubAmmoType", "Ammo Type", GetType(Integer), , "AMMOTYPE", "uiIndex", "name"))
+        t.Columns.Add(MakeColumn("ubMagType", "Mag Type", GetType(Integer), , "MagazineType", "id", "name"))
 
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
@@ -742,6 +848,13 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("ubDuration", "Duration", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubStartRadius", "Initial Radius", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubMagSize", "Magazine Size", GetType(Integer))) 'NAS
+        t.Columns.Add(MakeColumn("fExplodeOnImpact", "Impact Explosive", GetType(Boolean))) 'Impact Explosive
+        t.Columns.Add(MakeColumn("usNumFragments", "Fragments", GetType(Integer)))          'Number of Fragments
+        t.Columns.Add(MakeColumn("ubFragType", "Fragment Type", GetType(Integer), , "AMMOTYPE", "uiIndex", "Name", , , , , "Name"))          'Fragment Type
+        t.Columns.Add(MakeColumn("ubFragDamage", "Fragment Damage", GetType(Integer)))      'Fragment Damage
+        t.Columns.Add(MakeColumn("ubFragRange", "Fragment Range", GetType(Integer)))        'Fragment Range
+        t.Columns.Add(MakeColumn("ubHorizontalDegree", "Horizontal Degrees", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubVerticalDegree", "Vertical Degrees", GetType(Integer)))
 
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
@@ -792,15 +905,22 @@ Public Module DatabaseCode
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("usItem", "Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass<>1", , , "szLongItemName"))
-        t.Columns.Add(MakeColumn("usAttachment1", "Attachment 1", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass<>1", , , "szLongItemName"))
-        t.Columns.Add(MakeColumn("usAttachment2", "Attachment 2", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass<>1", , , "szLongItemName"))
+        For i As Integer = 1 To 20
+            t.Columns.Add(MakeColumn("usAttachment" & i, "Attachment " & i, GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "Attachment=1 AND usItemClass<>1", , , "szLongItemName"))
+        Next
         t.Columns.Add(MakeColumn("usResult", "Resulting Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass<>1", , , "szLongItemName"))
 
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
         t.PrimaryKey = pk
 
-        AddConstraint(t, New String() {"usItem", "usAttachment1", "usAttachment2"}, False)
+        Dim s(20) As String
+        s(0) = "usItem"
+        For i As Integer = 1 To 20
+            s(i) = "usAttachment" & i
+        Next
+
+        AddConstraint(t, s, False)
 
         Return t
     End Function
@@ -813,7 +933,7 @@ Public Module DatabaseCode
 
         t.Columns.Add(MakeColumn("attachmentIndex", "Attachment", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "Attachment=1 AND usItemClass<>1", , , "szLongItemName"))
         t.Columns.Add(MakeColumn("itemIndex", "Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass<>1", , , "szLongItemName"))
-        t.Columns.Add(MakeColumn("APCost", "AP Cost", GetType(Integer), 5))
+        t.Columns.Add(MakeColumn("APCost", "AP Cost", GetType(Integer), 20))
         t.Columns.Add(MakeColumn("NASOnly", "NAS Only", GetType(Boolean)))
 
         AddConstraint(t, New String() {"attachmentIndex", "itemIndex"}, True)
@@ -843,6 +963,7 @@ Public Module DatabaseCode
         Dim t As New DataTable("AMMOTYPE")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "AmmoTypes.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
@@ -875,6 +996,8 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("lockBustingPower", "Lock Buster Power", GetType(Integer)))
         t.Columns.Add(MakeColumn("tracerEffect", "Tracer Effect", GetType(Boolean)))
         t.Columns.Add(MakeColumn("spreadPattern", "Spread Pattern", GetType(String)))
+        t.Columns.Add(MakeColumn("temperatureModificator", "Temperature Modifier", GetType(Decimal), 0))
+        t.Columns.Add(MakeColumn("PoisonPercentage", "Poison Power", GetType(Integer), 0))
 
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
@@ -887,6 +1010,7 @@ Public Module DatabaseCode
         Dim t As New DataTable("AMMO")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "AmmoStrings.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "AmmoCaliber")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("AmmoCaliber", "Caliber", GetType(String), , , , , , , , 20))
@@ -904,6 +1028,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.FileName, language & ".AmmoStrings.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "AMMO")
         t.ExtendedProperties.Add(TableProperty.DataSetName, "AMMOLIST")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "AmmoCaliber")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("AmmoCaliber", "Caliber", GetType(String), , , , , , , , 20))
@@ -963,7 +1088,11 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("ubAimLevels", "Default Aim Levles", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("ubRecoilDelay", "Recoil Delay", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("Handling", "Weapon Handling", GetType(Integer), , , , , , , True))
+        t.Columns.Add(MakeColumn("usOverheatingJamThreshold", "Overheating Jam Threshold", GetType(Decimal), 4000))
+        t.Columns.Add(MakeColumn("usOverheatingDamageThreshold", "Overheating Damage Threshold", GetType(Decimal), 5000))
+        t.Columns.Add(MakeColumn("usOverheatingSingleShotTemperature", "Overheating Single Shot Temperature ", GetType(Decimal), 80))
         t.Columns.Add(MakeColumn("MalfunctionRate", "Malfunction Rate", GetType(Integer), , , , , , , ))
+
 
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
@@ -978,6 +1107,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.FileName, "Items.xml")
         t.ExtendedProperties.Add(TableProperty.TableHandlerName, "ItemTable")
         t.ExtendedProperties.Add(TableProperty.Trim, True)
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "szLongItemName")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
 
@@ -987,17 +1117,25 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("szBRName", "BR Name", GetType(String), , , , , , , True, 80))
         t.Columns.Add(MakeColumn("szBRDesc", "BR Desc", GetType(String), , , , , , , True, 400))
         t.Columns.Add(MakeColumn("usItemClass", "Class", GetType(Integer), , "ItemClass", "id", "name"))
-        t.Columns.Add(MakeColumn("nasAttachmentClass", "Attachment Class", GetType(Integer), , "AttachmentClass", "id", "name", , , , , "id")) 'NAS
-        t.Columns.Add(MakeColumn("nasLayoutClass", "Layout Class", GetType(Integer))) 'NAS
+        t.Columns.Add(MakeColumn("AttachmentClass", "Built-in Att. Class", GetType(ULong), , "AttachmentClass", "id", "name", , , True, , "name"))
+        t.Columns.Add(MakeColumn("nasAttachmentClass", "Custom Att. Class", GetType(ULong), , "NasAttachmentClass", "id", "name", , , True, , "name")) 'NAS
+        t.Columns.Add(MakeColumn("nasLayoutClass", "Layout Class", GetType(ULong), , , , , , , True)) 'NAS
+        For i As Integer = 0 To 9
+            t.Columns.Add(MakeColumn("AvailableAttachmentPoint" & i, "Avail. Att. Point " & i + 1, GetType(ULong), , "AttachmentPoint", "id", "name", , , True, , "name", , , , "AvailableAttachmentPoint"))
+        Next
+        't.Columns.Add(MakeColumn("AvailableAttachmentPoint", "Avail. Att. Point", GetType(ULong), , "AttachmentPoint", "id", "name", , , True, , "name"))
+        t.Columns.Add(MakeColumn("AttachmentPoint", "Att. Point", GetType(ULong), , "AttachmentPoint", "id", "name", , , True, , "name"))
+        t.Columns.Add(MakeColumn("AttachToPointAPCost", "Att. AP Cost", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("ubClassIndex", "Foreign Key", GetType(Integer), , , , , , , True))
+        t.Columns.Add(MakeColumn("ItemFlag", "Flag(s)", GetType(Integer), , "ItemFlag", "id", "name", , , True))
         t.Columns.Add(MakeColumn("ubCursor", "Cursor", GetType(Integer), , "Cursor", "id", "name", , , True))
         t.Columns.Add(MakeColumn("bSoundType", "Sound Type", GetType(Integer), 0, , , , , , True))
         t.Columns.Add(MakeColumn("ubGraphicType", "Graphic Type", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("ubGraphicNum", "Graphic #", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("ubWeight", "Weight", GetType(Integer)))
-        t.Columns.Add(MakeColumn("ubPerPocket", "# per Pocket", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubPerPocket", "# per Pocket", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("ItemSize", "Size", GetType(Integer))) 'TODO: limit to 0-34 and 99
-        t.Columns.Add(MakeColumn("ItemSizeBonus", "Size Adjustment", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ItemSizeBonus", "Size Adjustment", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("usPrice", "Price", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubCoolness", "Coolness", GetType(Integer)))
         t.Columns.Add(MakeColumn("bReliability", "Reliability", GetType(Integer), , , , , , , True))
@@ -1009,17 +1147,18 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("Sinks", "Sinks", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("ShowStatus", "Show Status", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("HiddenAddon", "Hidden Addon", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("TwoHanded", "Two Handed", GetType(Boolean)))
+        t.Columns.Add(MakeColumn("TwoHanded", "Two Handed", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("NotBuyable", "Not Buyable", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("Attachment", "Attachment", GetType(Boolean)))
+        t.Columns.Add(MakeColumn("Attachment", "Attachment", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("HiddenAttachment", "Hidden Attachment", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("BlockIronSight", "Block Iron Sight", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("BigGunList", "Tons of Guns Mode", GetType(Boolean)))
         t.Columns.Add(MakeColumn("SciFi", "Sci-Fi", GetType(Boolean)))
         t.Columns.Add(MakeColumn("NotInEditor", "Not In Editor", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("DefaultUndroppable", "Undroppable", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Unaerodynamic", "Unaerodynamic", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Electronic", "Electronic", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("Inseparable", "Inseparable", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("Inseparable", "Inseparable", GetType(Integer), , "Separability", "id", "name", , , True))
         t.Columns.Add(MakeColumn("BR_NewInventory", "BR New Inventory", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("BR_UsedInventory", "BR Used Inventory", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("BR_ROF", "BR Rate of Fire", GetType(Integer), , , , , , , True))
@@ -1053,15 +1192,15 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("Mortar", "Mortar", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("RocketLauncher", "Rocket Launcher", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("SingleShotRocketLauncher", "Single-Shot Rocket Launcher", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("DiscardedLauncherItem", "Discarded Launcher Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", True, "uiIndex=0 OR usItemClass=268435456", True, , "szLongItemName"))
+        t.Columns.Add(MakeColumn("DiscardedLauncherItem", "Discarded Launcher Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "uiIndex=0 OR usItemClass=268435456", True, , "szLongItemName"))
         t.Columns.Add(MakeColumn("RocketRifle", "Rocket Rifle", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Cannon", "Cannon", GetType(Boolean), , , , , , , True))
-        For i As Integer = 0 To 19
-            t.Columns.Add(MakeColumn("DefaultAttachment" & i, "Default Attachment", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", True, "uiIndex=0 OR (Attachment=1 AND usItemClass <> 1)", True, , "szLongItemName"))
+        For i As Integer = 0 To 9
+            t.Columns.Add(MakeColumn("DefaultAttachment" & i, "Default Attachment " & i + 1, GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "uiIndex=0 OR (Attachment=1 AND usItemClass <> 1)", True, , "szLongItemName", , , , "DefaultAttachment"))
         Next
         t.Columns.Add(MakeColumn("BrassKnuckles", "Brass Knuckles", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Crowbar", "Crowbar", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("BloodiedItem", "Bloodied Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", True, "usItemClass = 8 OR uiIndex=0", True, , "szLongItemName"))
+        t.Columns.Add(MakeColumn("BloodiedItem", "Bloodied Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass = 8 OR uiIndex=0", True, , "szLongItemName"))
         t.Columns.Add(MakeColumn("Rock", "Rock", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("CamoBonus", "Camo Bonus", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("UrbanCamoBonus", "Urban Camo Bonus", GetType(Integer), , , , , , , True))
@@ -1070,8 +1209,7 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("StealthBonus", "Stealth Bonus", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("FlakJacket", "Flak Jacket", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("LeatherJacket", "Leather Jacket", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("Detonator", "Detonator", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("RemoteDetonator", "Remote Detonator", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("Directional", "Directional", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("RemoteTrigger", "Remote Trigger", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("LockBomb", "LockBomb", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Flare", "Flare", GetType(Boolean), , , , , , , True))
@@ -1089,6 +1227,7 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("Alcohol", "Alcohol", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Hardware", "Hardware", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Medical", "Medical", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("DrugType", "Drug Type", GetType(ULong), , "DrugType", "id", "name", , , True))
         t.Columns.Add(MakeColumn("CamouflageKit", "Camouflage Kit", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("LocksmithKit", "Locksmith Kit", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("Toolkit", "Toolkit", GetType(Boolean), , , , , , , True))
@@ -1106,16 +1245,25 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("ContainsLiquid", "Contains Liquid", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("MetalDetector", "Metal Detector", GetType(Boolean), , , , , , , True))
         t.Columns.Add(MakeColumn("FingerPrintID", "Finger Print ID", GetType(Boolean), , , , , , , True))
-        t.Columns.Add(MakeColumn("NewInv", "New Inventory Only", GetType(Boolean)))
-        t.Columns.Add(MakeColumn("AttachmentSystem", "Attachment System", GetType(Integer), , "AttachmentSystem", "id", "name")) 'NAS
-        t.Columns.Add(MakeColumn("AmmoCrate", "Ammo Crate", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("TripWireActivation", "Trip Wire Activator", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("TripWire", "Trip Wire", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("NewInv", "New Inventory Only", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("AttachmentSystem", "Attachment System", GetType(Integer), , "AttachmentSystem", "id", "name", , , True)) 'NAS
         t.Columns.Add(MakeColumn("ScopeMagFactor", "Scope Magnification Factor", GetType(Decimal), , , , , , , True))
         t.Columns.Add(MakeColumn("ProjectionFactor", "Laser Projection Factor", GetType(Decimal), , , , , , , True))
         t.Columns.Add(MakeColumn("RecoilModifierX", "Recoil X Modifier", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("RecoilModifierY", "Recoil Y Modifier", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("PercentRecoilModifier", "Recoil Modifier", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("PercentAccuracyModifier", "Accuracy Modifier", GetType(Integer), , , , , , , True))
-        t.Columns.Add(MakeColumn("spreadPattern", "Spread Pattern", GetType(String), , , , , , , False))
+        t.Columns.Add(MakeColumn("spreadPattern", "Spread Pattern", GetType(String), , , , , , , True))
+        t.Columns.Add(MakeColumn("barrel", "Barrel", GetType(Boolean), , , , , , , True))
+        t.Columns.Add(MakeColumn("usOverheatingCooldownFactor", "Overheating Cooldown Factor", GetType(Decimal), 100, , , , , , True))
+        t.Columns.Add(MakeColumn("overheatTemperatureModificator", "Overheating Temperature Modifier", GetType(Decimal), 0, , , , , , True))
+        t.Columns.Add(MakeColumn("overheatCooldownModificator", "Overheating Cooldown Modifier", GetType(Decimal), 0, , , , , , True))
+        t.Columns.Add(MakeColumn("overheatJamThresholdModificator", "Overheating Jam Threshold Modifier", GetType(Decimal), 0, , , , , , True))
+        t.Columns.Add(MakeColumn("overheatDamageThresholdModificator", "Overheating Damage Threshold Modifier", GetType(Decimal), 0, , , , , , True))
+        t.Columns.Add(MakeColumn("PoisonPercentage", "Poison Power", GetType(Integer), 0, , , , , , True))
+
         'CHRISL: Add new tags above this point.  Do not have new tags in the above section end in 1, 2 or 3 or the xml will not load correctly
         '   Only add new tags below this point if the tags are in the STAND_MODIFIERS, CROUCH_MODIFIERS and PRONE_MODIFIERS sections
         'Start STAND_MODIFIERS section
@@ -1155,6 +1303,7 @@ Public Module DatabaseCode
         t.Columns.Add(MakeColumn("PercentCounterForceFrequency3", "Prone CF Frequency Bonus", GetType(Integer), -101, , , , , , True))
         t.Columns.Add(MakeColumn("AimLevels3", "Prone Aim Bonus", GetType(Integer), -101, , , , , , True))
 
+
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
         t.PrimaryKey = pk
@@ -1168,6 +1317,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.FileName, language & ".Items.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "ITEM")
         t.ExtendedProperties.Add(TableProperty.Trim, True)
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "szLongItemName")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
 
@@ -1189,6 +1339,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "Sounds\Sounds.xml")
         t.ExtendedProperties.Add(TableProperty.TableHandlerName, "SoundTable")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("id", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
@@ -1206,6 +1357,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.FileName, "Sounds\BurstSounds.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "SOUND")
         t.ExtendedProperties.Add(TableProperty.TableHandlerName, "SoundTable")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("id", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
@@ -1222,7 +1374,8 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, "INVENTORYLIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "NPCInventory\" & shopKeeperName & "Inventory.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "INVENTORY")
-        t.ExtendedProperties.Add(TableProperty.TableHandlerName, "AutoIncrementTable")
+        t.ExtendedProperties.Add(TableProperty.TableHandlerName, "InventoryTable")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "sItemIndex")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("sItemIndex", "Item", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass<>1", , , "szLongItemName"))
@@ -1237,6 +1390,7 @@ Public Module DatabaseCode
 
     Private Function MakeShopKeeperControlTable(ByVal shopKeeperName As String) As DataTable
         Dim t As New DataTable(shopKeeperName & "Control")
+        t.ExtendedProperties.Add(TableProperty.TableHandlerName, "ControlTable")
         t.ExtendedProperties.Add(TableProperty.DataSetName, "INVENTORYLIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "NPCInventory\" & shopKeeperName & "Inventory.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "CONTROL")
@@ -1340,6 +1494,7 @@ Public Module DatabaseCode
         Dim t As New DataTable("IMPITEMCHOICES")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "IMPItemChoices.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Type", GetType(String)))
@@ -1361,6 +1516,7 @@ Public Module DatabaseCode
         Dim t As New DataTable("ENEMYGUNCHOICES")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "EnemyGunChoices.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Progress", GetType(String)))
@@ -1382,6 +1538,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "EnemyItemChoices.xml")
         t.ExtendedProperties.Add(TableProperty.TableHandlerName, "EnemyItemTable")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Type", GetType(String)))
@@ -1400,6 +1557,7 @@ Public Module DatabaseCode
 
     Private Function MakeEnemyAmmoTable() As DataTable
         Dim t As New DataTable("ENEMYAMMOCHOICES")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "name")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("name", "Type", GetType(String)))
@@ -1439,6 +1597,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, "ARMOURDROPLIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "EnemyArmourDrops.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "DROPITEM")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "ubArmourClass")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubArmourClass", "Type", GetType(Integer), , "ArmourClass", "id", "name"))
@@ -1457,6 +1616,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, "EXPLOSIVEDROPLIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "EnemyExplosiveDrops.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "DROPITEM")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "ubType")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubType", "Type", GetType(Integer), , "ExplosionType", "id", "name"))
@@ -1475,6 +1635,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, "WEAPONDROPLIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "EnemyWeaponDrops.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "DROPITEM")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "ubWeaponType")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("ubWeaponType", "Type", GetType(Integer), , "WeaponType", "id", "name"))
@@ -1493,6 +1654,7 @@ Public Module DatabaseCode
         t.ExtendedProperties.Add(TableProperty.DataSetName, "MISCDROPLIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "EnemyMiscDrops.xml")
         t.ExtendedProperties.Add(TableProperty.SourceTableName, "DROPITEM")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "usItemClass")
 
         t.Columns.Add(MakeColumn("uiIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("usItemClass", "Type", GetType(Integer), , "ItemClass", "id", "name"))
@@ -1526,20 +1688,38 @@ Public Module DatabaseCode
         Return t
     End Function
 
-    Private Function MakePocketsTable() As DataTable
+    Private Sub ReadItemSizes(baseDir As String)
+        Dim ja2() As String = System.IO.File.ReadAllLines(baseDir & "ja2_options.ini")
+        For Each line As String In ja2
+            Dim arr As String() = line.Split("=")
+            If arr(0).Trim = "MAX_ITEM_SIZE" Then
+                ItemSizeMax = arr(1)
+                ItemSizesRead = True
+            End If
+        Next
+        If Not ItemSizesRead Then ItemSizeMax = 99
+    End Sub
+
+    Private Function MakePocketsTable(baseDir As String) As DataTable
         Dim t As New DataTable("POCKET")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "Pockets.xml")
+        t.ExtendedProperties.Add(TableProperty.Trim, True)
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "pName")
 
         t.Columns.Add(MakeColumn("pIndex", "ID", GetType(Integer), , , , , , , True))
         t.Columns.Add(MakeColumn("pName", "Name", GetType(String)))
         t.Columns.Add(MakeColumn("pSilhouette", "Silhouette", GetType(Integer), , "Silhouette", "id", "name"))
         t.Columns.Add(MakeColumn("pType", "Type", GetType(Integer), , "PocketSize", "id", "name"))
-        t.Columns.Add(MakeColumn("pRestriction", "Restriction", GetType(Integer), ItemClass.None, "ItemClass", "id", "name", True))
+        t.Columns.Add(MakeColumn("pRestriction", "Restriction", GetType(Integer), 0, "ItemClass", "id", "name", True))
 
-        If Not ItemSizesRead Then ReadItemSizes()
+        If Not ItemSizesRead Then ReadItemSizes(baseDir)
         For i As Integer = 0 To ItemSizeMax
-            t.Columns.Add(MakeColumn("ItemCapacityPerSize" & i, "Size " & i, GetType(Integer), , , , , , , , , , "Capacity for Size " & i))
+            If ItemSizeMax < 100 Then
+                t.Columns.Add(MakeColumn("ItemCapacityPerSize" & i, "Size " & i, GetType(Integer), , , , , , , , , , "Capacity for Size " & i))
+            Else
+                t.Columns.Add(MakeColumn("ItemCapacityPerSize" & i, "Size " & i, GetType(Integer), , , , , , , True, , , "Capacity for Size " & i))
+            End If
         Next
 
         Dim pk(0) As DataColumn
@@ -1551,8 +1731,10 @@ Public Module DatabaseCode
 
     Private Function MakeMercStartingGearTable() As DataTable
         Dim t As New DataTable("MERCGEAR")
+        t.ExtendedProperties.Add(TableProperty.TableHandlerName, "MercStartingGearTable")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "MercStartingGear.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "mName")
 
         t.Columns.Add(MakeColumn("mIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("mName", "Name", GetType(String)))
@@ -1606,11 +1788,12 @@ Public Module DatabaseCode
         Dim t As New DataTable("ATTACHMENTSLOT")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "AttachmentSlots.xml")
+        t.ExtendedProperties.Add(TableProperty.ComparisonField, "szSlotName")
 
-        t.Columns.Add(MakeColumn("uiSlotIndex", "ID", GetType(Integer), , , , , , , True))
+        t.Columns.Add(MakeColumn("uiSlotIndex", "ID", GetType(Integer)))
         t.Columns.Add(MakeColumn("szSlotName", "Name", GetType(String), , , , , , , , 200))
-        t.Columns.Add(MakeColumn("nasAttachmentClass", "Attachment Class", GetType(Integer), , "AttachmentClass", "id", "name")) 'NAS
-        t.Columns.Add(MakeColumn("nasLayoutClass", "Layout Class", GetType(Integer))) 'NAS
+        t.Columns.Add(MakeColumn("nasAttachmentClass", "Custom Attachment Class", GetType(ULong), , "NasAttachmentClass", "id", "name")) 'NAS
+        t.Columns.Add(MakeColumn("nasLayoutClass", "Layout Class", GetType(Decimal))) 'NAS
         t.Columns.Add(MakeColumn("usDescPanelPosX", "X Coord", GetType(Integer)))
         t.Columns.Add(MakeColumn("usDescPanelPosY", "Y Coord", GetType(Integer)))
         t.Columns.Add(MakeColumn("fMultiShot", "Multi-Shot", GetType(Boolean)))
@@ -1625,6 +1808,8 @@ Public Module DatabaseCode
 
     Private Function MakeITETable() As DataTable
         Dim t As New DataTable("ITEMTOEXPLOSIVE")
+
+        t.ExtendedProperties.Add(TableProperty.TableHandlerName, "IteTable")
         t.ExtendedProperties.Add(TableProperty.DataSetName, t.TableName & "LIST")
         t.ExtendedProperties.Add(TableProperty.FileName, "")
 
@@ -1633,6 +1818,50 @@ Public Module DatabaseCode
 
         Dim pk(0) As DataColumn
         pk(0) = t.Columns("uiIndex")
+        t.PrimaryKey = pk
+
+        Return t
+    End Function
+
+    Private Function MakeTransformTable() As DataTable
+        Dim t As New DataTable("TRANSFORM")
+        t.ExtendedProperties.Add(TableProperty.DataSetName, "TRANSFORMATIONS_LIST")
+        t.ExtendedProperties.Add(TableProperty.FileName, "Item_Transformations.xml")
+        t.ExtendedProperties.Add(TableProperty.TableHandlerName, "ItemTransformationTable")
+
+        t.Columns.Add(MakeColumn("usItem", "Item to Transform", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass <> 1 OR uiIndex=0", , , "szLongItemName"))
+        t.Columns.Add(MakeColumn("usResult1", "1st Result", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass <> 1 OR uiIndex=0", , , "szLongItemName"))
+        t.Columns.Add(MakeColumn("usResult2", "2nd Result", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass <> 1 OR uiIndex=0", , , "szLongItemName"))
+        t.Columns.Add(MakeColumn("usResult3", "3rd Result", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass <> 1 OR uiIndex=0", , , "szLongItemName"))
+        For x As Integer = 4 To 10
+            t.Columns.Add(MakeColumn("usResult" & x, x & "th Result", GetType(Integer), , "ITEM", "uiIndex", "szLongItemName", , "usItemClass <> 1 OR uiIndex=0", , , "szLongItemName"))
+        Next
+        t.Columns.Add(MakeColumn("usAPCost", "AP Cost", GetType(Integer)))
+        t.Columns.Add(MakeColumn("iBPCost", "BP Cost", GetType(Integer)))
+        t.Columns.Add(MakeColumn("szMenuRowText", "Menu Description", GetType(String), , , , , , , , 50))
+        t.Columns.Add(MakeColumn("szTooltipText", "Tooltip", GetType(String), , , , , , , , 300))
+
+        AddConstraint(t, New String() {"usItem", "usResult1", "usResult2", "usResult3", "usResult4", "usResult5", "usResult6", "usResult7", "usResult8", "usResult9", "usResult10"}, True)
+
+        Return t
+    End Function
+
+    Private Function MakeDrugsTable() As DataTable
+        Dim t As New DataTable("DRUG")
+        t.ExtendedProperties.Add(TableProperty.DataSetName, "DRUGSLIST")
+        t.ExtendedProperties.Add(TableProperty.FileName, "Drugs.xml")
+
+        t.Columns.Add(MakeColumn("ubType", "Type", GetType(Integer)))
+        t.Columns.Add(MakeColumn("name", "Name", GetType(String)))
+        t.Columns.Add(MakeColumn("ubDrugTravelRate", "Travel Rate", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubDrugWearoffRate", "Wear Off Rate", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubDrugEffect", "Effect", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubDrugSideEffect", "Side Effect", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubDrugSideEffectRate", "Side Effect Rate", GetType(Integer)))
+        t.Columns.Add(MakeColumn("ubMoralBacklash", "Morale Hit", GetType(Integer)))
+
+        Dim pk(0) As DataColumn
+        pk(0) = t.Columns("ubType")
         t.PrimaryKey = pk
 
         Return t

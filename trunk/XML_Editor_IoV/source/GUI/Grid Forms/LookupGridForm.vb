@@ -1,8 +1,8 @@
 Public Class LookupGridForm
     Inherits GridForm
 
-    Public Sub New(ByVal formText As String, ByVal view As DataView)
-        MyBase.New(formText, view)
+    Public Sub New(manager As DataManager, ByVal formText As String, tableName As String, Optional rowFilter As String = Nothing, Optional sort As String = Nothing, Optional rowStateFilter As DataViewRowState = DataViewRowState.CurrentRows)
+        MyBase.New(manager, formText, tableName, rowFilter, sort, rowStateFilter)
 
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
@@ -14,6 +14,7 @@ Public Class LookupGridForm
             .SelectionMode = DataGridViewSelectionMode.CellSelect
             .RowHeadersVisible = True
         End With
+        EnableContextMenuItems()
     End Sub
 
 End Class

@@ -1,3 +1,5 @@
+Imports System.Runtime.CompilerServices
+
 Public Module Utility
     Public Class TableProperty
         Public Const FileName As String = "FileName"
@@ -6,6 +8,7 @@ Public Module Utility
         Public Const TableHandler As String = "TableHandler"
         Public Const TableHandlerName As String = "TableHandlerName"
         Public Const Trim As String = "Trim"
+        Public Const ComparisonField As String = "ComparisonField"
     End Class
 
     Public Class ColumnProperty
@@ -18,11 +21,14 @@ Public Module Utility
         Public Const Lookup_ValueColumn As String = "Lookup_ValueColumn"
         Public Const Lookup_TextColumn As String = "Lookup_TextColumn"
         Public Const Lookup_AddBlank As String = "Lookup_AddBlank"
+        Public Const Lookup_FirstValuePrefix As String = "Lookup_FirstValuePrefix"
         Public Const Lookup_Filter As String = "Lookup_Filter"
         Public Const Lookup_Sort As String = "Lookup_Sort"
+        Public Const ReferenceRequired As String = "RefRequired"
         Public Const ToolTip As String = "ToolTip"
         Public Const SubTable As String = "SubTable"
         Public Const Width As String = "Width"
+        Public Const SourceColumnName As String = "SourceColumnName"
     End Class
 
     Public Class ShopKeepers
@@ -70,6 +76,7 @@ Public Module Utility
         Money = 536870912
     End Enum
 
+    <Extension()>
     Friend Function GetTableHandler(ByVal table As DataTable) As DefaultTable
         Dim val As DefaultTable = Nothing
         If table IsNot Nothing AndAlso table.ExtendedProperties.Contains(TableProperty.TableHandler) Then
@@ -78,6 +85,7 @@ Public Module Utility
         Return val
     End Function
 
+    <Extension()>
     Public Function GetStringProperty(ByVal table As DataTable, ByVal extendedProperty As String) As String
         Dim val As String = Nothing
         If table Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
@@ -87,6 +95,7 @@ Public Module Utility
         Return val
     End Function
 
+    <Extension()>
     Public Function GetStringProperty(ByVal column As DataColumn, ByVal extendedProperty As String) As String
         Dim val As String = Nothing
         If column Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
@@ -96,6 +105,7 @@ Public Module Utility
         Return val
     End Function
 
+    <Extension()>
     Public Function GetBooleanProperty(ByVal table As DataTable, ByVal extendedProperty As String) As Boolean
         Dim val As String = False
         If table Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
@@ -105,6 +115,7 @@ Public Module Utility
         Return val
     End Function
 
+    <Extension()>
     Public Function GetBooleanProperty(ByVal column As DataColumn, ByVal extendedProperty As String) As Boolean
         Dim val As String = False
         If column Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
@@ -114,6 +125,7 @@ Public Module Utility
         Return val
     End Function
 
+    <Extension()>
     Public Sub SetProperty(ByVal table As DataTable, ByVal extendedProperty As String, ByVal Value As Object)
         If table Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
 
@@ -126,6 +138,7 @@ Public Module Utility
         End If
     End Sub
 
+    <Extension()>
     Public Sub SetProperty(ByVal column As DataColumn, ByVal extendedProperty As String, ByVal Value As Object)
         If column Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
         If Not Value Is Nothing Then
@@ -137,6 +150,7 @@ Public Module Utility
         End If
     End Sub
 
+    <Extension()>
     Public Sub RemoveProperty(ByVal column As DataColumn, ByVal extendedProperty As String)
         If column Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
         If column.ExtendedProperties.Contains(extendedProperty) Then
@@ -144,6 +158,7 @@ Public Module Utility
         End If
     End Sub
 
+    <Extension()>
     Public Sub RemoveProperty(ByVal table As DataTable, ByVal extendedProperty As String)
         If table Is Nothing Or extendedProperty Is Nothing Then Throw New ArgumentNullException
         If table.ExtendedProperties.Contains(extendedProperty) Then
@@ -151,7 +166,8 @@ Public Module Utility
         End If
     End Sub
 
-    Friend Function CopyColumn(ByVal column As DataColumn) As DataColumn
+    <Extension()>
+    Friend Function Clone(ByVal column As DataColumn) As DataColumn
         Dim c As New DataColumn
         With column
             c.ColumnName = .ColumnName

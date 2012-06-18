@@ -1,6 +1,7 @@
 Public Class BaseDataForm
-    Protected view As DataView
-    Protected id As Integer
+    Protected _view As DataView
+    Protected _id As Integer
+    Protected _dm As DataManager
 
     Public Sub New()
 
@@ -11,7 +12,7 @@ Public Class BaseDataForm
 
     End Sub
 
-    Public Sub New(ByVal recordID As Integer, ByVal formText As String)
+    Public Sub New(manager As DataManager, ByVal recordID As Integer, ByVal formText As String)
         LoadingForm.Show()
         Application.DoEvents()
         ' This call is required by the Windows Form Designer.
@@ -19,47 +20,50 @@ Public Class BaseDataForm
 
         ' Add any initialization after the InitializeComponent() call.
         Me.AcceptButton = OKButton
-        Me.Text = formText
-        id = recordID
+        _dm = manager
+        _id = recordID
+        If Not formText.Contains(_dm.Name & ":") Then Me.Text = _dm.Name & ": " & formText Else Me.Text = formText
     End Sub
 
 #Region " Data Binding "
     Protected Sub Bind(ByVal tableName As String, ByVal filter As String)
-        view = New DataView(DB.Table(tableName), filter, "", DataViewRowState.CurrentRows)
-        view(0).BeginEdit()
+        _view = New DataView(_dm.Database.Table(tableName), filter, "", DataViewRowState.CurrentRows)
+        _view(0).BeginEdit()
         BindControls(CType(Me, Control))
     End Sub
 
     Protected Sub BindControls(ByVal parent As Control)
         For Each ctl As Control In parent.Controls
             If ctl.Tag IsNot Nothing Then
-                If TypeOf ctl Is TextBox OrElse TypeOf ctl Is Label OrElse TypeOf ctl Is MaskedTextBox Then
-                    ctl.DataBindings.Add("Text", view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
-                ElseIf TypeOf ctl Is CheckBox OrElse TypeOf ctl Is RadioButton Then
-                    ctl.DataBindings.Add("Checked", view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
-                ElseIf TypeOf ctl Is NumericUpDown Then
-                    ctl.DataBindings.Add("Value", view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
-                ElseIf TypeOf ctl Is PictureBox Then
-                    ctl.DataBindings.Add("Image", view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
-                ElseIf TypeOf ctl Is ComboBox Then
-                    ctl.DataBindings.Add("SelectedValue", view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
+                Dim col As DataColumn = _view.Table.Columns(ctl.Tag)
 
-                    Dim lookupTable As String = GetStringProperty(view.Table.Columns(ctl.Tag), ColumnProperty.Lookup_Table)
+                If TypeOf ctl Is TextBox OrElse TypeOf ctl Is Label OrElse TypeOf ctl Is MaskedTextBox Then
+                    ctl.DataBindings.Add("Text", _view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
+                ElseIf TypeOf ctl Is CheckBox OrElse TypeOf ctl Is RadioButton Then
+                    ctl.DataBindings.Add("Checked", _view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
+                ElseIf TypeOf ctl Is NumericUpDown Then
+                    ctl.DataBindings.Add("Value", _view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
+                ElseIf TypeOf ctl Is PictureBox Then
+                    ctl.DataBindings.Add("Image", _view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
+                ElseIf TypeOf ctl Is ComboBox Then
+                    ctl.DataBindings.Add("SelectedValue", _view, ctl.Tag, True, DataSourceUpdateMode.OnPropertyChanged)
+
+                    Dim lookupTable As String = col.GetStringProperty(ColumnProperty.Lookup_Table)
                     If lookupTable IsNot Nothing Then
-                        Dim lookupTextField As String = GetStringProperty(view.Table.Columns(ctl.Tag), ColumnProperty.Lookup_TextColumn)
-                        Dim lookupValueField As String = GetStringProperty(view.Table.Columns(ctl.Tag), ColumnProperty.Lookup_ValueColumn)
-                        Dim lookupFilter As String = GetStringProperty(view.Table.Columns(ctl.Tag), ColumnProperty.Lookup_Filter)
-                        Dim lookupSort As String = GetStringProperty(view.Table.Columns(ctl.Tag), ColumnProperty.Lookup_Sort)
+                        Dim lookupTextField As String = col.GetStringProperty(ColumnProperty.Lookup_TextColumn)
+                        Dim lookupValueField As String = col.GetStringProperty(ColumnProperty.Lookup_ValueColumn)
+                        Dim lookupFilter As String = col.GetStringProperty(ColumnProperty.Lookup_Filter)
+                        Dim lookupSort As String = col.GetStringProperty(ColumnProperty.Lookup_Sort)
                         If lookupSort Is Nothing Then lookupSort = lookupTextField
 
                         Dim cbo As ComboBox = DirectCast(ctl, ComboBox)
                         cbo.ValueMember = lookupValueField
                         cbo.DisplayMember = lookupTextField
-                        cbo.DataSource = New DataView(DB.Table(lookupTable), lookupFilter, lookupSort, DataViewRowState.CurrentRows)
+                        cbo.DataSource = New DataView(_dm.Database.Table(lookupTable), lookupFilter, lookupSort, DataViewRowState.CurrentRows)
                     End If
                 End If
 
-                Dim tooltip As String = GetStringProperty(view.Table.Columns(ctl.Tag), ColumnProperty.ToolTip)
+                Dim tooltip As String = col.GetStringProperty(ColumnProperty.ToolTip)
                 If tooltip IsNot Nothing Then DataToolTip.SetToolTip(ctl, tooltip)
             End If
 
@@ -70,8 +74,8 @@ Public Class BaseDataForm
     End Sub
 
     Protected Overridable Function CommitData() As Boolean
-        view(0).EndEdit()
-        view(0).Row.AcceptChanges()
+        _view(0).EndEdit()
+        _view(0).Row.AcceptChanges()
         Return True
     End Function
 
@@ -79,10 +83,10 @@ Public Class BaseDataForm
     End Sub
 
     Protected Sub CancelData()
-        If view IsNot Nothing Then
-            If view.Count > 0 Then view(0).CancelEdit()
+        If _view IsNot Nothing Then
+            If _view.Count > 0 Then _view(0).CancelEdit()
             DoCancelData()
-            view.Dispose()
+            _view.Dispose()
         End If
     End Sub
 
@@ -96,7 +100,7 @@ Public Class BaseDataForm
     Private Sub ApplyButton_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ApplyButton.Click
         If CommitData() Then
             ApplyButtonClicked()
-            view(0).BeginEdit()
+            _view(0).BeginEdit()
         End If
     End Sub
 
@@ -107,7 +111,7 @@ Public Class BaseDataForm
         If CommitData() Then
             OKButtonClicked()
             Close()
-            view.Dispose()
+            _view.Dispose()
         End If
     End Sub
 

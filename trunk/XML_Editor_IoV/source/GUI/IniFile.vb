@@ -1,19 +1,27 @@
 Public Class IniFile
-    Protected Shared dataDir As String
+    Protected Const MaxDataDir As Integer = 9
+    Protected Shared dataDir(MaxDataDir) As String
     Protected Shared apMax As Integer
+    Protected Shared useWorkingDir As Boolean
 
-    Protected Shared languageSpecificRussianGameDirPath As String = ""
-    Protected Shared languageSpecificPolishGameDirPath As String = ""
-    Protected Shared languageSpecificGermanGameDirPath As String = ""
-    Protected Shared languageSpecificItalianGameDirPath As String = ""
-    Protected Shared languageSpecificFrenchGameDirPath As String = ""
-    Protected Shared languageSpecificDutchGameDirPath As String = ""
-    Protected Shared languageSpecificChineseGameDirPath As String = ""
-    Protected Shared languageSpecificTaiwaneseGameDirPath As String = ""
+    Protected Shared languageSpecificRussianGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificPolishGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificGermanGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificItalianGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificFrenchGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificDutchGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificChineseGameDirPath(MaxDataDir) As String
+    Protected Shared languageSpecificTaiwaneseGameDirPath(MaxDataDir) As String
 
-    Public Shared ReadOnly Property DataDirectory() As String
+    Public Shared ReadOnly Property DataDirectory(index As Integer) As String
         Get
-            Return dataDir
+            Return dataDir(index)
+        End Get
+    End Property
+
+    Public Shared ReadOnly Property UseWorkingDirectory As Boolean
+        Get
+            Return useWorkingDir
         End Get
     End Property
 
@@ -23,51 +31,51 @@ Public Class IniFile
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_Russian_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_Russian_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificRussianGameDirPath
+            Return languageSpecificRussianGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_Polish_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_Polish_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificPolishGameDirPath
+            Return languageSpecificPolishGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_German_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_German_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificGermanGameDirPath
+            Return languageSpecificGermanGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_Italian_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_Italian_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificItalianGameDirPath
+            Return languageSpecificItalianGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_French_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_French_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificFrenchGameDirPath
+            Return languageSpecificFrenchGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_Chinese_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_Chinese_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificChineseGameDirPath
+            Return languageSpecificChineseGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_Taiwanese_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_Taiwanese_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificTaiwaneseGameDirPath
+            Return languageSpecificTaiwaneseGameDirPath(index)
         End Get
     End Property
 
-    Public Shared ReadOnly Property LanguageSpecific_Dutch_GameDirPath() As String
+    Public Shared ReadOnly Property LanguageSpecific_Dutch_GameDirPath(index As Integer) As String
         Get
-            Return languageSpecificDutchGameDirPath
+            Return languageSpecificDutchGameDirPath(index)
         End Get
     End Property
 
@@ -81,29 +89,34 @@ Public Class IniFile
             ElseIf xr.NodeType = Xml.XmlNodeType.Text Then
                 curValue = xr.Value
                 Select Case curNode
-                    Case "Data_Directory"
-                        dataDir = curValue
-                        If Not dataDir.EndsWith("\") Then dataDir &= "\"
                     Case "AP_Maximum"
                         apMax = curValue
-
-                    Case "GameDir_Russian_Path"
-                        languageSpecificRussianGameDirPath = curValue
-                    Case "GameDir_German_Path"
-                        languageSpecificGermanGameDirPath = curValue
-                    Case "GameDir_Polish_Path"
-                        languageSpecificPolishGameDirPath = curValue
-                    Case "GameDir_French_Path"
-                        languageSpecificFrenchGameDirPath = curValue
-                    Case "GameDir_Italian_Path"
-                        languageSpecificItalianGameDirPath = curValue
-                    Case "GameDir_Chinese_Path"
-                        languageSpecificChineseGameDirPath = curValue
-                    Case "GameDir_Dutch_Path"
-                        languageSpecificDutchGameDirPath = curValue
-                    Case "GameDir_Taiwanese_Path"
-                        languageSpecificTaiwaneseGameDirPath = curValue
-
+                    Case "Use_Working_Directory"
+                        useWorkingDir = CBool(curValue)
+                    Case Else
+                        If IsNumeric(curNode.Substring(curNode.Length - 1)) Then
+                            Dim index As Integer = CInt(curNode.Substring(curNode.LastIndexOf("_") + 1)) - 1
+                            If curNode.StartsWith("Data_Directory") Then
+                                dataDir(index) = curValue
+                                If Not dataDir(index).EndsWith("\") Then dataDir(index) &= "\"
+                            ElseIf curNode.StartsWith("GameDir_Russian_Path") Then
+                                languageSpecificRussianGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_German_Path") Then
+                                languageSpecificGermanGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_Polish_Path") Then
+                                languageSpecificPolishGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_French_Path") Then
+                                languageSpecificFrenchGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_Italian_Path") Then
+                                languageSpecificItalianGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_Chinese_Path") Then
+                                languageSpecificChineseGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_Dutch_Path") Then
+                                languageSpecificDutchGameDirPath(index) = curValue
+                            ElseIf curNode.StartsWith("GameDir_Taiwanese_Path") Then
+                                languageSpecificTaiwaneseGameDirPath(index) = curValue
+                            End If
+                        End If
                 End Select
             End If
         End While

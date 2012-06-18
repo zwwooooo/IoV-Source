@@ -182,7 +182,7 @@ STR16	pEncyclopediaTypeText[] =
 	L"Unknown",// 0 - unknown
 	L"城市", //1 - cities
 	L"SAM Site", //2 - SAM Site
-	L"其它区域", //3 - other location
+	L"其他区域", //3 - other location
 	L"矿场", //4 - mines 
 	L"军事设施", //5 - military complex 
 	L"研究设施",  //6 - laboratory complex 
@@ -223,7 +223,7 @@ STR16	pEncyclopediaHelpText[] =
 	L"全部显示",
 	L"显示城市",
 	L"显示SAM Sites",
-	L"显示其它区域",
+	L"显示其他区域",
 	L"显示矿场",
 	L"显示军事设施",
 	L"显示研究设施",
@@ -238,7 +238,7 @@ STR16	pEncyclopediaSkrotyText[] =
 	L"全部",
 	L"城市",
 	L"SAM",
-	L"其它",
+	L"其他",
 	L"矿场",
 	L"军事",
 	L"研究所",
@@ -254,13 +254,13 @@ STR16	pEncyclopediaShortInventoryText[] =
 	L"枪械",
 	L"弹药",
 	L"携行具",
-	L"杂项",
+	L"杂货",
 	
 	L"全部", //5
 	L"枪械",
 	L"弹药",
 	L"携行具",
-	L"杂项",
+	L"杂货",
 };
 
 STR16			BoxFilter[] =
@@ -290,7 +290,7 @@ STR16			BoxFilter[] =
 	L"枪械",
 	L"护甲",
 	L"携行具",
-	L"杂项", //20
+	L"杂货", //20
 
 	// Armour
 	L"头盔",
@@ -308,7 +308,7 @@ STR16			BoxFilter[] =
 	L"工具",
 	L"通讯等",
 	L"携行具",
-	L"杂项", //34
+	L"其他", //34
 };
 //-----------
 
@@ -1857,7 +1857,7 @@ STR16 pGuardMenuStrings[] =
 	L" 进攻式射击", // the merc can be aggressive in their choice of fire rates
 	L" 节约弹药", // conserve ammo
 	L" 有保留的射击", // fire only when the merc needs to
-	L"其它选择: ", // other options available to merc
+	L"其他选择: ", // other options available to merc
 	L" 可以撤退", // merc can retreat
 	L" 可以寻找掩体",  // merc is allowed to seek cover
 	L" 可以帮助队友", // merc can assist teammates
@@ -1873,7 +1873,7 @@ STR16 pOtherGuardMenuStrings[] =
 	L" *进攻式射击*",
 	L" *节约弹药o*",
 	L" *有保留的射击*",
-	L"其它选择: ",
+	L"其他选择: ",
 	L" *可以撤退*",
 	L" *可以看见覆盖物*",
 	L" *可以帮助队友*",
@@ -2070,6 +2070,8 @@ STR16 pPersonnelRecordsHelpTexts[] =
 	L"弱点:",
 
 	L"态度:",	// WANNE: For old traits display instead of "Character:"!
+
+	L"Zombies: %d\n", // TODO.Translate
 };
 
 
@@ -2290,7 +2292,7 @@ STR16 gpStrategicString[] =
 {
 	L"",	//Unused
 	L"%s在%c%d分区被发现了，另一小队即将到达。",	//STR_DETECTED_SINGULAR
-	L"%s在%c%d分区被发现了，其它几个小队即将到达。",	//STR_DETECTED_PLURAL
+	L"%s在%c%d分区被发现了，其他几个小队即将到达。",	//STR_DETECTED_PLURAL
 	L"你想调整为同时到达吗？",												//STR_COORDINATE
 
 	//Dialog strings for enemies.
@@ -2877,6 +2879,7 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"异形",
 	L"民兵",
 	L"平民",
+	L"ZOMBIE",		// TODO.Translate
 	L"离开分区",
 	L"确定",
 	L"取消",
@@ -2932,6 +2935,9 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Set detonation frequency (1 - 4) and defusing frequency (A - D):",
 	L"Set detonation time in turns (1 - 4) and defusing frequency (A - D):",
 	L"Select tripwire hierarchy (1 - 4) and network (A - D):",
+
+	// added by Flugente to display health and poisoning			// TODO.Translate
+	L"Health: %d/%d\n  Poison: %d/%d\nEnergy: %d/%d\nMorale: %s",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -2942,7 +2948,7 @@ STR16 pExitingSectorHelpText[] =
 	L"如果勾中，你将被立即自动放置在地图屏幕，\n因为你的佣兵要花些时间来行军。",
 
 	//If you attempt to leave a sector when you have multiple squads in a hostile sector.
-	L"该分区被敌军占据。你不能将佣兵留在这里。\n在进入其它分区前，你必须把这里的问题解决。",
+	L"该分区被敌军占据。你不能将佣兵留在这里。\n在进入其他分区前，你必须把这里的问题解决。",
 
 	//Because you only have one squad in the sector, and the "move all" option is checked, the "go to sector" option is locked to on. 
 	//The helptext explains why it is locked.
@@ -3176,7 +3182,7 @@ STR16 pMovementMenuStrings[] =
 	L"调动佣兵", 	// title for movement box
 	L"安排行军路线",	// done with movement menu, start plotting movement
 	L"取消",		// cancel this menu
-	L"其它",		// title for group of mercs not on squads nor in vehicles
+	L"其他",		// title for group of mercs not on squads nor in vehicles
 };
 
 
@@ -3373,11 +3379,11 @@ STR16 pFinanceSummary[] =
 	L"收入: ", 				// credit (subtract from) to player's account
 	L"支出: ",				// debit (add to) to player's account
 	L"昨日实际收入: ",
-	L"昨日其它存款: ",
+	L"昨日其他存款: ",
 	L"昨日支出: ",
 	L"昨日日终余额: ",
 	L"今日实际收入: ",
-	L"今日其它存款: ",
+	L"今日其他存款: ",
 	L"今日支出: ",
 	L"今日当前余额: ",
 	L"预期收入: ",
@@ -3485,6 +3491,7 @@ STR16 pMapScreenStatusStrings[] =
 	L"士气",
 	L"状态",	// the condition of the current vehicle (its "health")
 	L"油量",	// the fuel level of the current vehicle (its "energy")
+	L"Posion",	// TODO.Translate
 };
 
 
@@ -4017,7 +4024,7 @@ STR16 pPersonnelDepartedStateStrings[] =
 	//reasons why a merc has left.
 	L"阵亡",
 	L"解雇",
-	L"其它: ",
+	L"其他: ",
 	L"结婚",
 	L"合同到期",
 	L"退出",
@@ -4033,7 +4040,7 @@ STR16 pPersonelTeamStrings[] =
 	L"最低日薪: ",
 	L"行动中牺牲: ",
 	L"解雇: ",
-	L"其它: ",
+	L"其他: ",
 };
 
 
@@ -4423,7 +4430,7 @@ STR16			BobbyRFilter[] =
 	L"枪械", //"Guns",
 	L"护甲", //"Armor",
 	L"携行具", //"LBE Gear",
-	L"其他", //"Misc",
+	L"杂货", //"Misc",
 
 	// Armour
 	L"头盔", //"Helmets",
@@ -4441,7 +4448,13 @@ STR16			BobbyRFilter[] =
 	L"工具套装", //"Kits",
 	L"头部装备", //"Face Items",
 	L"携行具", //"LBE Gear",
-	L"杂项", //"Misc.",
+	L"瞄镜", // Madd: new BR filters		// TODO.Translate
+	L"握把/LAM",
+	L"Muzzle",
+	L"枪托",
+	L"Mag/Trig.",
+	L"其他附件",
+	L"其他", //"Misc.",
 };
 
 
@@ -4459,7 +4472,7 @@ STR16			BobbyRText[] =
 	L"枪械",	//"Guns", 			//3
 	L"弹药",	//"Ammo",			//4
 	L"护甲",	//"Armor",			//5
-	L"其他",	//"Misc.",			//6	//misc is an abbreviation for miscellaneous
+	L"杂货",	//"Misc.",			//6	//misc is an abbreviation for miscellaneous
 	L"二手货",	//"Used",			//7
 	L"下一页",	//"More Items",
 	L"订货单",	//"ORDER FORM",
@@ -4970,16 +4983,17 @@ STR16			zSaveLoadText[] =
 	L"难度",		//"Difficulty",
 	L"Platinum Mode", //Placeholder English
 
-	L"Bobby Ray 库存",
-	L"一般",
-	L"较多",
-	L"很多",
-	L"极多",
+	L"Bobby Ray 货品等级",
+	L"普通|一般",
+	L"一级|较多",
+	L"高级|很多",
+	L"极品|囧多",
 
 	L"新携行系统不兼容640x480的屏幕分辨率，请重新设置分辨率。",
 	L"新携行系统无法使用默认的 Data 文件夹，请仔细读说明。",
 
 	L"当前分辨率不支持存档文件的小队人数，请增加分辨率再试。",	//L"The squad size from the savegame is not supported by the current screen resolution. Please increase the screen resolution and try again.",
+	L"Bobby Ray 供货量",
 };
 
 
@@ -5096,19 +5110,20 @@ STR16		zOptionsToggleText[] =
 	L"允许显示敌军装备",	// Show Soldier Tooltips
 	L"自动存盘",	//"Auto save",
 	L"沉默的Skyrider",	//"Silent Skyrider",
-	//L"降低CPU的使用率",	//"Low CPU usage",
 	L"增强属性框(EDB)", //L"Enhanced Description Box",
 	L"强制回合制模式",						// add forced turn mode
 	L"属性进度条",	//L"Stat Progress Bars", // Show progress towards stat increase //ham3.6
 	L"替代战略地图颜色", // Change color scheme of Strategic Map
 	L"替代子弹图像", // Show alternate bullet graphics (tracers)
-	//L"开启新的瞄准系统(NCTH)",				// use NCTH
 	L"显示佣兵军衔",	// shows mercs ranks
 	L"显示脸部装备图",				
 	L"显示脸部装备图标",
 	L"禁止光标切换",		            // Disable Cursor Swap
+	L"Quiet Training",						// Madd: mercs don't say quotes while training // TODO.Translate
+	L"Quiet Repairing",						// Madd: mercs don't say quotes while repairing //TODO.Translate
+	L"Quiet Doctoring",						// Madd: mercs don't say quotes while doctoring //TODO.Translate
 	L"自动加速敌军回合",			// Automatic fast forward through AI turns
-	//L"武器过热",
+	L"Allow Zombies",				// TODO.Translate
 	L"--作弊模式选项--",				// TOPTION_CHEAT_MODE_OPTIONS_HEADER,
 	L"强制 Bobby Ray 送货",			// force all pending Bobby Ray shipments
 	L"-----------------",					// TOPTION_CHEAT_MODE_OPTIONS_END
@@ -5204,19 +5219,20 @@ STR16	zOptionsScreenHelpText[] =
 	L"打开时，把光标定位在敌人身上并且按下 |A|l|t 键会显示敌兵装备信息窗口。",
 	L"打开时，游戏将在玩家回合后自动存盘",
 	L"打开时，Skyrider保持沉默。",
-	//L"打开时，游戏将使用更少的CPU资源。",
 	L"打开时，使用物品及武器的“增强描述框”（EDB）。",
 	L"打开时，在战术画面内存在敌军时，将一直处于回合制模式直至该地区所有敌军被消灭（可以通过快捷键 |C|T|R|L+|S|H|I|F|T+|A|L|T+|T 来控制打开或关闭强制回合制模式）",
 	L"打开时，显示各属性的增长进度。", // L"When ON, shows character progress towards gaining levels.", //ham3.6
 	L"打开时, 战略地图将会根据探索状态显示不同的着色。",
 	L"打开时, 当你射击时会显示间隔子弹图像。",
-	//L"打开时, 使用新命中率系统（NCTH）和光标。",
 	L"打开时，在战略界面的佣兵名旁显示军衔。",
 	L"打开时, 显示佣兵脸部装备图。",
 	L"打开时, 佣兵肖像右下角显示脸部装备图标",
-	L"打开时，在交换位置和其它动作时光标不切换。键入 |x 可以快速切换。",
+	L"打开时，在交换位置和其他动作时光标不切换。键入 |x 可以快速切换。",
+	L"When ON, mercs will not report progress during training.", //TODO.Translate
+	L"When ON, mercs will not report progress during repairing.",	// TODO.Translate
+	L"When ON, mercs will not report progress during doctoring.",	// TODO.Translate
 	L"打开时，敌军回合将被大幅加速。",
-	//L"打开时，武器连续射击时温度逐渐升高引起过热。",
+	L"When ON, zombies will span. Be aware!",							// allow zombies	// TODO.Translate
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_HEADER",
 	L"强制 Bobby Ray 出货",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_END",
@@ -5262,11 +5278,11 @@ STR16	gzGIOScreenText[] =
 	L"随时存盘",
 	L"铁人模式",
 	L"在Demo中禁用",
-	L"Bobby Ray商店库存",
-	L"极少",
-	L"较少",
-	L"一般",
-	L"很多",
+	L"Bobby Ray 货品等级",
+	L"普通|一般",
+	L"一级|较多",
+	L"高级|很多",
+	L"极品|囧多",
 	L"携行系统 / 附件系统",
 	L"NOT USED",
 	L"NOT USED",
@@ -5319,6 +5335,7 @@ STR16	gzGIOScreenText[] =
 	L"新命中率系统（NCTH）", //L"New Chance to Hit System",
 	L"改进的中断系统（IIS）", //L"Improved Interrupt System",
 	L"武器过热", //L"Weapon Overheating",
+	L"Bobby Ray 供货量",
 };
 
 STR16	gzMPJScreenText[] =
@@ -5485,7 +5502,7 @@ STR16 pDepartedMercPortraitStrings[ ]=
 {
 	L"阵亡",	//"Killed in Action",
 	L"解雇",		//"Dismissed",
-	L"其它",		//"Other",
+	L"其他",		//"Other",
 };
 
 // title for program
@@ -6321,7 +6338,7 @@ STR16 MPClientMessage[] =
 	// 10
 	L"客户端 #%d - '%S' 已准备 - 准备就绪 = %d/%d.",
 	L"客户端 #%d - '%S' 不再准备 - 准备就绪 = %d/%d",
-	L"你已准备。 等候其它客户端... 按'OK'如果你已准备就绪。",
+	L"你已准备。 等候其他客户端... 按'OK'如果你已准备就绪。",
 	L"让我们开始战斗！",
 	L"要开始游戏必须运行一台客户端。",
 	// 15
@@ -6947,6 +6964,7 @@ STR16 szUDBGenAmmoStatsTooltipText[]=
 	L"|翻|搅|力|（|开|花|弹|）",
 	L"|爆|炸|力|（|炸|子|儿|）",
 	L"|过|热|修|正",
+	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",	// TODO.Translate
 };
 
 STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
@@ -6955,6 +6973,7 @@ STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
 	L"\n \n该值决定子弹打穿护甲击中身体时的伤害力\n加成。\n \n该值大于1时，子弹在穿过护甲后会增加伤害。\n \n当该值小于1时，子弹穿过护甲后会减少伤害。\n \n该数值越高越好。",
 	L"\n \n该值是子弹在击中目标前已经造成的潜在伤害的倍率。\n \n大于1的数值可以增加伤害，\n反之则减少伤害。\n \n该数值越高越好。",
 	L"\n \n子弹温度系数。\n \n该数值越低越好。",
+	L"\n \nDetermines what percentage of a\nbullet's damage will be poisonous.",	// TODO.Translate
 };
 
 STR16 szUDBGenExplosiveStatsTooltipText[]=
@@ -7131,6 +7150,7 @@ STR16 szUDBAdvStatsTooltipText[]=
 	L"|冷|却|参|数",
 	L"|卡|壳|阈|值",
 	L"|损|坏|阈|值",
+	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",	// TODO.Translate
 };
 
 // Alternate tooltip text for weapon Advanced Stats. Just different wording, nothing spectacular.
@@ -7192,6 +7212,7 @@ STR16 szUDBAdvStatsExplanationsTooltipText[]=
 	L"\n \n武器的冷却系数数增加了(百分比)。\n \n该数值越高越好。",
 	L"\n \n武器的卡壳阈值增加了(百分比)。\n \n该数值越高越好。",
 	L"\n \n武器的损坏阈值增加了(百分比)。\n \n该数值越高越好。",
+	L"\n \nThis is the percentage of damage dealt\nby this item that will be poisonous.\n\nUsefulness depends on wether enemy\nhas poison resistance or absorption.",	// TODO.Translate
 };
 
 STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=

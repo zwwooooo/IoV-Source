@@ -1,7 +1,9 @@
 Public Class EnterItemIDForm
     Inherits SimpleFormBase
 
-    Public Sub New()
+    Public Sub New(manager As DataManager)
+        MyBase.New(manager)
+
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
 
@@ -11,6 +13,7 @@ Public Class EnterItemIDForm
 
         Me.btnOK.Left = myOKButton.Left
         Me.btnCancel.Left = myCancelButton.Left
+
     End Sub
 
     Protected Overrides Function OkAction() As Boolean
@@ -19,13 +22,13 @@ Public Class EnterItemIDForm
             Return False
         End If
 
-        Dim r As DataRow = DB.Table(Tables.Items.Name).Rows.Find(ItemIDTextBox.Text)
+        Dim r As DataRow = _dm.Database.Table(Tables.Items.Name).Rows.Find(ItemIDTextBox.Text)
         If r Is Nothing Then
             ErrorHandler.ShowWarning("Unrecognized item ID.", MessageBoxIcon.Hand)
             Return False
         End If
 
-        ItemDataForm.Open(CInt(ItemIDTextBox.Text), r(Tables.Items.Fields.Name))
+        ItemDataForm.Open(_dm, CInt(ItemIDTextBox.Text), r(Tables.Items.Fields.Name))
 
         Return True
     End Function

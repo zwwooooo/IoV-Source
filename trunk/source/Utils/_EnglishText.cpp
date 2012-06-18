@@ -2070,6 +2070,8 @@ STR16 pPersonnelRecordsHelpTexts[] =
 	L"Weakness:",
 
 	L"Attitudes:",	// WANNE: For old traits display instead of "Character:"!
+
+	L"Zombies: %d\n",	// Flugente Zombies
 };
 
 
@@ -2877,6 +2879,7 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"CREPITUS",
 	L"MILITIA",
 	L"CIVILIAN",
+	L"ZOMBIE",
 	L"Exiting Sector",
 	L"OK",
 	L"Cancel",
@@ -2932,6 +2935,9 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Set detonation frequency (1 - 4) and defusing frequency (A - D):",
 	L"Set detonation time in turns (1 - 4) and defusing frequency (A - D):",
 	L"Select tripwire hierarchy (1 - 4) and network (A - D):",
+
+	// added by Flugente to display health and poisoning
+	L"Health: %d/%d\n  Poison: %d/%d\nEnergy: %d/%d\nMorale: %s",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -3483,6 +3489,7 @@ STR16 pMapScreenStatusStrings[] =
 	L"Morale",
 	L"Condition",	// the condition of the current vehicle (its "health")
 	L"Fuel",	// the fuel level of the current vehicle (its "energy")
+	L"Poison",		// for display of poisoning
 };
 
 
@@ -4439,6 +4446,12 @@ STR16			BobbyRFilter[] =
 	L"Kits",
 	L"Face Items",
 	L"LBE Gear",
+	L"Optics", // Madd: new BR filters
+	L"Grip/LAM",
+	L"Muzzle",
+	L"Stock",
+	L"Mag/Trig.",
+	L"Other Att.",
 	L"Misc.",
 };
 
@@ -4968,16 +4981,17 @@ STR16			zSaveLoadText[] =
 	L"Difficulty",
 	L"Platinum Mode", //Placeholder English
 
-	L"Bobby Ray's",
-	L"Normal Selection",
-	L"Great Selection",
-	L"Excellent Selection",
-	L"Awesome Selection",
+	L"Bobby Ray Quality",
+	L"Normal",
+	L"Great",
+	L"Excellent",
+	L"Awesome",
 
 	L"New Inventory does not work in 640x480 screen resolution. Please increase the screen resolution and try again.",
 	L"New Inventory does not work from the default 'Data' folder.",
 
 	L"The squad size from the savegame is not supported by the current screen resolution. Please increase the screen resolution and try again.",
+	L"Bobby Ray Quantity",
 };
 
 
@@ -5094,19 +5108,20 @@ STR16		zOptionsToggleText[] =
 	L"Show Soldier Tooltips",
 	L"Tactical End-Turn Save",
 	L"Silent Skyrider",
-	//L"Low CPU usage",
 	L"Enhanced Description Box",
 	L"Forced Turn Mode",					// add forced turn mode
 	L"Stat Progress Bars",					// Show progress towards stat increase
 	L"Alternate Strategy Map Colors",		// Change color scheme of Strategic Map
 	L"Alternate Bullet Graphics",			// Show alternate bullet graphics (tracers)
-//	L"Use new Chance to Hit System",		// use NCTH
 	L"Show Merc Ranks",						// shows mercs ranks
 	L"Show Face Gear Graphics",				
 	L"Show Face Gear Icons",
 	L"Disable Cursor Swap",		            // Disable Cursor Swap
+	L"Quiet Training",						// Madd: mercs don't say quotes while training
+	L"Quiet Repairing",						// Madd: mercs don't say quotes while repairing
+	L"Quiet Doctoring",						// Madd: mercs don't say quotes while doctoring
 	L"Auto Fast Forward AI Turns",			// Automatic fast forward through AI turns
-	//L"Weapons Overheating",					// TODO.Translate
+	L"Allow Zombies",						// Flugente Zombies 1.0
 	L"--Cheat Mode Options--",				// TOPTION_CHEAT_MODE_OPTIONS_HEADER,
 	L"Force Bobby Ray shipments",			// force all pending Bobby Ray shipments
 	L"-----------------",					// TOPTION_CHEAT_MODE_OPTIONS_END
@@ -5117,7 +5132,7 @@ STR16		zOptionsToggleText[] =
 	L"Debug Options in other builds",		// allow debugging in release or mapeditor
 	L"DEBUG Render Option group",			// an example option that will show/hide other options
 	L"Render Mouse Regions",				// an example of a DEBUG build option
-	L"-----------------",					// an example options screen options divider (pure text)
+	L"-----------------",					// an example options screen options divider (pure text)	
 
 	// this is THE LAST option that exists (debug the options screen, doesnt do anything, except exist)
 	L"THE_LAST_OPTION",
@@ -5202,19 +5217,20 @@ STR16	zOptionsScreenHelpText[] =
 	L"When ON, a tooltip window is shown when pressing |A|l|t and hovering cursor over an enemy.",
 	L"When ON, game will be saved in 2 alternate save slots after each player's turn.",
 	L"When ON, Skyrider will not talk anymore.",
-	//L"When ON, game will run with much lower CPU usage.",
 	L"When ON, enhanced descriptions will be shown for items and weapons.",
 	L"When ON and enemy present, turn base mode persists untill sector is free (|C|t|r|l+|S|h|i|f|t+|A|l|t+|T).",	// add forced turn mode
 	L"When ON, shows character progress towards gaining levels.",
 	L"When ON, the strategic map will be colored differently based on exploration.",
 	L"When ON, alternate bullet graphics will be shown when you shoot.",
-//	L"When ON, the new chance to hit system and cursor is used.",
-	L"When ON, ranks will be displayed before merc names in the strategic view.",		// TODO.Translate
+	L"When ON, ranks will be displayed before merc names in the strategic view.",
 	L"When ON, you will see the equipped face gear on the merc portraits.",
 	L"When ON, you will see icons for the equipped face gear on the merc portraits in the lower right corner.",
 	L"When ON, the cursor will not toggle between exchange position and other actions. Press |x to initiate quick exchange.",
+	L"When ON, mercs will not report progress during training.",
+	L"When ON, mercs will not report progress during repairing.",
+	L"When ON, mercs will not report progress during doctoring.",
 	L"When ON, AI turns will be much faster.",
-	//L"When ON, weapons can be overheated when firing.",				// TODO.Translate
+	L"When ON, zombies will spawn. Be aware!",							// allow zombies
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_HEADER",
 	L"Force all pending Bobby Ray shipments",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_END",
@@ -5225,8 +5241,7 @@ STR16	zOptionsScreenHelpText[] =
 	L"Allows debug options in release or mapeditor builds",				// allow debugging in release or mapeditor
 	L"Toggle to display debugging render options",						// an example option that will show/hide other options
 	L"Attempts to display slash-rects around mouse regions",			// an example of a DEBUG build option
-	L"(text not rendered)TOPTION_DEBUG_MODE_OPTIONS_END",				// an example options screen options divider (pure text)
-
+	L"(text not rendered)TOPTION_DEBUG_MODE_OPTIONS_END",				// an example options screen options divider (pure text)	
 
 	// this is THE LAST option that exists (debug the options screen, doesnt do anything, except exist)
 	L"TOPTION_LAST_OPTION",
@@ -5260,7 +5275,7 @@ STR16	gzGIOScreenText[] =
 	L"Save Anytime",
 	L"Iron Man",
 	L"Disabled for Demo",
-	L"Bobby Ray's Selection",
+	L"Bobby Ray Quality",
 	L"Normal",
 	L"Great",
 	L"Excellent",
@@ -5318,6 +5333,7 @@ STR16	gzGIOScreenText[] =
 	L"New Chance to Hit System",
 	L"Improved Interrupt System",
 	L"Weapon Overheating",
+	L"Bobby Ray Quantity",
 };
 
 STR16	gzMPJScreenText[] =
@@ -6934,6 +6950,7 @@ STR16 szUDBGenAmmoStatsTooltipText[]=
 	L"|B|u|l|l|e|t |T|u|m|b|l|e",
 	L"|P|r|e|-|I|m|p|a|c|t |E|x|p|l|o|s|i|o|n",
 	L"|T|e|m|p|e|r|a|t|u|r|e |M|o|d|i|f|i|c|a|t|i|o|n",
+	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",
 };
 
 STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
@@ -6942,6 +6959,7 @@ STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
 	L"\n \nDetermines a proportional increase of damage\npotential once the bullet gets through the\ntarget's armor and hits the bodypart behind it.\n \nWhen above 1.0, the bullet's damage\nincreases after penetrating the armor.\n \nWhen below 1.0, the bullet's damage\npotential decreases after passing through armor.\n \nHigher is better.",
 	L"\n \nA multiplier to the bullet's damage potential\nthat is applied immediately before hitting the\ntarget.\n \nValues above 1.0 indicate an increase in damage,\nvalues below 1.0 indicate a decrease.\n \nHigher is better.",
 	L"\n \nAdditional heat generated by this ammunition.\n \nLower is better.",
+	L"\n \nDetermines what percentage of a\nbullet's damage will be poisonous.",
 };
 
 STR16 szUDBGenExplosiveStatsTooltipText[]=
@@ -7119,6 +7137,7 @@ STR16 szUDBAdvStatsTooltipText[]=
 	L"|C|o|o|l|d|o|w|n |M|o|d|i|f|i|e|r",
 	L"|J|a|m |T|h|r|e|s|h|o|l|d |M|o|d|i|f|i|e|r",
 	L"|D|a|m|a|g|e |T|h|r|e|s|h|o|l|d |M|o|d|i|f|i|e|r",
+	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",	
 };
 
 // Alternate tooltip text for weapon Advanced Stats. Just different wording, nothing spectacular.
@@ -7180,6 +7199,7 @@ STR16 szUDBAdvStatsExplanationsTooltipText[]=
 	L"\n \nA gun's cooldown factor is\nincreased by this percentage.\n \nHigher is better.",
 	L"\n \nA gun's jam threshold is\nincreased by this percentage.\n \nHigher is better.",
 	L"\n \nA gun's damage threshold is\nincreased by this percentage.\n \nHigher is better.",
+	L"\n \nThis is the percentage of damage dealt\nby this item that will be poisonous.\n\nUsefulness depends on wether enemy\nhas poison resistance or absorption.",
 };
 
 STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=
@@ -7232,7 +7252,7 @@ STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=
 	L"\n \nThis is the shooter's ability to\nfrequently reasses how much counter-force they\nneed to apply against a gun's recoil.\n \nNaturally, this has no effect if the weapon lacks\nboth Burst and Auto-Fire modes.\n \nLower frequency makes volleys more accurate on the whole,\nand also makes longer volleys more accurate assuming\nthe shooter can overcome recoil correctly.\n \nLower is better.",
 	L"\n \nThis weapon's to-hit is being modified by\nan ammo, attachment, or built-in attributes.\n \nIncreased To-Hit allows the gun to hit targets\nmore often, assuming it is also well-aimed.\n \nHigher is better.",
 	L"\n \nThis weapon's Aim Bonus is being modified by\nan ammo, attachment, or built-in attributes.\n \nIncreased Aim Bonus allows the gun to hit\ntargets at longer ranges more often, assuming\nit is also well-aimed.\n \nHigher is better.",
-	L"\n \nA single shot causes this much heat.\nThe type of ammunition can affect this value.\n \nLower is better.",					// TODO.Translate
+	L"\n \nA single shot causes this much heat.\nThe type of ammunition can affect this value.\n \nLower is better.",
 	L"\n \nEvery turn, the temperature is lowered\nby this amount.\nWeapon attachments can affect this.\n \nHigher is better.",
 	L"\n \nIf a gun's temperature is above this,\nit will jam more frequently.",
 	L"\n \nIf a gun's temperature is above this,\nit will be damaged more easily.",

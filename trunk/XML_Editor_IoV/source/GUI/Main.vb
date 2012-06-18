@@ -3,9 +3,16 @@ Imports GUI.GUI
 Imports System.Threading
 
 Module Main
-    Public DB As XmlDB
+    'this file creates the xsd from scratch
+    'we don't want a typed-dataset, because it's less flexible
+    'once we have a flexible way to do the GUI, this format should pay off
+    Private Const SchemaName As String = "JA2Data"
+
+    Public GameData(9) As DataManager
+    Public GameDataCount As Integer
     Public MainWindow As MainForm
     Public Splash As SplashForm
+
     Public Sub Main()
         If CheckForDuplicateProcess(My.Application.Info.AssemblyName) Then End
 
@@ -18,75 +25,67 @@ Module Main
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US")
             Thread.CurrentThread.CurrentUICulture = New CultureInfo("en-US")
 
+            IniFile.ReadFile("XMLEditorInit.xml")
+            Dim useWorkingDir As Boolean = IniFile.UseWorkingDirectory
+
+            If My.Application.Info.Version.Major <> My.Settings.Last_Version_Major OrElse
+                My.Application.Info.Version.Minor <> My.Settings.Last_Version_Minor Then
+                useWorkingDir = False
+            End If
+
             Splash = New SplashForm()
             Splash.Show()
 
-            Splash.UpdateLoadingText("Initializing...")
+            Splash.UpdateLoadingText(DisplayText.Initializing)
 
-            ' RoWa21: Try to delete the "JA2Data.xsd" file
-            If System.IO.File.Exists(SchemaFileName) Then
-                Try
-                    System.IO.File.Delete(SchemaFileName)
-                Catch ex As Exception
-                End Try
-            End If
+            For i As Integer = 0 To GameData.Length - 1
+                If Not String.IsNullOrEmpty(IniFile.DataDirectory(i)) Then
+                    Splash.UpdateCurrentDirectory(IniFile.DataDirectory(i))
 
-            'IniFile.ReadFile("XMLEditorInit.xml")
-            XmlDB.DataDirectory = IniFile.DataDirectory
+                    GameData(i) = New DataManager(SchemaName, IniFile.DataDirectory(i), IniFile.LanguageSpecific_Russian_GameDirPath(i), IniFile.LanguageSpecific_Polish_GameDirPath(i), _
+                                    IniFile.LanguageSpecific_German_GameDirPath(i), IniFile.LanguageSpecific_French_GameDirPath(i), _
+                                    IniFile.LanguageSpecific_Italian_GameDirPath(i), IniFile.LanguageSpecific_Chinese_GameDirPath(i), _
+                                    IniFile.LanguageSpecific_Dutch_GameDirPath(i), IniFile.LanguageSpecific_Taiwanese_GameDirPath(i), useWorkingDir)
+                    AddHandler GameData(i).Database.AfterLoadAll, AddressOf DB_AfterLoadAll
+                    AddHandler GameData(i).Database.LoadingTable, AddressOf DB_LoadingTable
 
-            XmlDB.GameDirRussianPath = IniFile.LanguageSpecific_Russian_GameDirPath
-            XmlDB.GameDirPolishPath = IniFile.LanguageSpecific_Polish_GameDirPath
-            XmlDB.GameDirGermanPath = IniFile.LanguageSpecific_German_GameDirPath
-            XmlDB.GameDirItalianPath = IniFile.LanguageSpecific_Italian_GameDirPath
-            XmlDB.GameDirFrenchPath = IniFile.LanguageSpecific_French_GameDirPath
-            XmlDB.GameDirChinesePath = IniFile.LanguageSpecific_Chinese_GameDirPath
-            XmlDB.GameDirDutchPath = IniFile.LanguageSpecific_Dutch_GameDirPath
-            XmlDB.GameDirTaiwanesePath = IniFile.LanguageSpecific_Taiwanese_GameDirPath
+                    GameDataCount += 1
 
-            Splash.UpdateLoadingText("Creating database...")
+                    Splash.UpdateLoadingText(DisplayText.CreatingDatabase)
+                    GameData(i).CreateDatabase()
 
-#If DEBUG Then
-            MakeDB()
-#End If
-            If Not IO.File.Exists(SchemaFileName) Then
-                MakeDB()
-            End If
+                    Splash.UpdateLoadingText(DisplayText.LoadingImages)
+                    GameData(i).LoadImages()
 
-            DB = New XmlDB()
-            AddHandler DB.AfterLoadAll, AddressOf DB_AfterLoadAll
-            AddHandler DB.LoadingTable, AddressOf DB_LoadingTable
-            DB.LoadSchema(SchemaFileName)
+                    Splash.UpdateLoadingText(DisplayText.LoadingXmlFiles)
+                    GameData(i).LoadData()
 
-            Splash.UpdateLoadingText("Loading Images...")
-            'load stuff
-            ItemImages.LoadAllImages(IniFile.DataDirectory)
+                    Splash.UpdateLoadingText(DisplayText.SearchingForOtherDirectories)
+                End If
+            Next
 
-            Splash.UpdateLoadingText("Loading XML Files...")
-            DB.LoadAllData()
-
-            Splash.UpdateLoadingText("Loading Saved Settings...")
+            Splash.UpdateLoadingText(DisplayText.LoadingSettings)
             SettingsUtility.LoadSettings()
 
-            Splash.UpdateLoadingText("Application Starting...")
-            'start app
-            MainWindow = New MainForm
-
+            Splash.UpdateLoadingText(DisplayText.ApplicationStarting)
             Splash.Hide()
+
+            MainWindow = New MainForm
             Application.Run(MainWindow)
 
             SettingsUtility.SaveSettings()
         Catch ex As Exception
-            ErrorHandler.ShowError("Unhandled error.  Please report this error to the JA2 1.13 Development Team on the 'Bears Pit Forum'.", ex)
+            ErrorHandler.ShowError(DisplayText.UnhandledError, ex)
         End Try
     End Sub
 
-    Private Sub DB_AfterLoadAll()
-        Splash.UpdateLoadingText("Building Item Table...")
+    Private Sub DB_AfterLoadAll(sender As XmlDB)
+        Splash.UpdateLoadingText(String.Format(DisplayText.BuildingItemTable, sender.DataManager.Name))
     End Sub
 
-    Private Sub DB_LoadingTable(ByVal fileName As String)
+    Private Sub DB_LoadingTable(sender As XmlDB, ByVal fileName As String)
         If fileName.Contains("\") Then fileName = fileName.Remove(0, fileName.LastIndexOf("\") + 1)
-        Splash.UpdateLoadingText("Loading XML Files... " & fileName)
+        Splash.UpdateLoadingText(String.Format(DisplayText.LoadingTables, sender.DataManager.Name, fileName))
     End Sub
 
     Private Sub ExitDueToError()

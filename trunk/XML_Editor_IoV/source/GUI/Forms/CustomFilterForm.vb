@@ -1,6 +1,8 @@
 Public Class CustomFilterForm
     Inherits SimpleFormBase
-    Public Sub New()
+    Public Sub New(manager As DataManager)
+        MyBase.New(manager)
+
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
 

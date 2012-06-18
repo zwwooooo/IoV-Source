@@ -2,8 +2,7 @@ Public NotInheritable Class SplashForm
 
     'TODO: This form can easily be set as the splash screen for the application by going to the "Application" tab
     '  of the Project Designer ("Properties" under the "Project" menu).
-
-
+    
     Private Sub SplashScreen1_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
         'Set up the dialog text at runtime according to the application's assembly information.  
 
@@ -27,9 +26,7 @@ Public NotInheritable Class SplashForm
         '    Version.Text = System.String.Format(Version.Text, My.Application.Info.Version.Major, My.Application.Info.Version.Minor, My.Application.Info.Version.Build, My.Application.Info.Version.Revision)
 
         Version.Text = System.String.Format(Version.Text, My.Application.Info.Version.Major, My.Application.Info.Version.Minor)
-
-        IniFile.ReadFile("XMLEditorInit.xml")
-        DataDirectoryLabel.Text = "MOD: " & IniFile.DataDirectory.TrimEnd("\")
+        DataDirectoryLabel.Text = String.Empty
 
         Loading.Text = Nothing
         Application.DoEvents()
@@ -40,4 +37,8 @@ Public NotInheritable Class SplashForm
         Application.DoEvents()
     End Sub
 
+    Public Sub UpdateCurrentDirectory(currentDir As String)
+        DataDirectoryLabel.Text = String.Format(DisplayText.CurrentDirectorySplash, currentDir.TrimEnd("\"))
+        Application.DoEvents()
+    End Sub
 End Class

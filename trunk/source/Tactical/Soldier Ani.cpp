@@ -618,7 +618,7 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 						// "artificially" set lock ui flag in this case
 						if (pSoldier->bTeam == gbPlayerNum)
 						{
-							AddTopMessage( COMPUTER_INTERRUPT_MESSAGE, Message[STR_INTERRUPT] );
+							//AddTopMessage( COMPUTER_INTERRUPT_MESSAGE, Message[STR_INTERRUPT] );
 							guiPendingOverrideEvent = LU_BEGINUILOCK;								
 							HandleTacticalUI( );
 						}
@@ -1255,7 +1255,7 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 						}
 						else
 						{
-#ifdef JA2UB
+#if (defined JA2UB || defined JA113NODEMO) 
 					//Ja25 No meanwhiles		
 					          	if ( fMartialArtist )
 #else
@@ -2079,7 +2079,7 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 						// "artificially" set lock ui flag in this case
 						if (pSoldier->bTeam == gbPlayerNum)
 						{
-							AddTopMessage( COMPUTER_INTERRUPT_MESSAGE, Message[STR_INTERRUPT] );
+							//AddTopMessage( COMPUTER_INTERRUPT_MESSAGE, Message[STR_INTERRUPT] );
 							guiPendingOverrideEvent = LU_BEGINUILOCK;								
 							HandleTacticalUI( );
 						}
@@ -3486,6 +3486,9 @@ BOOLEAN HandleSoldierDeath( SOLDIERTYPE *pSoldier , BOOLEAN *pfMadeCorpse )
 							case SOLDIER_CLASS_CREATURE :
 								gMercProfiles[ MercPtrs[ ubAttacker ]->ubProfile ].records.usKillsCreatures++;
 								break;
+							case SOLDIER_CLASS_ZOMBIE :
+								gMercProfiles[ MercPtrs[ ubAttacker ]->ubProfile ].records.usKillsZombies++;
+								break;
 							default :
 								if ( CREATURE_OR_BLOODCAT( pSoldier ) )
 									gMercProfiles[ MercPtrs[ ubAttacker ]->ubProfile ].records.usKillsCreatures++;
@@ -3712,7 +3715,7 @@ void CheckForAndHandleSoldierIncompacitated( SOLDIERTYPE *pSoldier )
 		}
 
 		// OK, if we are in a meanwhile and this is elliot...
-#ifdef JA2UB
+#if (defined JA2UB || defined JA113NODEMO) 
 //ja25: No queen
 #else
 		if ( AreInMeanwhile( ) )
@@ -3736,7 +3739,7 @@ void CheckForAndHandleSoldierIncompacitated( SOLDIERTYPE *pSoldier )
 		// If guy is now dead, play sound!
 		if ( pSoldier->stats.bLife == 0	)
 		{
-#ifdef JA2UB
+#if (defined JA2UB || defined JA113NODEMO) 
 //Ja25 No meanwhiles		
 #else
 			if ( !AreInMeanwhile() )

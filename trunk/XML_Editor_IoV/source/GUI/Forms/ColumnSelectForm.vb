@@ -1,11 +1,12 @@
 Public Class ColumnSelectForm
     Inherits SimpleFormBase
 
-    Dim table As DataTable
-    Dim grid As DataGridView
-    Dim subTable As String
+    Private _table As DataTable
+    Private _grid As DataGridView
+    Private _subTable As String
 
-    Public Sub New(ByVal grd As DataGridView, Optional ByVal subTable As String = Nothing)
+    Public Sub New(manager As DataManager, ByVal grid As DataGridView, Optional ByVal subTable As String = Nothing)
+        MyBase.New(manager)
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
 
@@ -16,9 +17,9 @@ Public Class ColumnSelectForm
         Me.btnOK.Left = myOKButton.Left
         Me.btnCancel.Left = myCancelButton.Left
 
-        grid = grd
-        Me.subTable = subTable
-        table = DirectCast(grd.DataSource, DataView).Table
+        _grid = grid
+        _subTable = subTable
+        _table = DirectCast(_grid.DataSource, DataView).Table
 
         GetColumnProperties()
     End Sub
@@ -26,31 +27,31 @@ Public Class ColumnSelectForm
     Protected Overrides Function OkAction() As Boolean
         SetColumnProperties()
         'rewrite the schema so it'll remember for next time the app starts
-        DB.SaveSchema()
+        _dm.Database.SaveSchema()
         Return True
     End Function
 
     Private Sub GetColumnProperties()
-        For Each c As DataColumn In table.Columns
-            If Not GetBooleanProperty(c, ColumnProperty.SubTable) OrElse (subTable IsNot Nothing AndAlso subTable.Length > 0 AndAlso c.ColumnName.StartsWith(subTable)) Then
-                ColumnCheckList.Items.Add(c.Caption, Not GetBooleanProperty(c, ColumnProperty.Grid_Hidden))
+        For Each c As DataColumn In _table.Columns
+            If Not c.GetBooleanProperty(ColumnProperty.SubTable) OrElse (Not String.IsNullOrEmpty(_subTable) AndAlso c.ColumnName.StartsWith(_subTable)) Then
+                ColumnCheckList.Items.Add(c.Caption, Not c.GetBooleanProperty(ColumnProperty.Grid_Hidden))
             End If
         Next
     End Sub
 
     Private Sub SetColumnProperties()
-        For Each c As DataColumn In table.Columns
-            If Not GetBooleanProperty(c, ColumnProperty.SubTable) OrElse (subTable IsNot Nothing AndAlso subTable.Length > 0 AndAlso c.ColumnName.StartsWith(subTable)) Then
+        For Each c As DataColumn In _table.Columns
+            If Not c.GetBooleanProperty(ColumnProperty.SubTable) OrElse (Not String.IsNullOrEmpty(_subTable) AndAlso c.ColumnName.StartsWith(_subTable)) Then
                 If ColumnCheckList.CheckedItems.Contains(c.Caption) Then
-                    RemoveProperty(table.Columns(c.ColumnName), ColumnProperty.Grid_Hidden)
+                    _table.Columns(c.ColumnName).RemoveProperty(ColumnProperty.Grid_Hidden)
 
-                    If GetBooleanProperty(c, ColumnProperty.SubTable) Then
-                        RemoveProperty(DB.Table(subTable).Columns(c.ColumnName.Remove(0, subTable.Length)), ColumnProperty.Grid_Hidden)
+                    If c.GetBooleanProperty(ColumnProperty.SubTable) Then
+                        _dm.Database.Table(_subTable).Columns(c.ColumnName.Remove(0, _subTable.Length)).RemoveProperty(ColumnProperty.Grid_Hidden)
                     End If
                 Else
-                    SetProperty(c, ColumnProperty.Grid_Hidden, True)
-                    If GetBooleanProperty(c, ColumnProperty.SubTable) Then
-                        SetProperty(DB.Table(subTable).Columns(c.ColumnName.Remove(0, subTable.Length)), ColumnProperty.Grid_Hidden, True)
+                    c.SetProperty(ColumnProperty.Grid_Hidden, True)
+                    If c.GetBooleanProperty(ColumnProperty.SubTable) Then
+                        _dm.Database.Table(_subTable).Columns(c.ColumnName.Remove(0, _subTable.Length)).SetProperty(ColumnProperty.Grid_Hidden, True)
                     End If
                 End If
             End If
