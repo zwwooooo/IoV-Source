@@ -10,7 +10,7 @@ Missing files
 - TableData\EnemyMiscDrops.xml
 - TableData\EnemyWeaponDrops.xml
 - TableData\ExplosionData.xml
-- TableData\Silhouette.xml - 113d1261 IoV928（需要针对 Silhouette.sti 定义口袋类型，IoV有66个，1.13只有25个）
+- TableData\Silhouette.xml - 113d1261 IoV928（需要从Lookup目录移出到 TableData 目录）
 - TableData\NPCInventory\FredoInventory.xml
 - TableData\NPCInventory\MickeyInventory.xml
 - TableData\NPCInventory\PerkoInventory.xml
