@@ -1035,9 +1035,11 @@ void StartEnemyTaunt( SOLDIERTYPE *pCiv, INT8 iTauntType )
 	VIDEO_OVERLAY_DESC		VideoOverlayDesc;
 	CHAR16	gzTauntQuote[ 320 ];
 
+#ifdef ENABLE_ZOMBIES
 	// Flugente: zombies don't talk
 	if ( pCiv->IsZombie() )
 		return;
+#endif
 
 	// if we have a different quote on, return, this one is not important
 	if ( gCivQuoteData.bActive )
@@ -1078,6 +1080,10 @@ void StartEnemyTaunt( SOLDIERTYPE *pCiv, INT8 iTauntType )
 		case TAUNT_GOT_HIT:
 			iTauntNumber = Random(7);
 			sTauntText = sEnemyTauntsGotHit[iTauntNumber];
+			break;
+		case TAUNT_NOTICED_UNSEEN_MERC:
+			iTauntNumber = Random(7);
+			sTauntText = sEnemyTauntsNoticedMerc[iTauntNumber];
 			break;
 		//kenkenkenken: IoV921+z.5 -->
 		case TAUNT_GUN_JAM:

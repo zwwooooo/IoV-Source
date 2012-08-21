@@ -84,6 +84,7 @@
 	#include "SkillCheck.h"				// added by Flugente
 	#include "random.h"					// added by Flugente
 	#include "Explosion Control.h"		// added by Flugente
+	#include "Food.h"					// added by Flugente
 #endif
 
 #ifdef JA2UB
@@ -582,12 +583,88 @@ INV_DESC_REGIONS gODBItemDescRegions[4][8]; // Four regions of eight sub-regions
 
 // ------------------- Attachment popup callbacks
 
+INT16 getStatusOfLeastDamagedItemInStack( OBJECTTYPE * stack );
+
 // BOB : globals for telling attachment popups _where_ should the attachment go
 UINT8	gubPopupStatusIndex;
 UINT32	guiPopupItemPos;
 void popupCallbackItem(INT16 itemId){
 
+	OBJECTTYPE* bestStack;
+	std::map<UINT32,INT16> bestItemsStatus;
 
+	for(UINT16 i = 0; i < pInventoryPoolList.size(); i++)
+	{	
+
+		OBJECTTYPE * currentStack = &pInventoryPoolList[i].object;
+		UINT16 currentItem = currentStack->usItem;
+
+		if(	currentItem == itemId )
+		{				
+			INT16 leastDamagedStatus = getStatusOfLeastDamagedItemInStack( currentStack );
+
+			if( bestItemsStatus[ currentItem ] < leastDamagedStatus ){	// either not indexed yet or worse then current
+
+				bestItemsStatus[ currentItem ] = leastDamagedStatus;
+				bestStack = currentStack;
+			}
+
+		} // found item
+
+	} // inv loop
+
+
+	// if this is a stack, try to find the least damaged object
+		
+	if( bestStack->ubNumberOfObjects > 1 ){
+
+		UINT8 numObjectsToPlace = 1;
+
+		for (UINT8 j = 1; j <= numObjectsToPlace; j++){
+
+			UINT16 i = 0, leastDamagedIndex = 0;
+			INT16 leastDamagedStatus = 0;
+
+			StackedObjects::iterator p = bestStack->objectStack.begin();
+			while(p != bestStack->objectStack.end()) {
+				
+				if( p->data.objectStatus > leastDamagedStatus ){
+					leastDamagedIndex = i;
+					leastDamagedStatus = p->data.objectStatus;
+				}
+				i++;p++;
+			}
+
+			OBJECTTYPE pObjTmp;
+			pObjTmp.initialize();
+
+			if( bestStack->RemoveObjectAtIndex(leastDamagedIndex, &pObjTmp) ){
+				gpItemPointer = &pObjTmp;									// pick up the object (or stack)
+				DoAttachment((UINT8)gubPopupStatusIndex, guiPopupItemPos);	// try to attach it
+				//gpItemPointer = NULL;										// dont drop it!
+
+				gItemDescAttachmentPopups[giActiveAttachmentPopup]->hide();
+				RenderItemDescriptionBox();
+				giActiveAttachmentPopup = -1;
+
+				//UpdateAttachmentTooltips(gpItemDescObject, gubItemDescStatusIndex);
+				return;
+			}
+		}
+
+	} else {
+		gpItemPointer = bestStack;									// pick up the object (or stack)
+		DoAttachment((UINT8)gubPopupStatusIndex, guiPopupItemPos);	// try to attach it
+		gpItemPointer = NULL;										// and drop it
+
+		gItemDescAttachmentPopups[giActiveAttachmentPopup]->hide();
+		RenderItemDescriptionBox();
+		giActiveAttachmentPopup = -1;
+
+		//UpdateAttachmentTooltips(gpItemDescObject, gubItemDescStatusIndex);
+		return;
+	}
+/*
 	for(UINT16 i = 0; i < pInventoryPoolList.size(); i++){
 		if( pInventoryPoolList[i].object.usItem == itemId ) {
 			
@@ -604,7 +681,7 @@ void popupCallbackItem(INT16 itemId){
 			
 		}
 	}
-
+*/
 }
 
 bool popupCallbackItemInSector(INT16 itemId){
@@ -964,7 +1041,7 @@ void GenerateConsString( STR16 zItemCons, OBJECTTYPE * pObject, UINT32 uiPixLimi
 BOOLEAN UseNASDesc(OBJECTTYPE *pObject){
 	if(pObject->exists() == FALSE)
 		return FALSE;
-	if(guiCurrentScreen == MAP_SCREEN && Item[pObject->usItem].usItemClass == IC_LBEGEAR && UsingNewAttachmentSystem()==true)
+	if(guiCurrentScreen == MAP_SCREEN && Item[pObject->usItem].usItemClass == IC_LBEGEAR && UsingNewAttachmentSystem()==true && gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT])
 		return FALSE;	// the map screen can't support NAS and LBEGEAR.
 	return (/*Item[pObject->usItem].usItemClass != IC_LBEGEAR && Item[pObject->usItem].usItemClass != IC_MONEY && */UsingNewAttachmentSystem()==true);
 }
@@ -1375,6 +1452,15 @@ BOOLEAN InitInvSlotInterface( INV_REGION_DESC *pRegionDesc , INV_REGION_DESC *pC
 	FilenameForBPP("INTERFACE\\gold_key_button.sti", VObjectDesc.ImageFile);
 	CHECKF( AddVideoObject( &VObjectDesc, &guiGoldKeyVO ) );
 
+	// added by Flugente
+	// HEADROCK HAM 4: Advanced Icons
+	if ( gGameExternalOptions.fScopeModes && gGameExternalOptions.fDisplayScopeModes )
+	{
+		VObjectDesc.fCreateFlags = VOBJECT_CREATE_FROMFILE;
+		strcpy( VObjectDesc.ImageFile, "INTERFACE\\ItemInfoAdvancedIcons.STI" );
+		CHECKF( AddVideoObject( &VObjectDesc, &guiItemInfoAdvancedIcon) );
+	}
+	
 	// Add cammo region
 	MSYS_DefineRegion( &gSMInvCamoRegion, pCamoRegion->sX, pCamoRegion->sY, (INT16)(pCamoRegion->sX + CAMO_REGION_WIDTH ), (INT16)(pCamoRegion->sY + CAMO_REGION_HEIGHT ), MSYS_PRIORITY_HIGH,
 						 MSYS_NO_CURSOR, INVMoveCammoCallback, INVClickCammoCallback );
@@ -1500,6 +1586,12 @@ void ShutdownInvSlotInterface( )
 	//DeleteVideoObjectFromIndex( guiBodyInvVO[ 4 ][ 1 ] );
 
 	DeleteVideoObjectFromIndex( guiGoldKeyVO );
+
+	if ( guiItemInfoAdvancedIcon != 0 )
+	{
+		DeleteVideoObjectFromIndex( guiItemInfoAdvancedIcon );
+		guiItemInfoAdvancedIcon = 0;
+	}
 
 	// Remove regions
 	// Add regions for inventory slots
@@ -1953,7 +2045,7 @@ void addItemsToPocketPopup( SOLDIERTYPE *pSoldier, INT16 sPocket, POPUP* popup, 
 
 		if( optsTotal > 0 && optsTotal%15 == 0 ){ // divide to subBoxes every 10 items
 
-			POPUP * currPopupTmp = currPopup->addSubMenuOption( new std::wstring(L"more...") );	// the new popup
+			POPUP * currPopupTmp = currPopup->addSubMenuOption( new std::wstring( gszPocketPopupText[POCKET_POPUP_MOAR] ) );	// the new popup
 			POPUP_SUB_POPUP_OPTION * currSubPopupTmp = currPopup->getSubPopupOption( currPopup->subPopupOptionCount-1 );	// the sub-popup option in prev popup
 
 			
@@ -2028,7 +2120,7 @@ void addWeaponGroupsToPocketPopup( SOLDIERTYPE *pSoldier, INT16 sPocket, POPUP* 
 
 	POPUP * subPopup = NULL;
 
-	subPopup = popup->addSubMenuOption( new std::wstring(L"Guns") );
+	subPopup = popup->addSubMenuOption( new std::wstring(BobbyRFilter[17]/*Guns*/) );
 	popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,
 																				10,
 																				POPUP_POSITION_RELATIVE );
@@ -2056,21 +2148,20 @@ void addWeaponGroupsToPocketPopup( SOLDIERTYPE *pSoldier, INT16 sPocket, POPUP* 
 
 	}
 	
-
-	subPopup = popup->addSubMenuOption( new std::wstring(L"Grenade launchers") );
+	subPopup = popup->addSubMenuOption( new std::wstring( gszPocketPopupText[POCKET_POPUP_GRENADE_LAUNCHERS] ) );
 	popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,
 																				10,
 																				POPUP_POSITION_RELATIVE );
 	addItemsToPocketPopup( pSoldier, sPocket, subPopup, IC_LAUNCHER, -1, -1, 0 );
 
-	subPopup = popup->addSubMenuOption( new std::wstring(L"Rocket launchers") );
+	subPopup = popup->addSubMenuOption( new std::wstring( gszPocketPopupText[POCKET_POPUP_ROCKET_LAUNCHERS] ) );
 	popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,
 																				10,
 																				POPUP_POSITION_RELATIVE );
 	addItemsToPocketPopup( pSoldier, sPocket, subPopup, IC_GUN, -1, 0, 0);
 
 
-	subPopup = popup->addSubMenuOption( new std::wstring(L"Melee & thrown weapons") );
+	subPopup = popup->addSubMenuOption( new std::wstring( gszPocketPopupText[POCKET_POPUP_MEELE_AND_THROWN] ) );
 	popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,
 																				10,
 																				POPUP_POSITION_RELATIVE );
@@ -2188,7 +2279,7 @@ void addAmmoToPocketPopup( SOLDIERTYPE *pSoldier, INT16 sPocket, POPUP* popup ){
 			} // mag loop
 
 			if (!ammoFound){
-				POPUP_OPTION * o = popup->addOption( &std::wstring( L"- no matching ammo -" ), NULL );
+				POPUP_OPTION * o = popup->addOption( &std::wstring( gszPocketPopupText[POCKET_POPUP_NO_AMMO] ), NULL );
 				o->color_shade = COLOR_RED;
 			}
 
@@ -2198,7 +2289,7 @@ void addAmmoToPocketPopup( SOLDIERTYPE *pSoldier, INT16 sPocket, POPUP* popup ){
 	} // found guns
 	else 
 	{
-		POPUP_OPTION * o = popup->addOption( &std::wstring( L"- no guns in inventory -" ), NULL );
+		POPUP_OPTION * o = popup->addOption( &std::wstring( gszPocketPopupText[POCKET_POPUP_NO_GUNS] ), NULL );
 		o->color_shade = COLOR_RED;
 	}
 
@@ -2271,37 +2362,36 @@ void PocketPopupFull( SOLDIERTYPE *pSoldier, INT16 sPocket ){
 
 		POPUP * subPopup = NULL;
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"Weapons") );
+		subPopup = popup->addSubMenuOption( new std::wstring( iEditorItemsToolbarText[0]/*Weapons*/ ) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addWeaponGroupsToPocketPopup( pSoldier, sPocket, subPopup );
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"Ammo") );
+		subPopup = popup->addSubMenuOption( new std::wstring( BobbyRText[BOBBYR_GUNS_AMMO]/*Ammo*/ ) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addAmmoToPocketPopup( pSoldier, sPocket, subPopup );
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"Armor") );
+		subPopup = popup->addSubMenuOption( new std::wstring( BobbyRText[BOBBYR_GUNS_ARMOR]/*Amour*/ ) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addArmorToPocketPopup( pSoldier, sPocket, subPopup );
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"LBE") );
+		subPopup = popup->addSubMenuOption( new std::wstring( BobbyRFilter[BOBBYR_FILTER_USED_LBEGEAR] /*"LBE"*/) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addLBEToPocketPopup( pSoldier, sPocket, subPopup );
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"Grenades") );
+		subPopup = popup->addSubMenuOption( new std::wstring( BobbyRFilter[BOBBYR_FILTER_MISC_GRENADE]/*Grenades*/ ) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addGrenadesToPocketPopup( pSoldier, sPocket, subPopup );
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"Bombs") );
+		subPopup = popup->addSubMenuOption( new std::wstring( BobbyRFilter[BOBBYR_FILTER_MISC_BOMB] ) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addBombsToPocketPopup( pSoldier, sPocket, subPopup );
 
-		subPopup = popup->addSubMenuOption( new std::wstring(L"Face Gear") );
+		subPopup = popup->addSubMenuOption( new std::wstring( BobbyRFilter[BOBBYR_FILTER_MISC_FACE] ) );
 		popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 		addFaceGearToPocketPopup( pSoldier, sPocket, subPopup );
 
 		popup->show();
 	}
-
 }
 
 /*
@@ -2374,7 +2464,7 @@ void PocketPopupDefault( SOLDIERTYPE *pSoldier, INT16 sPocket ){
 					// default for LBE slots - grenades + ammo for merc's guns
 				addAmmoToPocketPopup( pSoldier, sPocket, popup );
 
-				POPUP * subPopup = popup->addSubMenuOption( new std::wstring(L"Grenades") );
+				POPUP * subPopup = popup->addSubMenuOption( new std::wstring( BobbyRFilter[28]/*Grenades*/ ) );
 				popup->getSubPopupOption( popup->subPopupOptionCount-1 )->setPopupPosition(	10,10,POPUP_POSITION_RELATIVE );
 				addGrenadesToPocketPopup( pSoldier, sPocket, subPopup );
 				} else {
@@ -2431,10 +2521,15 @@ void INVRenderINVPanelItem( SOLDIERTYPE *pSoldier, INT16 sPocket, UINT8 fDirtyLe
 				case VEST_PACK:
 				case COMBAT_PACK:
 				case BACKPACK:
-					lbePocket = 
-						(pSoldier->inv[icLBE[sPocket]].exists() == false) 
-						? LoadBearingEquipment[Item[icDefault[sPocket]].ubClassIndex].lbePocketIndex[icPocket[sPocket]] 
-						: LoadBearingEquipment[Item[pSoldier->inv[icLBE[sPocket]].usItem].ubClassIndex].lbePocketIndex[icPocket[sPocket]];
+					 
+						if(pSoldier->inv[icLBE[sPocket]].exists() == false){
+							lbePocket =	LoadBearingEquipment[Item[icDefault[sPocket]].ubClassIndex].lbePocketIndex[icPocket[sPocket]];
+						}else{
+							lbePocket = LoadBearingEquipment[Item[pSoldier->inv[icLBE[sPocket]].usItem].ubClassIndex].lbePocketIndex[icPocket[sPocket]];
+							if( lbePocket == 0 && LoadBearingEquipment[Item[pSoldier->inv[icLBE[sPocket]].usItem].ubClassIndex].lbePocketsAvailable & (UINT16)pow((double)2, icPocket[sPocket])){
+								lbePocket = GetPocketFromAttachment(&pSoldier->inv[icLBE[sPocket]], icPocket[sPocket]);
+							}
+						}
 					iClass = Item[pSoldier->inv[sPocket].usItem].usItemClass;
 					if(icLBE[sPocket] == BPACKPOCKPOS && !(pSoldier->flags.ZipperFlag) && (gTacticalStatus.uiFlags & INCOMBAT))
 						lbePocket = 0;
@@ -3640,7 +3735,7 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 
 				// Flugente: If we display the thermometer for overheating, move the ammo counter a bit to the right
 				if ( gGameOptions.fWeaponOverheating == TRUE &&  gGameExternalOptions.fDisplayOverheatThermometer == TRUE )
-					sNewX = sX + 6;
+					sNewX = sX + 2; //6;  // SANDRO - 6 ps too much, 2 are fine
 
 				// Flugente: check for underbarrel weapons and use that object if necessary
 				OBJECTTYPE*	pObjShown = pObject;
@@ -3770,7 +3865,7 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 				gprintfinvalidate( sNewX, sNewY, pStr );
 			}
 
-			// Flugente FTW 1
+			// Flugente
 			if ( gGameOptions.fWeaponOverheating == TRUE &&  gGameExternalOptions.fDisplayOverheatThermometer == TRUE && ( pItem->usItemClass & (IC_GUN | IC_LAUNCHER) || Item[pObject->usItem].barrel == TRUE ) )
 			{	
 				OBJECTTYPE*	pObjShown = pObject;
@@ -3786,6 +3881,23 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 				UINT16 colour = Get16BPPColor( FROMRGB( red, green, blue ) );
 
 				DrawItemUIBarEx( pObjShown, DRAW_ITEM_TEMPERATURE, sX, sY + sHeight-1, ITEMDESC_ITEM_STATUS_WIDTH, sHeight-1, colour, colour, TRUE, guiSAVEBUFFER );								
+			}
+
+			// Flugente: display condition of food if it can decay
+			if ( gGameOptions.fFoodSystem == TRUE && Item[pObject->usItem].foodtype > 0 )
+			{
+				if ( OVERHEATING_MAX_TEMPERATURE > 0 )
+				{
+					FLOAT condition = (*pObject)[0]->data.bTemperature / OVERHEATING_MAX_TEMPERATURE;
+
+					UINT32 red   = (UINT32) ( 127 );
+					UINT32 green = (UINT32) ( 54 + 201 * ( min(1.0f, condition ) ) );
+					UINT32 blue  = 0;
+										
+					UINT16 colour = Get16BPPColor( FROMRGB( red, green, blue ) );
+
+					DrawItemUIBarEx( pObject, DRAW_ITEM_TEMPERATURE, sX, sY + sHeight-1, ITEMDESC_ITEM_STATUS_WIDTH, sHeight-1, colour, colour, TRUE, guiSAVEBUFFER);
+				}
 			}
 
 			// display symbol if we are leaning our weapon on something
@@ -3810,22 +3922,39 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 				gprintfinvalidate( sNewX, sNewY, pStr );
 			}
 
-			if ( gGameExternalOptions.fScopeModes && gGameExternalOptions.fDisplayScopeModes && pSoldier && pObject == &(pSoldier->inv[HANDPOS] ) && Item[pSoldier->inv[HANDPOS].usItem].usItemClass == IC_GUN )
+			if ( gGameExternalOptions.fScopeModes && gGameExternalOptions.fDisplayScopeModes
+				&& pSoldier && pObject == &(pSoldier->inv[HANDPOS] ) && Item[pSoldier->inv[HANDPOS].usItem].usItemClass == IC_GUN )
 			{
 				sNewX = sX + 5; // rather arbitrary
 				sNewY = sY;
 
 				// added by Flugente
 				// HEADROCK HAM 4: Advanced Icons
-				VOBJECT_DESC    VObjectDesc;
-				VObjectDesc.fCreateFlags = VOBJECT_CREATE_FROMFILE;
-				strcpy( VObjectDesc.ImageFile, "INTERFACE\\ItemInfoAdvancedIcons.STI" );
-				AddStandardVideoObject( &VObjectDesc, &guiItemInfoAdvancedIcon );
+				if (guiItemInfoAdvancedIcon == 0)
+				{
+					// added by Flugente
+					// HEADROCK HAM 4: Advanced Icons
+					VOBJECT_DESC    VObjectDesc;
+					VObjectDesc.fCreateFlags = VOBJECT_CREATE_FROMFILE;
+					strcpy( VObjectDesc.ImageFile, "INTERFACE\\ItemInfoAdvancedIcons.STI" );
+					AddVideoObject( &VObjectDesc, &guiItemInfoAdvancedIcon);
+				}
 
 				std::map<INT8, OBJECTTYPE*> ObjList;
 				GetScopeLists(&pSoldier->inv[HANDPOS], ObjList);
-								
-				if (ObjList[pSoldier->bScopeMode] != NULL && IsAttachmentClass(ObjList[pSoldier->bScopeMode]->usItem, AC_SCOPE ) )
+				
+				if ( pSoldier->bScopeMode == USE_ALT_WEAPON_HOLD )
+				{		
+					BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoAdvancedIcon, 55, sNewX, sNewY, VO_BLT_TRANSSHADOW, NULL );
+
+					SetFontForeground( FONT_ORANGE );
+			
+					if ( uiBuffer == guiSAVEBUFFER )
+					{
+						RestoreExternBackgroundRect( sNewX, sNewY, 15, 15 );
+					}
+				}
+				else if (ObjList[pSoldier->bScopeMode] != NULL && IsAttachmentClass(ObjList[pSoldier->bScopeMode]->usItem, AC_SCOPE ) )
 				{					
 					BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoAdvancedIcon, 54, sNewX, sNewY, VO_BLT_TRANSSHADOW, NULL );
 
@@ -3872,7 +4001,7 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 					mprintf( sMagX, sNewY, pStr );
 					gprintfinvalidate( sMagX, sNewY, pStr );
 				}
-				else if (ObjList[pSoldier->bScopeMode] != NULL &&  IsAttachmentClass(ObjList[pSoldier->bScopeMode]->usItem, AC_SIGHT ) )
+				else if (ObjList[pSoldier->bScopeMode] != NULL && IsAttachmentClass(ObjList[pSoldier->bScopeMode]->usItem, AC_SIGHT ) )
 				{
 					BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoAdvancedIcon, 53, sNewX, sNewY, VO_BLT_TRANSSHADOW, NULL );
 
@@ -3967,6 +4096,121 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 				mprintf( sNewX, sNewY, pStr );
 				gprintfinvalidate( sNewX, sNewY, pStr );
 
+			}
+			// SANDRO - display BRST/AUTO on the second weapon too, if we are going to fire dual bursts
+			if ( pSoldier && pObject == &(pSoldier->inv[SECONDHANDPOS] ) && 
+				(pSoldier->bWeaponMode == WM_BURST || pSoldier->bWeaponMode == WM_AUTOFIRE) && 
+				Item[pSoldier->inv[HANDPOS].usItem].usItemClass == IC_GUN &&
+				!(Item[ pSoldier->inv[HANDPOS ].usItem ].twohanded ) &&
+				pSoldier->IsValidSecondHandBurst() )
+			{
+				sNewY = sY + 13; // rather arbitrary
+				if ( pSoldier->bWeaponMode == WM_BURST )
+				{
+					swprintf( pStr, New113Message[MSG113_BRST] );
+					SetFontForeground( FONT_RED );
+				}
+				else
+				{
+					swprintf( pStr, New113Message[MSG113_AUTO] );
+					SetFontForeground( FONT_RED );
+				}
+				// Get length of string
+				uiStringLength=StringPixLength(pStr, ITEM_FONT );
+
+				sNewX = sX + sWidth - uiStringLength - 4;
+
+				if ( uiBuffer == guiSAVEBUFFER )
+				{
+					RestoreExternBackgroundRect( sNewX, sNewY, 15, 15 );
+				}
+				mprintf( sNewX, sNewY, pStr );
+				gprintfinvalidate( sNewX, sNewY, pStr );
+			}
+
+			// Flugente: display the time left/frequencies on armed bombs (as we can now arm them in our inventory)
+			if( ( (Item[pObject->usItem].usItemClass & (IC_BOMB)) && ( ( (*pObject)[0]->data.misc.bDetonatorType == BOMB_TIMED ) || ( (*pObject)[0]->data.misc.bDetonatorType == BOMB_REMOTE ) ) )  )
+			{
+				sNewY = sY + sHeight - 10;
+
+				INT8 timeleft = (*pObject)[0]->data.misc.bDelay;
+				INT8 detfrequency = (*pObject)[0]->data.misc.bFrequency;
+				INT8 defusefrequency = (*pObject)[0]->data.bDefuseFrequency;
+				
+				if ( ( (*pObject)[0]->data.misc.bDetonatorType == BOMB_TIMED ) && timeleft > 0 )
+				{
+					SetRGBFontForeground( 250, 0, 0 );
+
+					if ( defusefrequency > 0 )
+						swprintf( pStr, L"%d/%d", timeleft, defusefrequency );
+					else
+						swprintf( pStr, L"%d", timeleft );
+				}
+				else if ( detfrequency > 0 )
+				{
+					SetRGBFontForeground( 207, 211, 39 );
+
+					if ( defusefrequency > 0 )
+						swprintf( pStr, L"%d/%d", detfrequency, defusefrequency );
+					else
+						swprintf( pStr, L"%d", detfrequency );
+				}
+				else
+				{
+					SetRGBFontForeground( 7, 243, 143 );
+
+					swprintf( pStr, L"-/%d", defusefrequency );
+				}
+				
+				// Get length of string
+				uiStringLength=StringPixLength(pStr, ITEM_FONT );
+
+				sNewX = sX + sWidth - uiStringLength - 4;
+
+				if ( uiBuffer == guiSAVEBUFFER )
+				{
+					RestoreExternBackgroundRect( sNewX, sNewY, 15, 15 );
+				}
+				mprintf( sNewX, sNewY, pStr );
+				gprintfinvalidate( sNewX, sNewY, pStr );
+			}
+
+			// Flugente: if ammo is used to feed a gun externally, show ammo count left on this ammo
+			if ( gGameExternalOptions.ubExternalFeeding > 0 && (Item[pObject->usItem].usItemClass & (IC_AMMO)) && ObjectIsExternalFeeder(pSoldier, pObject)  )
+			{
+				sNewY = sY + sHeight - 10;
+
+				UINT16 usAmmoItem	  = pObject->usItem;
+				UINT16 usMagIndex	  = Item[usAmmoItem].ubClassIndex;
+				UINT16 usAmmoMagSize  = Magazine[usMagIndex].ubMagSize;
+				UINT8  usAmmoAmmoType = Magazine[usMagIndex].ubAmmoType;
+
+				SetFontForeground ( AmmoTypes[usAmmoAmmoType].fontColour );
+
+				// count the total ammo left
+				UINT16 totalammo = 0;
+				int i;
+				for (i=0; i < pObject->ubNumberOfObjects; ++i)
+					totalammo += (*pObject)[i]->data.ubShotsLeft;
+
+				swprintf( pStr, L"%d", totalammo );
+
+				// Get length of string
+				uiStringLength=StringPixLength(pStr, ITEM_FONT );
+
+				sNewX = sX + 1;
+				//sNewX = sX + sWidth - uiStringLength - 4;
+									
+				if ( uiBuffer == guiSAVEBUFFER )
+				{
+					RestoreExternBackgroundRect( sNewX, sNewY, 20, 15 );
+				}
+				mprintf( sNewX, sNewY, pStr );
+				gprintfinvalidate( sNewX, sNewY, pStr );
+
+				//sNewX = sX + 1;
+
+				//SetFontForeground( FONT_MCOLOR_DKGRAY );
 			}
 		}
 	}
@@ -5823,6 +6067,25 @@ void ItemDescAttachmentsCallback( MOUSE_REGION * pRegion, INT32 iReason )
 			// ATE: Make sure we have enough AP's to drop it if we pick it up!
 			if ( pAttachment->exists() && EnoughPoints( gpItemDescSoldier, ( AttachmentAPCost( pAttachment->usItem, gpItemDescObject, gpItemPointerSoldier ) + APBPConstants[AP_PICKUP_ITEM] ), 0, TRUE ) )
 			{
+				// Flugente: if we are trying to remove the detonators of an armed bomb, auto-fail: it explodes
+				if ( gpItemPointerSoldier && ( (Item[gpItemDescObject->usItem].usItemClass & (IC_BOMB)) && ( ( (*gpItemDescObject)[ubStatusIndex]->data.misc.bDetonatorType == BOMB_TIMED ) || ( (*gpItemDescObject)[ubStatusIndex]->data.misc.bDetonatorType == BOMB_REMOTE ) ) )  )
+				{
+					if ( guiCurrentScreen == GAME_SCREEN )
+					{
+						// ignite explosions manually - this item is not in the WorldBombs-structure, so we can't add it to the queue
+						IgniteExplosion( (*gpItemDescObject)[0]->data.misc.ubBombOwner - 2, gpItemPointerSoldier->sX, gpItemPointerSoldier->sY, (INT16) (gpWorldLevelData[gpItemPointerSoldier->sGridNo].sHeight), gpItemPointerSoldier->sGridNo, gpItemDescObject->usItem, gpItemPointerSoldier->pathing.bLevel, gpItemPointerSoldier->ubDirection );
+					}
+					else if ( (guiCurrentScreen == MAP_SCREEN) || (guiCurrentScreen == MSG_BOX_SCREEN) )
+					{
+						// no explosions in map screen - instead we simply damage the inventory and harm our health
+						gpItemPointerSoldier->InventoryExplosion();
+					}
+
+					DeleteObj( gpItemDescObject );
+
+					return;
+				}
+
 				// Get attachment if there is one
 				// The follwing function will handle if no attachment is here
 				if ( gpItemDescObject->RemoveAttachment( pAttachment, &gItemPointer, ubStatusIndex, gpItemDescSoldier ) )
@@ -5841,12 +6104,21 @@ void ItemDescAttachmentsCallback( MOUSE_REGION * pRegion, INT32 iReason )
 						fMapInventoryItem=TRUE;
 						fTeamPanelDirty=TRUE;
 					}
-
+										
 					//if we are currently in the shopkeeper interface
 					else if( guiTacticalInterfaceFlags & INTERFACE_SHOPKEEP_INTERFACE )
 					{
 						// pick up attachment from item into cursor (don't try to sell)
 						BeginSkiItemPointer( PLAYERS_INVENTORY, -1, FALSE );
+					}
+
+					// Flugente: if we altered a gun's attachments, re-evaluate the scope mode and sight
+					if ( gGameExternalOptions.fScopeModes && gpItemPointerSoldier && Item[gpItemDescObject->usItem].usItemClass == IC_GUN )
+					{
+						ChangeScopeMode( gpItemPointerSoldier, 0 );
+
+						// reevaluate sight
+						ManLooksForOtherTeams( gpItemPointerSoldier );
 					}
 
 					//Dirty interface
@@ -6083,6 +6355,9 @@ INT8 DetermineShowLBE( )
 		return -1;
 
 	if (iResolution >= _640x480 && iResolution < _800x600)
+		return -1;
+
+	if(!gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT] && guiCurrentItemDescriptionScreen == MAP_SCREEN)
 		return -1;
 
 	if(!UsingNewInventorySystem())
@@ -6464,8 +6739,9 @@ void RenderItemDescriptionBox( )
 
 		// CHRISL: This block will display misc information for items stored in LBE Pockets
 		// Display LBENODE attached items
-		if(UsingNewInventorySystem() == true && Item[gpItemDescObject->usItem].usItemClass == IC_LBEGEAR)
+		if(UsingNewInventorySystem() == true && Item[gpItemDescObject->usItem].usItemClass == IC_LBEGEAR && (gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT] || guiCurrentItemDescriptionScreen != MAP_SCREEN))
 		{
+			
 			RenderLBENODEItems( gpItemDescObject, gubItemDescStatusIndex );
 		}
 
@@ -6580,6 +6856,57 @@ void RenderItemDescriptionBox( )
 						FindFontRightCoordinates( gItemDescTextRegions[regionindex].sLeft, gItemDescTextRegions[regionindex].sTop, gItemDescTextRegions[regionindex].sRight - gItemDescTextRegions[regionindex].sLeft ,gItemDescTextRegions[regionindex].sBottom - gItemDescTextRegions[regionindex].sTop ,pStr, BLOCKFONT2, &usX, &usY);
 
 						mprintf( usX, usY, pStr );
+					}
+					// Flugente: display condition of food if it can decay
+					else if ( gGameOptions.fFoodSystem == TRUE && Item[gpItemDescObject->usItem].foodtype > 0 )
+					{
+						if ( OVERHEATING_MAX_TEMPERATURE > 0 )
+						{
+							FLOAT condition = (*gpItemDescObject)[0]->data.bTemperature / OVERHEATING_MAX_TEMPERATURE;
+
+							UINT32 red   = (UINT32) ( 127 );
+							UINT32 green = (UINT32) ( 54 + 201 * ( min(1.0f, condition ) ) );
+							UINT32 blue  = 0;
+
+							UINT8 FoodStringNum = 6;
+							if ( condition > 0.84f )
+								FoodStringNum = 1;
+							else if ( condition > 0.66f )
+								FoodStringNum = 2;
+							else if ( condition > 0.5f )
+								FoodStringNum = 3;
+							else if ( condition > 0.33f )
+								FoodStringNum = 4;
+							else if ( condition > 0.16f )
+								FoodStringNum = 5;
+
+							// UDB system displays a string with colored condition text.
+							int regionindex = 7;
+							SetFontForeground( ForegroundColor );
+							swprintf( pStr, L"%s", gFoodDesc[0] ); // "Temperature is "
+							mprintf( gItemDescTextRegions[regionindex].sLeft, gItemDescTextRegions[regionindex].sTop, pStr );
+							// Record length
+							INT16 indent = StringPixLength( gFoodDesc[0], ITEMDESC_FONT );
+						
+							swprintf( pStr, L"%s", gFoodDesc[FoodStringNum] );
+
+							SetRGBFontForeground( red, green, blue );
+
+							mprintf( gItemDescTextRegions[regionindex].sLeft+indent+2, gItemDescTextRegions[regionindex].sTop, pStr );
+							// Record length
+							indent += StringPixLength( gFoodDesc[FoodStringNum], ITEMDESC_FONT );
+
+							SetFontForeground( ForegroundColor );
+							swprintf( pStr, L"%s", gFoodDesc[7] ); // "."
+							mprintf( gItemDescTextRegions[regionindex].sLeft + indent + 2, gItemDescTextRegions[regionindex].sTop, pStr );
+
+							// to get the text to the left side...
+							swprintf( pStr, L"");
+
+							FindFontRightCoordinates( gItemDescTextRegions[regionindex].sLeft, gItemDescTextRegions[regionindex].sTop, gItemDescTextRegions[regionindex].sRight - gItemDescTextRegions[regionindex].sLeft ,gItemDescTextRegions[regionindex].sBottom - gItemDescTextRegions[regionindex].sTop ,pStr, BLOCKFONT2, &usX, &usY);
+
+							mprintf( usX, usY, pStr );
+						}
 					}
 
 					// UDB system displays a string with colored condition text.
@@ -9744,7 +10071,7 @@ void ItemPopupRegionCallback( MOUSE_REGION * pRegion, INT32 iReason )
 				}
 				else
 				{
-					if ( _KeyDown(SHIFT) && gpItemPointer == NULL && Item[gpItemPopupObject->usItem].usItemClass == IC_GUN )
+					if ( _KeyDown(SHIFT) && gpItemPointer == NULL && Item[gpItemPopupObject->usItem].usItemClass == IC_GUN && (*gpItemPopupObject)[uiItemPos]->data.gun.ubGunShotsLeft > 0 && !(Item[gpItemPopupObject->usItem].singleshotrocketlauncher) )
 					{
 						EmptyWeaponMagazine( gpItemPopupObject, &gItemPointer, uiItemPos );
 						InternalMAPBeginItemPointer( gpItemPopupSoldier );
@@ -9755,7 +10082,7 @@ void ItemPopupRegionCallback( MOUSE_REGION * pRegion, INT32 iReason )
 			}
 			else
 			{
-				if ( _KeyDown(SHIFT) && gpItemPointer == NULL && Item[gpItemPopupObject->usItem].usItemClass == IC_GUN && !(Item[gpItemPopupObject->usItem].singleshotrocketlauncher) && !( guiTacticalInterfaceFlags & INTERFACE_SHOPKEEP_INTERFACE ) )
+				if ( _KeyDown(SHIFT) && gpItemPointer == NULL && Item[gpItemPopupObject->usItem].usItemClass == IC_GUN && (*gpItemPopupObject)[uiItemPos]->data.gun.ubGunShotsLeft > 0 && !(Item[gpItemPopupObject->usItem].singleshotrocketlauncher) && !( guiTacticalInterfaceFlags & INTERFACE_SHOPKEEP_INTERFACE ) )
 				{
 					EmptyWeaponMagazine( gpItemPopupObject, &gItemPointer, uiItemPos );
 					gpItemPointer = &gItemPointer;
@@ -11159,8 +11486,10 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 	CHAR16	pStr[ 500 ];
 	UINT16	usItem = pObject->usItem;
 	INT32	iNumAttachments = 0;
-	INT16	sValue;
+	INT16	sValue;	
 	FLOAT	fWeight;
+	INT16   sThreshold = 100;
+	FLOAT	bDirt = 0.0f;
 
 	if( pSoldier != NULL )
 	{
@@ -11224,6 +11553,15 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 		if ( fWeight < 0.1 )
 		{
 			fWeight = 0.1f;
+		}
+
+		if ( Item[pObject->usItem].usItemClass & (IC_WEAPON|IC_ARMOUR) )
+		{
+			if (  gGameExternalOptions.fAdvRepairSystem )
+				sThreshold  = (*pObject)[subObject]->data.sRepairThreshold;
+
+			if ( gGameExternalOptions.fDirtSystem )
+				bDirt		= 100 * (*pObject)[subObject]->data.bDirtLevel / OVERHEATING_MAX_TEMPERATURE;
 		}
 
 		switch( Item[ usItem ].usItemClass )
@@ -11294,12 +11632,96 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					FLOAT accuracymalus = (FLOAT)((max(1.0, overheatdamagepercentage) - 1.0) * 0.1);
 					accuracyheatmultiplicator = (FLOAT)max(0.0, 1.0 - accuracymalus);
 				}
+				
+				INT8 accuracy = (UsingNewCTHSystem()==true?Weapon[ usItem ].nAccuracy:Weapon[ usItem ].bAccuracy);
+				accuracy = (INT8)(accuracy * accuracyheatmultiplicator);
 
-				//Info for weapons
-				//swprintf( pStr, L"%s (%s) [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
-
-					INT8 accuracy = (UsingNewCTHSystem()==true?Weapon[ usItem ].nAccuracy:Weapon[ usItem ].bAccuracy);
-					accuracy = (INT8)(accuracy * accuracyheatmultiplicator);
+				if ( gGameExternalOptions.fAdvRepairSystem && gGameExternalOptions.fDirtSystem && ( sThreshold < 100 || bDirt > 0 ) )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString8,
+					#else
+						swprintf( pStr, L"%s (%s) [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n%s %.2f%%",
+					#endif
+					
+					ItemNames[ usItem ],
+					AmmoCaliber[ Weapon[ usItem ].ubCalibre ],
+					sValue,
+					sThreshold,
+					gWeaponStatsDesc[ 9 ],		//Accuracy String
+					accuracy,
+					gWeaponStatsDesc[ 11 ],		//Damage String
+					GetDamage(pObject),
+					gWeaponStatsDesc[ 10 ],		//Range String
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
+					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
+					apStr,						//AP's
+					gWeaponStatsDesc[ 12 ],		//Weight String
+					fWeight,					//Weight
+					GetWeightUnitString(),		//Weight units					
+					gWeaponStatsDesc[ 18 ],		//Dirt String
+					bDirt						//Dirt
+					);
+				}
+				else if ( gGameExternalOptions.fAdvRepairSystem && sThreshold < 100 )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString11,
+					#else
+						swprintf( pStr, L"%s (%s) [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s",
+					#endif
+					
+					ItemNames[ usItem ],
+					AmmoCaliber[ Weapon[ usItem ].ubCalibre ],
+					sValue,
+					sThreshold,
+					gWeaponStatsDesc[ 9 ],		//Accuracy String
+					accuracy,
+					gWeaponStatsDesc[ 11 ],		//Damage String
+					GetDamage(pObject),
+					gWeaponStatsDesc[ 10 ],		//Range String
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
+					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
+					apStr,						//AP's
+					gWeaponStatsDesc[ 12 ],		//Weight String
+					fWeight,					//Weight
+					GetWeightUnitString()		//Weight units	
+					);
+				}
+				else if ( gGameExternalOptions.fDirtSystem && bDirt > 0 )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString12,
+					#else
+						swprintf( pStr, L"%s (%s) [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n%s %.2f%%",
+					#endif
+					
+					ItemNames[ usItem ],
+					AmmoCaliber[ Weapon[ usItem ].ubCalibre ],
+					sValue,
+					gWeaponStatsDesc[ 9 ],		//Accuracy String
+					accuracy,
+					gWeaponStatsDesc[ 11 ],		//Damage String
+					GetDamage(pObject),
+					gWeaponStatsDesc[ 10 ],		//Range String
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
+					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
+					apStr,						//AP's
+					gWeaponStatsDesc[ 12 ],		//Weight String
+					fWeight,					//Weight
+					GetWeightUnitString(),		//Weight units					
+					gWeaponStatsDesc[ 18 ],		//Dirt String
+					bDirt						//Dirt
+					);
+				}
+				else
+				{					
 					#ifdef CHINESE
 						swprintf( pStr, ChineseSpecString4,
 					#else
@@ -11324,6 +11746,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					fWeight,					//Weight
 					GetWeightUnitString()		//Weight units
 					);
+				}
 			}
 			break;
 
@@ -11366,9 +11789,89 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 				}
 
 				//Info for weapons
-					INT8 accuracy = (UsingNewCTHSystem()==true?Weapon[ usItem ].nAccuracy:Weapon[ usItem ].bAccuracy);
-					accuracy = (INT8)(accuracy * accuracyheatmultiplicator);
+				INT8 accuracy = (UsingNewCTHSystem()==true?Weapon[ usItem ].nAccuracy:Weapon[ usItem ].bAccuracy);
+				accuracy = (INT8)(accuracy * accuracyheatmultiplicator);
 
+				if ( gGameExternalOptions.fAdvRepairSystem && gGameExternalOptions.fDirtSystem && ( sThreshold < 100 || bDirt > 0 ) )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, L"%s [%d%ге(%d%ге)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n %s %.2f%%",
+					#else
+						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n%s %.2f%%",
+					#endif
+
+					ItemNames[ usItem ],
+					sValue,
+					sThreshold,
+					gWeaponStatsDesc[ 9 ],		//Accuracy String
+					accuracy,
+					gWeaponStatsDesc[ 11 ],		//Damage String
+					GetDamage(pObject),
+					gWeaponStatsDesc[ 10 ],		//Range String
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
+					gWeaponStatsDesc[ 6 ],		//AP String
+					apStr,						//AP's
+					gWeaponStatsDesc[ 12 ],		//Weight String
+					fWeight,					//Weight
+					GetWeightUnitString(),		//Weight units
+					gWeaponStatsDesc[ 18 ],		//Dirt String
+					bDirt						//Dirt
+					);
+				}
+				else if ( gGameExternalOptions.fAdvRepairSystem && sThreshold < 100 )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, L"%s [%d%ге(%d%ге)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
+					#else
+						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
+					#endif
+
+					ItemNames[ usItem ],
+					sValue,
+					sThreshold,
+					gWeaponStatsDesc[ 9 ],		//Accuracy String
+					accuracy,
+					gWeaponStatsDesc[ 11 ],		//Damage String
+					GetDamage(pObject),
+					gWeaponStatsDesc[ 10 ],		//Range String
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
+					gWeaponStatsDesc[ 6 ],		//AP String
+					apStr,						//AP's
+					gWeaponStatsDesc[ 12 ],		//Weight String
+					fWeight,					//Weight
+					GetWeightUnitString()		//Weight units
+					);
+				}
+				else if ( gGameExternalOptions.fDirtSystem && bDirt > 0 )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, L"%s [%d%ге]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n %s %.2f%%",
+					#else
+						swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n%s %.2f%%",
+					#endif
+
+					ItemNames[ usItem ],
+					sValue,
+					gWeaponStatsDesc[ 9 ],		//Accuracy String
+					accuracy,
+					gWeaponStatsDesc[ 11 ],		//Damage String
+					GetDamage(pObject),
+					gWeaponStatsDesc[ 10 ],		//Range String
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
+					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
+					gWeaponStatsDesc[ 6 ],		//AP String
+					apStr,						//AP's
+					gWeaponStatsDesc[ 12 ],		//Weight String
+					fWeight,					//Weight
+					GetWeightUnitString(),		//Weight units
+					gWeaponStatsDesc[ 18 ],		//Dirt String
+					bDirt						//Dirt
+					);
+				}
+				else
+				{
 					#ifdef CHINESE
 						swprintf( pStr, L"%s [%d%ге]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
 					#else
@@ -11390,6 +11893,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					fWeight,					//Weight
 					GetWeightUnitString()		//Weight units
 					);
+				}
 			}
 			break;
 
@@ -11397,22 +11901,45 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 		case IC_THROWING_KNIFE:
 		case IC_PUNCH:
 			{
-				#ifdef CHINESE
-					swprintf( pStr, ChineseSpecString5,
-				#else
-					swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %1.1f %s",
-				#endif
+				if ( gGameExternalOptions.fAdvRepairSystem && sThreshold < 100 )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString9,
+					#else
+						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %1.1f %s",
+					#endif
 
-					ItemNames[ usItem ],
-					sValue,
-					gWeaponStatsDesc[ 11 ],					//Damage String
-					GetDamage(pObject), 					//Melee damage
-					gWeaponStatsDesc[ 6 ],					//AP String
-					BaseAPsToShootOrStab( APBPConstants[DEFAULT_APS], APBPConstants[DEFAULT_AIMSKILL], pObject, pSoldier ), //AP's
-					gWeaponStatsDesc[ 12 ],					//Weight String
-					fWeight,								//Weight
-					GetWeightUnitString()					//Weight units
-					);
+						ItemNames[ usItem ],
+						sValue,
+						sThreshold,
+						gWeaponStatsDesc[ 11 ],					//Damage String
+						GetDamage(pObject), 					//Melee damage
+						gWeaponStatsDesc[ 6 ],					//AP String
+						BaseAPsToShootOrStab( APBPConstants[DEFAULT_APS], APBPConstants[DEFAULT_AIMSKILL], pObject, pSoldier ), //AP's
+						gWeaponStatsDesc[ 12 ],					//Weight String
+						fWeight,								//Weight
+						GetWeightUnitString()					//Weight units
+						);
+				}
+				else
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString5,
+					#else
+						swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %1.1f %s",
+					#endif
+
+						ItemNames[ usItem ],
+						sValue,
+						gWeaponStatsDesc[ 11 ],					//Damage String
+						GetDamage(pObject), 					//Melee damage
+						gWeaponStatsDesc[ 6 ],					//AP String
+						BaseAPsToShootOrStab( APBPConstants[DEFAULT_APS], APBPConstants[DEFAULT_AIMSKILL], pObject, pSoldier ), //AP's
+						gWeaponStatsDesc[ 12 ],					//Weight String
+						fWeight,								//Weight
+						GetWeightUnitString()					//Weight units
+						);
+				}
 			}
 			break;
 
@@ -11494,12 +12021,35 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					break;
 				}
 
-				#ifdef CHINESE
-					swprintf( pStr, ChineseSpecString6,
-				#else
-					swprintf( pStr, L"%s [%d%%]\n%s %d%% (%d/%d)\n%s %d%%\n%s %1.1f %s",
-				#endif
-
+				if ( gGameExternalOptions.fAdvRepairSystem && sThreshold < 100 )
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString10,
+					#else
+						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d%% (%d/%d)\n%s %d%%\n%s %1.1f %s",
+					#endif
+				
+					ItemNames[ usItem ],		//Item long name
+					sValue,						//Item condition
+					sThreshold,					//repair threshold
+					pInvPanelTitleStrings[ 4 ],	//Protection string
+					iProtection,				//Protection rating in % based on best armor
+					Armour[ Item[ usItem ].ubClassIndex ].ubProtection, //Protection (raw data)
+					Armour[ Item[ usItem ].ubClassIndex ].ubProtection * sValue / 100,
+					pInvPanelTitleStrings[ 3 ],	//Camo string
+					GetCamoBonus(pObject)+GetUrbanCamoBonus(pObject)+GetDesertCamoBonus(pObject)+GetSnowCamoBonus(pObject),	//Camo bonus
+					gWeaponStatsDesc[ 12 ],		//Weight string
+					fWeight,					//Weight
+					GetWeightUnitString()		//Weight units
+					);
+				}
+				else
+				{
+					#ifdef CHINESE
+						swprintf( pStr, ChineseSpecString6,
+					#else
+						swprintf( pStr, L"%s [%d%%]\n%s %d%% (%d/%d)\n%s %d%%\n%s %1.1f %s",
+					#endif
 				
 					ItemNames[ usItem ],		//Item long name
 					sValue,						//Item condition
@@ -11513,6 +12063,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					fWeight,					//Weight
 					GetWeightUnitString()		//Weight units
 					);
+				}
 			}
 			break;
 
@@ -12612,16 +13163,14 @@ void BombInventoryMessageBoxCallBack( UINT8 ubExitValue )
 				{
 					// ignite explosions manually - this item is not in the WorldBombs-structure, so we can't add it to the queue
 					IgniteExplosion( (*gpItemDescObject)[0]->data.misc.ubBombOwner - 2, gpItemDescSoldier->sX, gpItemDescSoldier->sY, (INT16) (gpWorldLevelData[gpItemDescSoldier->sGridNo].sHeight), gpItemDescSoldier->sGridNo, gpItemDescObject->usItem, gpItemDescSoldier->pathing.bLevel, gpItemDescSoldier->ubDirection );
-
-					DeleteObj( gpItemDescObject );
 				}
 				else if ( (screen == MAP_SCREEN) || (screen == MSG_BOX_SCREEN) )
 				{
 					// no explosions in map screen - instead we simply damage the inventory and harm our health
 					gpItemDescSoldier->InventoryExplosion();
-
-					DeleteObj( gpItemDescObject );
 				}
+
+				DeleteObj( gpItemDescObject );
 
 				return;
 			}
@@ -12780,16 +13329,14 @@ void BombInventoryDisArmMessageBoxCallBack( UINT8 ubExitValue )
 			{
 				// ignite explosions manually - this item is not in the WorldBombs-structure, so we can't add it to the queue
 				IgniteExplosion( (*gpItemDescObject)[0]->data.misc.ubBombOwner - 2, gpItemDescSoldier->sX, gpItemDescSoldier->sY, (INT16) (gpWorldLevelData[gpItemDescSoldier->sGridNo].sHeight), gpItemDescSoldier->sGridNo, gpItemDescObject->usItem, gpItemDescSoldier->pathing.bLevel, gpItemDescSoldier->ubDirection );
-
-				DeleteObj( gpItemDescObject );
 			}
 			else if ( (screen == MAP_SCREEN) || (screen == MSG_BOX_SCREEN) )
 			{
 				// no explosions in map screen - instead we simply damage the inventory and harm our health
 				gpItemDescSoldier->InventoryExplosion();
-
-				DeleteObj( gpItemDescObject );
 			}
+
+			DeleteObj( gpItemDescObject );
 
 #ifdef JA2TESTVERSION
 			ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, L"Arming failed, explosion here" );
