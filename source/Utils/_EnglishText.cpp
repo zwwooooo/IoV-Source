@@ -1638,12 +1638,13 @@ STR16 pAssignmentStrings[] =
 	L"Trainer", // training a teammate
 	L"Student", // being trained by someone else 
 	L"Staff", // operating a strategic facility
+	L"Eat",		// eating at a facility (cantina etc.)
 	L"Rest", // Resting at a facility
 	L"Dead", // dead
 	L"Incap.", // abbreviation for incapacitated
 	L"POW", // Prisoner of war - captured
-	L"Hospital", // patient in a hospital 
-	L"Empty",	// Vehicle is empty
+	L"Hospital", // patient in a hospital	
+	L"Empty",	// Vehicle is empty	
 };
 
 
@@ -1722,6 +1723,7 @@ STR16 pPersonnelAssignmentStrings[] =
 	L"Trainer",
 	L"Student",
 	L"Facility Staff",	// Missing
+	L"Eat",		// eating at a facility (cantina etc.)
 	L"Resting at Facility",		// Missing
 	L"Dead",
 	L"Incap.",
@@ -2442,7 +2444,7 @@ STR16 sKeyDescriptionStrings[2] =
 
 //The headers used to describe various weapon statistics.
 
-CHAR16		gWeaponStatsDesc[][ 28 ] = //kenkenkenken: IoV921+z.5 Altered value from 17 to 28
+CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from 18 to 28. 2012/08/18 modify: 19~29
 {
 	// HEADROCK: Changed this for Extended Description project
 	L"Status:",
@@ -2467,18 +2469,19 @@ CHAR16		gWeaponStatsDesc[][ 28 ] = //kenkenkenken: IoV921+z.5 Altered value from
 	L"AUTO/5:",		//15
 	L"Remaining ammo:",		//16
 	L"Default:",	//17 //WarmSteel - So we can also display default attachments
+	L"Dirt:",	// 18	//added by Flugente
 	//kenkenkenken: IoV921+z.5b2b3 -->
-    L"MALF:",		//18 
-	L"x----",           //19
-	L"o----",          //20
-	L"ox---",         //21
-	L"oo---",        //22
-	L"oox--",       //23
-	L"ooo--",      //24
-	L"ooox-",     //25
-	L"oooo-",    //26
-	L"oooox",   //27
-	L"ooooo",  //28
+	L"故障率:",		//19
+	L"x----",           //20
+	L"o----",          //21
+	L"ox---",         //22
+	L"oo---",        //23
+	L"oox--",       //24
+	L"ooo--",      //25
+	L"ooox-",     //26
+	L"oooo-",    //27
+	L"oooox",   //28
+	L"ooooo",  //29
 	//<-- IoV
 };
 
@@ -2937,7 +2940,14 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Select tripwire hierarchy (1 - 4) and network (A - D):",
 
 	// added by Flugente to display health and poisoning
-	L"Health: %d/%d\n  Poison: %d/%d\nEnergy: %d/%d\nMorale: %s",
+	L"Health: %d/%d\nPoison: %d/%d\nEnergy: %d/%d\nMorale: %s",
+
+	// added by Flugente to display food status
+	L"Health: %d/%d\nEnergy: %d/%d\nMorale: %s\nWater: %d%s\nFood: %d%s",
+	L"Health: %d/%d\nPoison: %d/%d\nEnergy: %d/%d\nMorale: %s\nWater: %d%s\nFood: %d%s",
+
+	// added by Flugente: selection of a function to call in tactical
+	L"1 - Fill Canteens 2 - Clean Weapons 3,4 - Nothing",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -3490,6 +3500,8 @@ STR16 pMapScreenStatusStrings[] =
 	L"Condition",	// the condition of the current vehicle (its "health")
 	L"Fuel",	// the fuel level of the current vehicle (its "energy")
 	L"Poison",		// for display of poisoning
+	L"Water",		// drink level
+	L"Food",		// food level	
 };
 
 
@@ -5120,8 +5132,17 @@ STR16		zOptionsToggleText[] =
 	L"Quiet Training",						// Madd: mercs don't say quotes while training
 	L"Quiet Repairing",						// Madd: mercs don't say quotes while repairing
 	L"Quiet Doctoring",						// Madd: mercs don't say quotes while doctoring
+	
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"Auto Fast Forward AI Turns",			// Automatic fast forward through AI turns
+#endif
+
+#ifdef ENABLE_ZOMBIES
 	L"Allow Zombies",						// Flugente Zombies 1.0
+#endif
+	L"Enable inventory popups",				// the_bob : enable popups for picking items from sector inv
+	L"Mark Remaining Hostiles",
+	L"Show LBE Content",
 	L"--Cheat Mode Options--",				// TOPTION_CHEAT_MODE_OPTIONS_HEADER,
 	L"Force Bobby Ray shipments",			// force all pending Bobby Ray shipments
 	L"-----------------",					// TOPTION_CHEAT_MODE_OPTIONS_END
@@ -5229,8 +5250,17 @@ STR16	zOptionsScreenHelpText[] =
 	L"When ON, mercs will not report progress during training.",
 	L"When ON, mercs will not report progress during repairing.",
 	L"When ON, mercs will not report progress during doctoring.",
+	
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER 
 	L"When ON, AI turns will be much faster.",
+#endif
+
+#ifdef ENABLE_ZOMBIES
 	L"When ON, zombies will spawn. Be aware!",							// allow zombies
+#endif
+	L"When ON, enables popup boxes that appear when you left click on empty merc inventory slots while viewing sector inventory in mapscreen.",
+	L"When ON, approximate locations of the last enemies in the sector are highlighted.",
+	L"When ON, show the contents of an LBE item, otherwise show the regular NAS interface.",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_HEADER",
 	L"Force all pending Bobby Ray shipments",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_END",
@@ -5333,6 +5363,7 @@ STR16	gzGIOScreenText[] =
 	L"New Chance to Hit System",
 	L"Improved Interrupt System",
 	L"Weapon Overheating",
+	L"Food System",
 	L"Bobby Ray Quantity",
 };
 
@@ -6647,6 +6678,7 @@ STR16 gzFacilityAssignmentStrings[]=
 {
 	L"AMBIENT",
 	L"Staff",
+	L"Eat",
 	L"Rest",
 	L"Repair Items",
 	L"Repair %s", // Vehicle name inserted here
@@ -6811,6 +6843,18 @@ STR16 sEnemyTauntsGotHit[]=
 
 };
 
+STR16 sEnemyTauntsNoticedMerc[]=
+{
+	L"Da'ffff...!",
+	L"Oh my God!",
+	L"Holy crap!",
+	L"Enemy!!!",
+	L"Alert! Alert!",
+	L"There is one!",
+	L"Attack!",
+
+};
+
 //////////////////////////////////////////////////////
 // HEADROCK HAM 4: Begin new UDB texts and tooltips
 //////////////////////////////////////////////////////
@@ -6951,6 +6995,7 @@ STR16 szUDBGenAmmoStatsTooltipText[]=
 	L"|P|r|e|-|I|m|p|a|c|t |E|x|p|l|o|s|i|o|n",
 	L"|T|e|m|p|e|r|a|t|u|r|e |M|o|d|i|f|i|c|a|t|i|o|n",
 	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",
+	L"|D|i|r|t |M|o|d|i|f|i|c|a|t|i|o|n",
 };
 
 STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
@@ -6960,6 +7005,7 @@ STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
 	L"\n \nA multiplier to the bullet's damage potential\nthat is applied immediately before hitting the\ntarget.\n \nValues above 1.0 indicate an increase in damage,\nvalues below 1.0 indicate a decrease.\n \nHigher is better.",
 	L"\n \nAdditional heat generated by this ammunition.\n \nLower is better.",
 	L"\n \nDetermines what percentage of a\nbullet's damage will be poisonous.",
+	L"\n \nAdditional dirt generated by this ammunition.\n \nLower is better.",
 };
 
 STR16 szUDBGenExplosiveStatsTooltipText[]=
@@ -7047,6 +7093,11 @@ STR16 szUDBGenSecondaryStatsTooltipText[]=
 	L"|F|i|r|s|t |A|i|d |K|i|t",
 	L"|M|e|d|i|c|a|l |K|i|t",
 	L"|L|o|c|k |B|o|m|b",
+	L"|D|r|i|n|k",
+	L"|M|e|a|l",
+	L"|A|m|m|o |B|e|l|t",
+	L"|A|m|m|o |V|e|s|t",
+	L"|D|e|f|u|s|a|l |K|i|t",
 };
 
 STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
@@ -7061,15 +7112,15 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \nThis item is electronic in nature, and contains\ncomplex circuitry.\n \nElectronic items are inherently more difficult\nto repair, at least without the ELECTRONICS skill.",
 	L"\n \nWhen this item is worn on a character's face,\nit will protect them from all sorts of noxious gasses.\n \nNote that some gases are corrosive, and might eat\nright through the mask...",
 	L"\n \nThis item requires batteries. Without batteries,\nyou cannot activate its primary abilities.\n \nTo use a set of batteries, attach them to\nthis item as you would a scope to a rifle.",
-	L"\n \nThis item can be used to pick open locked\ndoors or containers.\n \nLockpicking is silent, although it requires\nsubstantial mechanical skill to pick anything\nbut the simplest locks.",
+	L"\n \nThis item can be used to pick open locked\ndoors or containers.\n \nLockpicking is silent, although it requires\nsubstantial mechanical skill to pick anything\nbut the simplest locks. This item modifies\nthe lockpicking chance by ",
 	L"\n \nThis item can be used to cut through wire fences.\n \nThis allows a character to rapidly move through\nfenced areas, possibly outflanking the enemy!",
-	L"\n \nThis item can be used to smash open locked\ndoors or containers.\n \nLock-smashing requires substantial strength,\ngenerates a lot of noise, and can easily\ntire a character out. However, it is a good\nway to get through locks without superior skills or\ncomplicated tools.",
+	L"\n \nThis item can be used to smash open locked\ndoors or containers.\n \nLock-smashing requires substantial strength,\ngenerates a lot of noise, and can easily\ntire a character out. However, it is a good\nway to get through locks without superior skills or\ncomplicated tools. This item improves \nyour chance by ",
 	L"\n \nThis item can be used to detect metallic objects\nunder the ground.\n \nNaturally, its primary function is to detect\nmines without the necessary skills to spot them\nwith the naked eye.\n \nMaybe you'll find some buried treasure too.",
 	L"\n \nThis item can be used to detonate a bomb\nwhich has been set with a remote detonator.\n \nPlant the bomb first, then use the\nRemote Trigger item to set it off when the\ntime is right.",
 	L"\n \nWhen attached to an explosive device and set up\nin the right position, this detonator can be triggered\nby a (separate) remote device.\n \nRemote Detonators are great for setting traps,\nbecause they only go off when you tell them to.\n \nAlso, you have plenty of time to get away!",
 	L"\n \nWhen attached to an explosive device and set up\nin the right position, this detonator will count down\nfrom the set amount of time, and explode once the\ntimer expires.\n \nTimer Detonators are cheap and easy to install,\nbut you'll need to time them just right to give\nyourself enough chance to get away!",
 	L"\n \nThis item contains gasoline (fuel).\n \nIt might come in handy if you ever\nneed to fill up a gas tank...",
-	L"\n \nThis item contains various tools that can\nbe used to repair other items.\n \nA toolkit item is always required when setting\na character to repair duty.",
+	L"\n \nThis item contains various tools that can\nbe used to repair other items.\n\nA toolkit item is always required when setting\na character to repair duty. This item modifies\nthe effectiveness of repair by ",
 	L"\n \nWhen worn in a face-slot, this item provides\nthe ability to spot enemies through walls,\nthanks to their heat signature.",
 	L"\n \nThis powerful device can be used to scan\nfor enemies using X-rays.\n \nIt will reveal all enemies within a certain radius\nfor a short period of time.\n \nKeep away from reproductive organs!",
 	L"\n \nThis item contains fresh drinking water.\nUse when thirsty.",
@@ -7077,6 +7128,11 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \nThis is a basic field medical kit, containing\nitems required to provide basic medical aid.\n \nIt can be used to bandage wounded characters\nand prevent bleeding.\n \nFor actual healing, use a proper Medical Kit\nand/or plenty of rest.",
 	L"\n \nThis is a proper medical kit, which can\nbe used in surgery and other serious medicinal\npurposes.\n \nMedical Kits are always required when setting\na character to Doctoring duty.",
 	L"\n \nThis item can be used to blast open locked\ndoors and containers.\n \nExplosives skill is required to avoid\npremature detonation.\n \nBlowing locks is a relatively easy way of quickly\ngetting through locked doors. However,\nit is very loud, and dangerous to most characters.",
+	L"\n \nThis item will still your thirst\nif you drink it.",
+	L"\n \nThis item will still your hunger\nif you eat it.",
+	L"\n \nWith this ammo belt you can\nfeed someone else's MG.",
+	L"\n \nYou can feed an MG with ammo\nbelts stored in this vest.",
+	L"\n \nThis item improves your trap disarm chance by ",
 };
 
 STR16 szUDBAdvStatsTooltipText[]=
@@ -7137,7 +7193,8 @@ STR16 szUDBAdvStatsTooltipText[]=
 	L"|C|o|o|l|d|o|w|n |M|o|d|i|f|i|e|r",
 	L"|J|a|m |T|h|r|e|s|h|o|l|d |M|o|d|i|f|i|e|r",
 	L"|D|a|m|a|g|e |T|h|r|e|s|h|o|l|d |M|o|d|i|f|i|e|r",
-	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",	
+	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",
+	L"|D|i|r|t |M|o|d|i|f|i|e|r",
 };
 
 // Alternate tooltip text for weapon Advanced Stats. Just different wording, nothing spectacular.
@@ -7200,6 +7257,7 @@ STR16 szUDBAdvStatsExplanationsTooltipText[]=
 	L"\n \nA gun's jam threshold is\nincreased by this percentage.\n \nHigher is better.",
 	L"\n \nA gun's damage threshold is\nincreased by this percentage.\n \nHigher is better.",
 	L"\n \nThis is the percentage of damage dealt\nby this item that will be poisonous.\n\nUsefulness depends on wether enemy\nhas poison resistance or absorption.",
+	L"\n \nA single shot causes this much dirt.\nAmmunition types and attachments can\naffect this value.\n \nLower is better.",
 };
 
 STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=
@@ -7291,7 +7349,7 @@ STR16 gzMapInventoryFilterOptions[] =
 	L"Hide all",
 };
 
-// Flugente FTW 1: Temperature-based text similar to HAM 4's condition-based text.
+// Flugente: Temperature-based text similar to HAM 4's condition-based text.
 STR16 gTemperatureDesc[] =
 {
 	L"Temperature is ",
@@ -7304,6 +7362,19 @@ STR16 gTemperatureDesc[] =
 	L"CRITICAL",
 	L"DRAMATIC",
 	L"unknown",
+	L"."
+};
+
+// Flugente: food condition texts
+STR16 gFoodDesc[] =
+{
+	L"Food is ",
+	L"fresh",
+	L"good",
+	L"ok",
+	L"stale",
+	L"shabby",
+	L"rotting",
 	L"."
 };
 
@@ -7355,4 +7426,16 @@ STR16	zNewTacticalMessages[]=
 	L"You have selected the campaign %S. This campaign is a player-modified version of the original Unfinished Business campaign. Are you sure you wish to play the %S campaign?",			// @@@ new text
 	L"In order to use the editor, please select a campaign other than the default.",		///@@new
 };
+
+// The_bob : pocket popup text defs
+STR16	gszPocketPopupText[]=
+{
+	L"Grenade launchers",	// POCKET_POPUP_GRENADE_LAUNCHERS,
+	L"Rocket launchers",	// POCKET_POPUP_ROCKET_LAUNCHERS
+	L"Melee & thrown weapons",	// POCKET_POPUP_MEELE_AND_THROWN
+	L"- no matching ammo -",	//POCKET_POPUP_NO_AMMO
+	L"- no guns in inventory -",	//POCKET_POPUP_NO_GUNS
+	L"more...",		//POCKET_POPUP_MOAR
+};
+
 #endif //ENGLISH

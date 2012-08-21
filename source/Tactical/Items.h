@@ -385,6 +385,7 @@ BOOLEAN IsRemoteDetonatorAttached( OBJECTTYPE * pObj );		// Flugente: no more ne
 OBJECTTYPE* FindAttachedBatteries( OBJECTTYPE * pObj );
 INT8 FindMedKit( SOLDIERTYPE * pSoldier );
 INT8 FindFirstAidKit( SOLDIERTYPE * pSoldier );
+INT8 FindDisarmKit( SOLDIERTYPE * pSoldier );	//JMich_SkillsModifiers: Added function to check for disarm bonus
 INT8 FindLocksmithKit( SOLDIERTYPE * pSoldier );
 INT8 FindCamoKit( SOLDIERTYPE * pSoldier );
 INT8 FindWalkman( SOLDIERTYPE * pSoldier );
@@ -446,7 +447,7 @@ INT16 ReduceCamoFromSoldier( SOLDIERTYPE * pSoldier, INT16 iCamoToRemove, INT16 
 BOOLEAN HasExtendedEarOn( SOLDIERTYPE * pSoldier );
 BOOLEAN UseTotalMedicalKitPoints( SOLDIERTYPE * pSoldier, UINT16 usPointsToConsume );
 
-// Flugente FTW 1.2
+// Flugente
 FLOAT GetItemCooldownFactor( OBJECTTYPE * pObj );
 void  GetScopeLists( OBJECTTYPE * pObj, std::map<INT8, OBJECTTYPE*>& arScopeMap );
 
@@ -466,4 +467,36 @@ void CheckBombSpecifics( OBJECTTYPE * pObj, INT8* detonatortype, INT8* setting, 
 // Flugente: check for specific flags
 BOOLEAN HasItemFlag( UINT16 usItem, UINT32 aFlag );
 
+// Flugente: get first item number that has this flag. Use with caution, as we search in all items
+BOOLEAN GetFirstItemWithFlag( UINT16* pusItem, UINT32 aFlag );
+
+// Flugente: check if this object is currently fed from an external source (belts in inventory, other mercs)
+BOOLEAN ObjectIsBeingFedExternal(SOLDIERTYPE* pSoldier, OBJECTTYPE * pObject);
+
+// is this object currently used to feed an externally fed object? This can be in our or someone else's inventory
+BOOLEAN ObjectIsExternalFeeder(SOLDIERTYPE* pSoldier, OBJECTTYPE * pObject);
+
+OBJECTTYPE* GetExternalFeedingObject(SOLDIERTYPE* pSoldier, OBJECTTYPE * pObject);
+
+BOOLEAN DeductBulletViaExternalFeeding(SOLDIERTYPE* pSoldier, OBJECTTYPE * pObject);
+
+// Flugente: additional xml data for sectors
+typedef struct
+{
+	UINT8		usWaterType;			// type of water source in this sector
+	UINT16		usNaturalDirt;			// extra dirt percentage when firing in this sector
+} SECTOR_EXT_DATA;
+
+// get dirt increase for object with attachments, fConsiderAmmo: with ammo
+FLOAT GetItemDirtIncreaseFactor( OBJECTTYPE * pObj, BOOLEAN fConsiderAmmo = TRUE );
+
+//DBrot: get the volume of all attached pouches
+UINT8 GetVolumeAlreadyTaken(OBJECTTYPE * pObj);
+INT16 GetPocketFromAttachment(OBJECTTYPE * pObj, UINT8 pMap);
+
+INT8 GetNumberAltFireAimLevels( SOLDIERTYPE * pSoldier, INT32 iGridNo );
+
 #endif
+
+
+

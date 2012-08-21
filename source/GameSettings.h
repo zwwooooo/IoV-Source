@@ -90,8 +90,19 @@ enum
 	TOPTION_QUIET_TRAINING,						//Madd: mercs don't say gained experience quote while training
 	TOPTION_QUIET_REPAIRING,					//Madd: mercs don't say gained experience quote while repairing items
 	TOPTION_QUIET_DOCTORING,					//Madd: mercs don't say gained experience quote while doctoring
+	
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	TOPTION_AUTO_FAST_FORWARD_MODE,				// automatically fast forward through AI turns
+#endif
+
+#ifdef ENABLE_ZOMBIES
 	TOPTION_ZOMBIES,							// Flugente Zombies 1.0: allow zombies	
+#endif
+
+	TOPTION_ENABLE_INVENTORY_POPUPS,			// the_bob : enable popups for picking items from sector inv
+
+	TOPTION_SHOW_LAST_ENEMY,					//DBrot: show approximate locations for the last enemies
+	TOPTION_SHOW_LBE_CONTENT,					//DBrot: toggle between the content of an lbe and its attachments
 
 	// arynn: Debug/Cheat
 	TOPTION_CHEAT_MODE_OPTIONS_HEADER,
@@ -228,9 +239,10 @@ typedef struct
 	BOOLEAN fUseNCTH;					// ubFiller:	From 499 to 498
 	BOOLEAN fImprovedInterruptSystem;	// ubFiller:	From 498 to 497
 	BOOLEAN fWeaponOverheating;			// ubFiller:	From 497 to 496
+	BOOLEAN fFoodSystem;				// ubFiler:		From 496 to 495
 	
 	// WANNE: Decrease this filler by 1, for each new UINT8 / BOOLEAN variable, so we can maintain savegame compatibility!!
-	UINT8	ubFiller[496];		
+	UINT8	ubFiller[495];		
 
 } GAME_OPTIONS;
 
@@ -340,6 +352,8 @@ typedef struct
 	BOOLEAN fAllowCollectiveInterrupts;
 	BOOLEAN fAllowInstantInterruptsOnSight;
 
+	BOOLEAN fNoEnemyAutoReadyWeapon;
+
 	UINT16 usAwardSpecialExpForQuests;
 
 	BOOLEAN fAllowWalkingWithWeaponRaised;
@@ -365,6 +379,7 @@ typedef struct
 	//Video settings	
 	BOOLEAN gfVSync;
 
+#ifdef ENABLE_ZOMBIES
 	// Flugente: zombie settings
 	INT8	sZombieRiseBehaviour;
 	BOOLEAN fZombieSpawnWaves;
@@ -376,15 +391,30 @@ typedef struct
 	BOOLEAN fZombieOnlyHeadshotsWork;
 	INT8	sZombieDifficultyLevel;
 	BOOLEAN fZombieRiseWithArmour;
+#endif
 	
 	// Flugente: poison settings
 	INT32	ubPoisonBaseMedicalSkillToCure;
+	FLOAT	sPoisonMedicalPtsToCureMultiplicator;
 	INT16	sZombiePoisonDamagePercentage;
 	FLOAT	sPoisonInfectionDamageMultiplier;
 
 	// Flugente: fortification settings
 	BOOLEAN fFortificationAllowInHostileSector;
 
+	// Flugente: food settings
+	UINT16	usFoodDigestionHourlyBaseFood;
+	UINT16	usFoodDigestionHourlyBaseDrink;
+	FLOAT	sFoodDigestionSleep;
+	FLOAT	sFoodDigestionTravelVehicle;
+	FLOAT	sFoodDigestionTravel;
+	FLOAT	sFoodDigestionAssignment;
+	FLOAT	sFoodDigestionOnDuty;
+	FLOAT	sFoodDigestionCombat;
+		
+	BOOLEAN fFoodDecayInSectors;
+	FLOAT	sFoodDecayModificator;
+	
 	//Animation settings
 	FLOAT giPlayerTurnSpeedUpFactor;
 	FLOAT giEnemyTurnSpeedUpFactor;
@@ -1088,6 +1118,7 @@ typedef struct
 	
 	INT32 iInitialMercArrivalLocation;
 
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	// Keyboard shortcut (as VK) for fastforward key.  See Utils/KeyMap
 	INT32 iFastForwardKey;
 	// Turn on fast forward whenever ui is disabled.
@@ -1098,12 +1129,12 @@ typedef struct
 	INT32 iNotifyFrequency;
 	// Frequency that the screen is updated
 	FLOAT fClockSpeedPercent;
+#endif
 
 	// Flugente FTW 1: Weapon Overheating
 	BOOLEAN	fDisplayOverheatThermometer;			// Should a 'thermometer' for guns and replacable barrels be displayed?
 	UINT8	ubOverheatThermometerRedOffset;			// amount of red colour while temperature is below threshold
 	FLOAT   iCooldownModificatorLonelyBarrel;		// Cooldown modificator for barrels alone in the landscape ;-)
-	BOOLEAN	fSetZeroUponNewSector;					// Should loading a new sector set the temperatures of all items in the old sector to zero? (this doesn't apply to inventories)
 	
 	// Flugente: Weapon Mounting
 	BOOLEAN	fWeaponResting;							// Should it be possible to rest your weapon on structures in crouched position?
@@ -1113,13 +1144,42 @@ typedef struct
 	// Flugente: Scope Modes
 	BOOLEAN fScopeModes;							// allow the player to toggle between existing scopes/sights
 	BOOLEAN fDisplayScopeModes;						// allow display of scope modes
+
+	// Flugente: External Feeding
+	UINT8	ubExternalFeeding;						// allow external feeding of guns (0 = no, 1 = only for others, 2 = we can also fed ourselves)
+
+	// Flugente: advanced repair/dirt system
+	BOOLEAN	fAdvRepairSystem;						// allow thresholds to repairing
+	BOOLEAN fDirtSystem;							// allow dirt on items increase the chance for weapon jamming
+	UINT32	usSectorDirtDivider;					// divide a guns dirt factor by this to get dirt increase for every turn
 	
+	// Sandro: Alternative weapon holding (rifles fired from hip / pistols fired one-handed)
+	UINT8 ubAllowAlternativeWeaponHolding;
+	UINT8 ubToAltWeaponHoldReadyAPsPerc;
+	UINT8 ubFromAltWeaponHoldReadyAPsPerc;
+	UINT8 ubAltWeaponHoldingFireSpeedBonus;
+	UINT8 ubAltWeaponHoldingCtHPenaly;
+	UINT8 ubAltWeaponHoldingAimingPenaly;
+	UINT8 ubAltWeaponHoldingAimLevelsReduced;
+
+	// Sandro: Energy cost on weapon manipulation
+	UINT8 ubEnergyCostForWeaponWeight;
+	UINT8 ubEnergyCostForWeaponRecoilKick;
+
 	BOOLEAN gBriefingRoom;
 	BOOLEAN gEncyclopedia;
 			
 	UINT8	ubMapItemChanceOverride;				//Madd: special map override, mostly for debugging
 	UINT8	ubNumPItems;							//Madd: set number of PItem files to be used - default 3
 	BOOLEAN	fUseXmlTileSets;						//Madd: move this variable here, it should be mod dependent
+
+	UINT8	ubMarkerMode;							//DBrot: how should we mark the last hostile area?
+	UINT8	ubSoldiersLeft;							//DBrot: how many soldiers may still be standing for this to become active
+	UINT8	ubGridResolutionDay;					//DBrot: how precise we want to show their location
+	UINT8	ubGridResolutionNight;					//DBrot: how precise we want to show their location - adjust for shorter night time ranges ... or don't
+
+	BOOLEAN fRobotNoReadytime;						//DBrot: should the robot need to ready his gun?
+
 } GAME_EXTERNAL_OPTIONS;
 
 typedef struct
@@ -1480,6 +1540,61 @@ typedef struct
 	BOOLEAN MAX_EFFECTIVE_USE_GRADIENT;
 
 } CTH_CONSTANTS;
+//DBrot: Grids
+typedef struct
+{
+	//defines the basement and the bottom of the stairs
+	UINT8 ubHideoutSectorX;
+	UINT8 ubHideoutSectorY;
+	UINT8 ubHideoutSectorZ;
+	INT32 iHideoutExitGrid;
+	//defines the surface and the top of the stairs
+	UINT8 ubHideoutSurfaceX;
+	UINT8 ubHideoutSurfaceY;
+	UINT8 ubHideoutSurfaceZ;
+	INT32 iHideoutEntryGrid;
+	//where your mercs land when entering the basement, added some for 10 man squads
+	INT32 iBasementEntry[10];
+	
+	//where your mercs land when leaving the basement, again added some
+	INT32 iBasementExit[12];
+	
+	//this moves the crate to reveal the entrance
+	INT32 iFinalCrateGrid;
+	UINT16 usCrateTileDef;
+	UINT16 usTrapdoorTileDef;
+
+	//San Mona C5
+	//Porn Quest
+	UINT16 usPornShopRoomHans;
+	INT32  iHansGridNo;
+	UINT16 usPornShopRoomBrenda;
+	UINT16 usPornShopRoomTony;
+
+	//Brothel Quests
+	UINT16 usLeatherShop;
+	INT32  iCarlaDoorGridNo;
+	INT32  iCindyDoorGridNo;
+	INT32  iBambiDoorGridNo;
+	INT32  iMariaDoorGridNo;
+
+	UINT16 usBrothelRoomRangeStart;
+	UINT16 usBrothelRoomRangeEnd;
+	UINT16 usBrothelGuardRoom;
+
+	INT32 iBrothelDoor1;
+	INT32 iBrothelDoor2;
+	INT32 iBrothelDoor3;
+
+	//Leave Stuff
+	UINT8 ubOmertaDropOffX;
+	UINT8 ubOmertaDropOffY;
+	UINT8 ubOmertaDropOffZ;
+	INT32 iOmertaDropOff;
+
+}MOD_SETTINGS;
+
+extern MOD_SETTINGS gModSettings;
 
 //This structure will contain general Ja2 settings	NOT individual game settings.
 extern GAME_SETTINGS		gGameSettings;
@@ -1503,6 +1618,7 @@ BOOLEAN LoadGameSettings();
 // Snap: Read options from an INI file in the default of custom Data directory
 void LoadGameExternalOptions();
 void LoadSkillTraitsExternalSettings(); // SANDRO - added this one
+void LoadModSettings();
 void LoadIoVSettings(); //kenkenkenken: IoV921+z.5
 void LoadGameAPBPConstants();
 // HEADROCK HAM 4: Read CTH/Shooting coefficients from file

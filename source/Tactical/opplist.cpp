@@ -85,6 +85,7 @@ void HandleManNoLongerSeen( SOLDIERTYPE * pSoldier, SOLDIERTYPE * pOpponent, INT
 // The_Bob - real time sneaking code 01/06/09
 extern void CancelItemPointer(void);
 extern BOOLEAN NobodyAlerted(void);
+extern void ShowRadioLocator( UINT8 ubID, UINT8 ubLocatorSpeed );
 //#define TESTOPPLIST
 
 // for ManSeesMan()
@@ -870,7 +871,7 @@ void HandleSight(SOLDIERTYPE *pSoldier, UINT8 ubSightFlags)
 	if ((gTacticalStatus.uiFlags & TURNBASED) && 
 		(gTacticalStatus.uiFlags & INCOMBAT) && 
 		(ubSightFlags & SIGHT_INTERRUPT) && 
-		(!gGameOptions.fImprovedInterruptSystem || gGameExternalOptions.fAllowInstantInterruptsOnSight )	)
+		(!gGameOptions.fImprovedInterruptSystem || (gGameOptions.fImprovedInterruptSystem && gGameExternalOptions.fAllowInstantInterruptsOnSight) )	)
 	{
 		ResolveInterruptsVs( pSoldier, SIGHTINTERRUPT );
 	}
@@ -1784,9 +1785,11 @@ void HandleManNoLongerSeen( SOLDIERTYPE * pSoldier, SOLDIERTYPE * pOpponent, INT
 
 	if ( (pSoldier->ubCivilianGroup == KINGPIN_CIV_GROUP) && (pOpponent->bTeam == gbPlayerNum ) )
 	{
-		UINT8 ubRoom;
+		//DBrot: More Rooms
+		//UINT8 ubRoom;
+		UINT16 usRoom;
 
-		if ( InARoom( pOpponent->sGridNo, &ubRoom ) && IN_BROTHEL( ubRoom ) && ( IN_BROTHEL_GUARD_ROOM( ubRoom ) ) )
+		if ( InARoom( pOpponent->sGridNo, &usRoom ) && IN_BROTHEL( usRoom ) && ( IN_BROTHEL_GUARD_ROOM( usRoom ) ) )
 		{
 			// unauthorized!
 			// make guard run to block guard room
@@ -2256,12 +2259,14 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 						case ELDIN:
 							if ( pSoldier->aiData.bNeutral )
 							{
-								UINT8 ubRoom = 0;
+								//DBrot: More Rooms
+								//UINT8 ubRoom = 0;
+								UINT16 usRoom = 0;
 								// if player is in behind the ropes of the museum display
 								// or if alarm has gone off (status red)
-								InARoom( pOpponent->sGridNo, &ubRoom );
+								InARoom( pOpponent->sGridNo, &usRoom );
 
-								if ( ( CheckFact( FACT_MUSEUM_OPEN, 0 ) == FALSE && ubRoom >= 22 && ubRoom <= 41 ) || CheckFact( FACT_MUSEUM_ALARM_WENT_OFF, 0 ) || ( ubRoom == 39 || ubRoom == 40 ) || ( FindObj( pOpponent, CHALICE ) != NO_SLOT ) )
+								if ( ( CheckFact( FACT_MUSEUM_OPEN, 0 ) == FALSE && usRoom >= 22 && usRoom <= 41 ) || CheckFact( FACT_MUSEUM_ALARM_WENT_OFF, 0 ) || ( usRoom == 39 || usRoom == 40 ) || ( FindObj( pOpponent, CHALICE ) != NO_SLOT ) )
 								{
 									SetFactTrue( FACT_MUSEUM_ALARM_WENT_OFF );
 									AddToShouldBecomeHostileOrSayQuoteList( pSoldier->ubID );	
@@ -2375,11 +2380,13 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 						}
 						else
 						{
-							UINT8 ubRoom;
+							//DBrot: More Rooms
+							//UINT8 ubRoom;
+							UINT16 usRoom;
 
 							// JA2 Gold: only go hostile if see player IN guard room
 							//if ( InARoom( pOpponent->sGridNo, &ubRoom ) && IN_BROTHEL( ubRoom ) && ( gMercProfiles[ MADAME ].bNPCData == 0 || IN_BROTHEL_GUARD_ROOM( ubRoom ) ) )
-							if ( InARoom( pOpponent->sGridNo, &ubRoom ) && IN_BROTHEL_GUARD_ROOM( ubRoom ) )
+							if ( InARoom( pOpponent->sGridNo, &usRoom ) && IN_BROTHEL_GUARD_ROOM( usRoom ) )
 							{
 								// unauthorized!
 								MakeCivHostile( pSoldier, 2 );
@@ -2503,6 +2510,15 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 #ifdef TESTOPPLIST
 			DebugMsg( TOPIC_JA2OPPLIST, DBG_LEVEL_3, String( "ManSeesMan: ID %d(%S) to ID %d NEW TO ME",pSoldier->ubID,pSoldier->name,pOpponent->ubID) );	
 #endif
+			// SANDRO - if this is an enemy guy, who was unaware of us till now, and the combat didn't started yet, throw "taunt" and indicator we have been seen
+			if ( IS_MERC_BODY_TYPE( pSoldier ) && pSoldier->bTeam != gbPlayerNum )
+			{
+				if ( pSoldier->aiData.bOppList[pOpponent->ubID] <= NOT_HEARD_OR_SEEN &&	pSoldier->aiData.bAlertStatus != STATUS_RED && pSoldier->aiData.bAlertStatus != STATUS_BLACK )
+				{
+					StartEnemyTaunt( pSoldier, TAUNT_NOTICED_UNSEEN_MERC );
+				}
+				ShowRadioLocator( pSoldier->ubID, 1 );
+			}
 
 			// if we also haven't seen him earlier this turn
 			if (pSoldier->aiData.bOppList[pOpponent->ubID] != SEEN_THIS_TURN)
@@ -4318,12 +4334,12 @@ void DebugSoldierPage2( )
 			ubLine++;
 		}
 
-		if (gubWorldRoomInfo[ usMapPos ] != NO_ROOM )
+		if (gusWorldRoomInfo[ usMapPos ] != NO_ROOM )
 		{
 			SetFontColors(COLOR2);
 			mprintf( 0, LINE_HEIGHT * ubLine, L"Room Number" );
 			SetFontColors(COLOR2);
-			mprintf( 150, LINE_HEIGHT * ubLine, L"%d", gubWorldRoomInfo[ usMapPos ] );
+			mprintf( 150, LINE_HEIGHT * ubLine, L"%d", gusWorldRoomInfo[ usMapPos ] );
 			ubLine++;
 		}
 
@@ -4764,7 +4780,11 @@ void DebugSoldierPage4( )
 			case SOLDIER_CLASS_REG_MILITIA:			gprintf( 320, LINE_HEIGHT * ubLine, L"(Reg Militia)" );		break;
 			case SOLDIER_CLASS_ELITE_MILITIA:		gprintf( 320, LINE_HEIGHT * ubLine, L"(Elite Militia)" );	break;
 			case SOLDIER_CLASS_MINER:						gprintf( 320, LINE_HEIGHT * ubLine, L"(Miner)" );					break;
+
+#ifdef ENABLE_ZOMBIES
 			case SOLDIER_CLASS_ZOMBIE:						gprintf( 320, LINE_HEIGHT * ubLine, L"(Zombie)" );					break;
+#endif
+
 			default:	break; //don't care (don't write anything)
 		}
 		ubLine++;
@@ -7174,46 +7194,49 @@ void NoticeUnseenAttacker( SOLDIERTYPE * pAttacker, SOLDIERTYPE * pDefender, INT
 		}
 	}
 
-	if ( StandardInterruptConditionsMet( pDefender, pAttacker->ubID, bOldOppList ) )
+	if ( !gGameOptions.fImprovedInterruptSystem || (gGameOptions.fImprovedInterruptSystem && gGameExternalOptions.fAllowInstantInterruptsOnSight) )
 	{
-		DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("INTERRUPT: NoticeUnseenAttacker, standard conditions are met; defender %d, attacker %d", pDefender->ubID, pAttacker->ubID ) );
-
-		// calculate the interrupt duel points
-		DebugMsg( TOPIC_JA2, DBG_LEVEL_3, "Calculating int duel pts for defender in NUA" );
-		pDefender->aiData.bInterruptDuelPts = CalcInterruptDuelPts( pDefender, pAttacker->ubID, FALSE);
-	}
-	else
-	{
-		pDefender->aiData.bInterruptDuelPts = NO_INTERRUPT;
-	}
-
-	// say quote
-
-	if (pDefender->aiData.bInterruptDuelPts != NO_INTERRUPT)
-	{
-		// check for possible interrupt and handle control change if it happens
-		// this code is basically ResolveInterruptsVs for 1 man only...
-
-		// calculate active soldier's dueling pts for the upcoming interrupt duel
-		DebugMsg( TOPIC_JA2, DBG_LEVEL_3, "Calculating int duel pts for attacker in NUA" );
-		pAttacker->aiData.bInterruptDuelPts = CalcInterruptDuelPts( pAttacker, pDefender->ubID, FALSE );
-		if ( InterruptDuel( pDefender, pAttacker ) )
+		if ( StandardInterruptConditionsMet( pDefender, pAttacker->ubID, bOldOppList ) )
 		{
-			DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("INTERRUPT: NoticeUnseenAttacker, defender pts %d, attacker pts %d, defender gets interrupt", pDefender->aiData.bInterruptDuelPts, pAttacker->aiData.bInterruptDuelPts ) );
-			AddToIntList( pAttacker->ubID, FALSE, TRUE);
-			AddToIntList( pDefender->ubID, TRUE, TRUE);
-			DoneAddingToIntList( pDefender, TRUE, SIGHTINTERRUPT );
-		}
-		// either way, clear out both sides' duelPts fields to prepare next duel
-		pDefender->aiData.bInterruptDuelPts = NO_INTERRUPT;
-		#ifdef DEBUG_INTERRUPTS
-			DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("Resetting int pts for %d in NUA", pDefender->ubID ) );
-		#endif
-		pAttacker->aiData.bInterruptDuelPts = NO_INTERRUPT;
-		#ifdef DEBUG_INTERRUPTS
-			DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("Resetting int pts for %d in NUA", pAttacker->ubID ) );
-		#endif
+			DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("INTERRUPT: NoticeUnseenAttacker, standard conditions are met; defender %d, attacker %d", pDefender->ubID, pAttacker->ubID ) );
 
+			// calculate the interrupt duel points
+			DebugMsg( TOPIC_JA2, DBG_LEVEL_3, "Calculating int duel pts for defender in NUA" );
+			pDefender->aiData.bInterruptDuelPts = CalcInterruptDuelPts( pDefender, pAttacker->ubID, FALSE);
+		}
+		else
+		{
+			pDefender->aiData.bInterruptDuelPts = NO_INTERRUPT;
+		}
+
+		// say quote
+
+		if (pDefender->aiData.bInterruptDuelPts != NO_INTERRUPT)
+		{
+			// check for possible interrupt and handle control change if it happens
+			// this code is basically ResolveInterruptsVs for 1 man only...
+
+			// calculate active soldier's dueling pts for the upcoming interrupt duel
+			DebugMsg( TOPIC_JA2, DBG_LEVEL_3, "Calculating int duel pts for attacker in NUA" );
+			pAttacker->aiData.bInterruptDuelPts = CalcInterruptDuelPts( pAttacker, pDefender->ubID, FALSE );
+			if ( InterruptDuel( pDefender, pAttacker ) )
+			{
+				DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("INTERRUPT: NoticeUnseenAttacker, defender pts %d, attacker pts %d, defender gets interrupt", pDefender->aiData.bInterruptDuelPts, pAttacker->aiData.bInterruptDuelPts ) );
+				AddToIntList( pAttacker->ubID, FALSE, TRUE);
+				AddToIntList( pDefender->ubID, TRUE, TRUE);
+				DoneAddingToIntList( pDefender, TRUE, SIGHTINTERRUPT );
+			}
+			// either way, clear out both sides' duelPts fields to prepare next duel
+			pDefender->aiData.bInterruptDuelPts = NO_INTERRUPT;
+			#ifdef DEBUG_INTERRUPTS
+				DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("Resetting int pts for %d in NUA", pDefender->ubID ) );
+			#endif
+			pAttacker->aiData.bInterruptDuelPts = NO_INTERRUPT;
+			#ifdef DEBUG_INTERRUPTS
+				DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String("Resetting int pts for %d in NUA", pAttacker->ubID ) );
+			#endif
+
+		}
 	}
 }
 

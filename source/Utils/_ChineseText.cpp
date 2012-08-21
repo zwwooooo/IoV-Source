@@ -1638,6 +1638,7 @@ STR16 pAssignmentStrings[] =
 	L"教练", // training a teammate
 	L"学员", // being trained by someone else
 	L"工作", // L"Staff", // operating a strategic facility //ham3.6
+	L"饮食",		// eating at a facility (cantina etc.)
 	L"休息", //L"Rest",// Resting at a facility //ham3.6
 	L"死亡", // dead
 	L"无力中", // abbreviation for incapacitated
@@ -1722,6 +1723,7 @@ STR16 pPersonnelAssignmentStrings[] =
 	L"教练",
 	L"学员",
 	L"设施职员",
+	L"饮食",		// eating at a facility (cantina etc.)
 	L"在设施里休养",
 	L"休息",
 	L"无力中",
@@ -2071,7 +2073,7 @@ STR16 pPersonnelRecordsHelpTexts[] =
 
 	L"态度:",	// WANNE: For old traits display instead of "Character:"!
 
-	L"Zombies: %d\n", // TODO.Translate
+	L"僵尸: %d\n", // Zombies: %d\n
 };
 
 
@@ -2442,7 +2444,7 @@ STR16 sKeyDescriptionStrings[2] =
 
 //The headers used to describe various weapon statistics.
 
-CHAR16		gWeaponStatsDesc[][ 28 ] = //kenkenkenken: IoV921+z.5 Altered value from 17 to 28
+CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from 17 to 28. 2012/08/18 modify: 19~29
 {
 	// HEADROCK: Changed this for Extended Description project
 	L"状态: ",
@@ -2467,18 +2469,19 @@ CHAR16		gWeaponStatsDesc[][ 28 ] = //kenkenkenken: IoV921+z.5 Altered value from
 	L"连发/5AP: ",		//15
 	L"剩余弹药:",		//16
 	L"默认:",	//17 //WarmSteel - So we can also display default attachments
+	L"污垢:",	// 18	//added by Flugente	// TODO.Translate
 	//kenkenkenken: IoV921+z.5b2b3 -->
-	L"故障率:",		//18
-	L"x----",           //19
-	L"o----",          //20
-	L"ox---",         //21
-	L"oo---",        //22
-	L"oox--",       //23
-	L"ooo--",      //24
-	L"ooox-",     //25
-	L"oooo-",    //26
-	L"oooox",   //27
-	L"ooooo",  //28
+	L"故障率:",		//19
+	L"x----",           //20
+	L"o----",          //21
+	L"ox---",         //22
+	L"oo---",        //23
+	L"oox--",       //24
+	L"ooo--",      //25
+	L"ooox-",     //26
+	L"oooo-",    //27
+	L"oooox",   //28
+	L"ooooo",  //29
 	//<-- IoV
 };
 
@@ -2879,7 +2882,7 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"异形",
 	L"民兵",
 	L"平民",
-	L"ZOMBIE",		// TODO.Translate
+	L"僵尸",
 	L"离开分区",
 	L"确定",
 	L"取消",
@@ -2936,8 +2939,15 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Set detonation time in turns (1 - 4) and defusing frequency (A - D):",
 	L"Select tripwire hierarchy (1 - 4) and network (A - D):",
 
-	// added by Flugente to display health and poisoning			// TODO.Translate
-	L"Health: %d/%d\n  Poison: %d/%d\nEnergy: %d/%d\nMorale: %s",
+	// added by Flugente to display health and poisoning
+	L"生命: %d/%d\n毒性: %d/%d\n精力: %d/%d\n士气: %s",
+
+	// added by Flugente to display food status
+	L"生命: %d/%d\n精力: %d/%d\n士气: %s\n口渴: %d%s\n饥饿: %d%s",
+	L"生命: %d/%d\n毒性: %d/%d\n精力: %d/%d\n士气: %s\n口渴: %d%s\n饥饿: %d%s",
+
+	// added by Flugente: selection of a function to call in tactical
+	L"1 - Fill Canteens 2 - Clean Weapons 3,4 - Nothing",	// TODO.Translate
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -3213,26 +3223,26 @@ STR16 pMapScreenInvenButtonHelpText[] =
 {
 	L"下一页 (|.)",		// next page
 	L"上一页 (|,)",		// previous page
-	L"Exit Sector Inventory (|E|s|c)",	// exit sector inventory
+	L"离开 (|E|s|c)",	// exit sector inventory
 
 	// TODO.Translate
-	L"Zoom Inventory", // HEAROCK HAM 5: Inventory Zoom Button
-	L"Stack and merge items", // HEADROCK HAM 5: Stack and Merge
-	L"|L|e|f|t |C|l|i|c|k: Sort ammo into crates\n|R|i|g|h|t |C|l|i|c|k: Sort ammo into boxes", // HEADROCK HAM 5: Sort ammo
+	L"放大", // HEAROCK HAM 5: Inventory Zoom Button
+	L"合并堆叠同类的物品", // HEADROCK HAM 5: Stack and Merge
+	L"|L|e|f|t |C|l|i|c|k: 将子弹分类装入弹箱\n|R|i|g|h|t |C|l|i|c|k: 将子弹分类装入纸盒", // HEADROCK HAM 5: Sort ammo
 	// 6 - 10
-	L"Remove all item attachments", // HEADROCK HAM 5: Separate Attachments
-	L"Eject ammo from all weapons", //HEADROCK HAM 5: Eject Ammo
-	L"|L|e|f|t |C|l|i|c|k: Show all items\n|R|i|g|h|t |C|l|i|c|k: Hide all items", // HEADROCK HAM 5: Filter Button
-	L"|L|e|f|t |C|l|i|c|k: Toggle Guns\n|R|i|g|h|t |C|l|i|c|k|: Show only Guns", // HEADROCK HAM 5: Filter Button
-	L"|L|e|f|t |C|l|i|c|k: Toggle Ammunition\n|R|i|g|h|t |C|l|i|c|k: Show only Ammunition", // HEADROCK HAM 5: Filter Button
+	L"移除所有物品的附件", // HEADROCK HAM 5: Separate Attachments
+	L"退出所有武器的子弹", //HEADROCK HAM 5: Eject Ammo
+	L"|L|e|f|t |C|l|i|c|k: 显示全部物品\n|R|i|g|h|t |C|l|i|c|k: 隐藏全部物品", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示武器\n|R|i|g|h|t |C|l|i|c|k|: 只显示武器", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示弹药\n|R|i|g|h|t |C|l|i|c|k: 只显示弹药", // HEADROCK HAM 5: Filter Button
 	// 11 - 15
-	L"|L|e|f|t |C|l|i|c|k: Toggle Explosives\n|R|i|g|h|t |C|l|i|c|k: Show only Explosives", // HEADROCK HAM 5: Filter Button
-	L"|L|e|f|t |C|l|i|c|k: Toggle Melee Weapons\n|R|i|g|h|t |C|l|i|c|k: Show only Melee Weapons", // HEADROCK HAM 5: Filter Button
-	L"|L|e|f|t |C|l|i|c|k: Toggle Armor\n|R|i|g|h|t |C|l|i|c|k: Show only Armor", // HEADROCK HAM 5: Filter Button
-	L"|L|e|f|t |C|l|i|c|k: Toggle LBEs\n|R|i|g|h|t |C|l|i|c|k: Show only LBEs", // HEADROCK HAM 5: Filter Button
-	L"|L|e|f|t |C|l|i|c|k: Toggle Kits\n|R|i|g|h|t |C|l|i|c|k: Show only Kits", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示爆炸物\n|R|i|g|h|t |C|l|i|c|k: 只显示爆炸物", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示近战武器\n|R|i|g|h|t |C|l|i|c|k: 只显示近战武器", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示护甲\n|R|i|g|h|t |C|l|i|c|k: 只显示护甲", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示携行具\n|R|i|g|h|t |C|l|i|c|k: 只显示携行具", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示套装包\n|R|i|g|h|t |C|l|i|c|k: 只显示套装包", // HEADROCK HAM 5: Filter Button
 	// 16 - 20
-	L"|L|e|f|t |C|l|i|c|k: Toggle Misc. Items\n|R|i|g|h|t |C|l|i|c|k: Show only Misc. Items", // HEADROCK HAM 5: Filter Button
+	L"|L|e|f|t |C|l|i|c|k: 切换是否显示杂项物品\n|R|i|g|h|t |C|l|i|c|k: 只显示杂项物品", // HEADROCK HAM 5: Filter Button
 };
 
 STR16 pMapScreenBottomFastHelp[] =
@@ -3491,7 +3501,9 @@ STR16 pMapScreenStatusStrings[] =
 	L"士气",
 	L"状态",	// the condition of the current vehicle (its "health")
 	L"油量",	// the fuel level of the current vehicle (its "energy")
-	L"Posion",	// TODO.Translate
+	L"毒性",	// Posion
+	L"口渴",		// drink level
+	L"饥饿",		// food level
 };
 
 
@@ -4448,11 +4460,11 @@ STR16			BobbyRFilter[] =
 	L"工具套装", //"Kits",
 	L"头部装备", //"Face Items",
 	L"携行具", //"LBE Gear",
-	L"瞄镜", // Madd: new BR filters		// TODO.Translate
+	L"瞄镜", // Madd: new BR filters
 	L"握把/LAM",
-	L"Muzzle",
+	L"消音等",
 	L"枪托",
-	L"Mag/Trig.",
+	L"弹夹/握把",
 	L"其他附件",
 	L"其他", //"Misc.",
 };
@@ -4964,7 +4976,6 @@ STR16			zSaveLoadText[] =
 #else
 	L"试图载入老版本的存档。你要自动更新并载入存档吗？",
 #endif
-
 	L"你确认你要将#%d位置的存档覆盖吗?",
 	L"你要从#号位置载入存档吗",
 
@@ -5118,12 +5129,20 @@ STR16		zOptionsToggleText[] =
 	L"显示佣兵军衔",	// shows mercs ranks
 	L"显示脸部装备图",				
 	L"显示脸部装备图标",
-	L"禁止光标切换",		            // Disable Cursor Swap
-	L"Quiet Training",						// Madd: mercs don't say quotes while training // TODO.Translate
-	L"Quiet Repairing",						// Madd: mercs don't say quotes while repairing //TODO.Translate
-	L"Quiet Doctoring",						// Madd: mercs don't say quotes while doctoring //TODO.Translate
+	L"禁止光标切换",		// Disable Cursor Swap
+	L"佣兵训练时保持沉默",	// Madd: mercs don't say quotes while training
+	L"佣兵修理时保持沉默",	// Madd: mercs don't say quotes while repairing
+	L"佣兵医疗时保持沉默",	// Madd: mercs don't say quotes while doctoring
+	
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"自动加速敌军回合",			// Automatic fast forward through AI turns
-	L"Allow Zombies",				// TODO.Translate
+#endif
+#ifdef ENABLE_ZOMBIES
+	L"僵尸模式",
+#endif
+	L"区域物品栏弹窗匹配拾取",				// the_bob : enable popups for picking items from sector inv
+	L"标记剩余敌人",
+	L"显示LBE(携行具)物品",
 	L"--作弊模式选项--",				// TOPTION_CHEAT_MODE_OPTIONS_HEADER,
 	L"强制 Bobby Ray 送货",			// force all pending Bobby Ray shipments
 	L"-----------------",					// TOPTION_CHEAT_MODE_OPTIONS_END
@@ -5228,11 +5247,20 @@ STR16	zOptionsScreenHelpText[] =
 	L"打开时, 显示佣兵脸部装备图。",
 	L"打开时, 佣兵肖像右下角显示脸部装备图标",
 	L"打开时，在交换位置和其他动作时光标不切换。键入 |x 可以快速切换。",
-	L"When ON, mercs will not report progress during training.", //TODO.Translate
-	L"When ON, mercs will not report progress during repairing.",	// TODO.Translate
-	L"When ON, mercs will not report progress during doctoring.",	// TODO.Translate
+	L"打开时，佣兵训练时不会随时汇报进程。",
+	L"打开时，佣兵修理时不会随时汇报进程。",
+	L"打开时，佣兵医疗时不会随时汇报进程。",
+	
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"打开时，敌军回合将被大幅加速。",
-	L"When ON, zombies will span. Be aware!",							// allow zombies	// TODO.Translate
+#endif
+
+#ifdef ENABLE_ZOMBIES
+	L"打开时，被击毙的敌人将有可能变成僵尸！杀出个黎明！",
+#endif
+	L"打开时，在区域物品栏界面，点击佣兵身上空白的携行具位置会弹窗匹配拾取物品。",
+	L"打开时，会直接显示该区域最后一个敌人的大致位置。",
+	L"打开时，在区域物品栏界面，右键点击装有物品的携行具时可直接显示包含的物品。",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_HEADER",
 	L"强制 Bobby Ray 出货",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_END",
@@ -5335,6 +5363,7 @@ STR16	gzGIOScreenText[] =
 	L"新命中率系统（NCTH）", //L"New Chance to Hit System",
 	L"改进的中断系统（IIS）", //L"Improved Interrupt System",
 	L"武器过热", //L"Weapon Overheating",
+	L"生存模式与食物系统",
 	L"Bobby Ray 供货量",
 };
 
@@ -6500,6 +6529,11 @@ STR16 ChineseSpecString4 = L"%s (%s) [%d%％]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d)
 STR16 ChineseSpecString5 = L"%s [%d%％]\n%s %d\n%s %d\n%s %1.1f %s";
 STR16 ChineseSpecString6 = L"%s [%d%％]\n%s %d%％ (%d/%d)\n%s %d%％\n%s %1.1f %s";
 STR16 ChineseSpecString7 = L"%s [%d%％]\n%s %1.1f %s";
+STR16 ChineseSpecString8 = L"%s (%s) [%d%％(%d%％)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n%s %.2f%%";	// added by Flugente
+STR16 ChineseSpecString9 = L"%s [%d%％(%d%％)]\n%s %d\n%s %d\n%s %1.1f %s";								// added by Flugente
+STR16 ChineseSpecString10 = L"%s [%d%％(%d%％)]\n%s %d%％ (%d/%d)\n%s %d%％\n%s %1.1f %s";						// added by Flugente
+STR16 ChineseSpecString11 = L"%s (%s) [%d%％(%d%％)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s";	// added by Flugente
+STR16 ChineseSpecString12 = L"%s (%s) [%d%％]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n%s %.2f%%";	// added by Flugente
 
 // Following strings added - SANDRO
 STR16 pSkillTraitBeginIMPStrings[] =
@@ -6661,6 +6695,7 @@ STR16 gzFacilityAssignmentStrings[]=
 {
 	L"环境",
 	L"工作人员",
+	L"饮食",
 	L"休息",
 	L"修理物品",
 	L"修理%s", // Vehicle name inserted here
@@ -6825,6 +6860,19 @@ STR16 sEnemyTauntsGotHit[]=
 
 };
 
+// TODO.Translate
+STR16 sEnemyTauntsNoticedMerc[]=
+{
+	L"Da'ffff...!",
+	L"Oh my God!",
+	L"Holy crap!",
+	L"Enemy!!!",
+	L"Alert! Alert!",
+	L"There is one!",
+	L"Attack!",
+
+};
+
 //////////////////////////////////////////////////////
 // HEADROCK HAM 4: Begin new UDB texts and tooltips
 //////////////////////////////////////////////////////
@@ -6965,6 +7013,7 @@ STR16 szUDBGenAmmoStatsTooltipText[]=
 	L"|爆|炸|力|（|炸|子|儿|）",
 	L"|过|热|修|正",
 	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",	// TODO.Translate
+	L"|D|i|r|t |M|o|d|i|f|i|c|a|t|i|o|n",	// TODO.Translate
 };
 
 STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
@@ -6974,6 +7023,7 @@ STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
 	L"\n \n该值是子弹在击中目标前已经造成的潜在伤害的倍率。\n \n大于1的数值可以增加伤害，\n反之则减少伤害。\n \n该数值越高越好。",
 	L"\n \n子弹温度系数。\n \n该数值越低越好。",
 	L"\n \nDetermines what percentage of a\nbullet's damage will be poisonous.",	// TODO.Translate
+	L"\n \nAdditional dirt generated by this ammunition.\n \nLower is better.",		// TODO.Translate
 };
 
 STR16 szUDBGenExplosiveStatsTooltipText[]=
@@ -7060,6 +7110,11 @@ STR16 szUDBGenSecondaryStatsTooltipText[]=
 	L"|急|救|包",
 	L"|医|药|箱",
 	L"|破|锁|炸|弹",
+	L"|D|r|i|n|k",// TODO.Translate
+	L"|M|e|a|l",
+	L"|A|m|m|o |B|e|l|t",
+	L"|A|m|m|o |V|e|s|t",
+	L"|D|e|f|u|s|a|l |K|i|t",	// TODO.Translate
 };
 
 STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
@@ -7074,15 +7129,15 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \n该物品是电子产品，含有复杂电路。\n \n电子产品在维修者没有电子技能时很难被修复\n。",
 	L"\n \n将该物品佩戴于面部时，使用者不受任何\n有毒气体的伤害。\n \n然而有些腐蚀性气体可以通过腐蚀\n作用穿过这个面罩。",
 	L"\n \n该物品需要电池。没有安装电池时使用者不\n能使用这个物品的主要功能。\n \n只要把所需电池安装于该物品的附件栏即可\n（步骤与将瞄准镜安装在步枪上一样）。",
-	L"\n \n该物品能够用于开锁。\n \n（用技巧）开锁不会发出声音，但是开稍微复\n杂一些的锁需要足够的机械能力。",
+	L"\n \n该物品能够用于开锁。\n \n（用技巧）开锁不会发出声音，但是开稍微复\n杂一些的锁需要足够的机械能力。 This item modifies\nthe lockpicking chance by ", //JMich_SkillsModifiers: needs to be followed by a number		// TODO.Translate
 	L"\n \n该物品能够绞断铁丝网。\n \n使用此物品，佣兵可以快速穿越用铁丝网封锁的地区，以便\n包围敌人！",
-	L"\n \n该物品能够用于破坏锁具。\n \n破坏锁具需要很大的力量，既会发出很大的\n噪音，也很耗费佣兵的体力。但是在没有出色\n的技巧和复杂的工具时，用力量破坏锁具也是明智\n之举。",
+	L"\n \n该物品能够用于破坏锁具。\n \n破坏锁具需要很大的力量，既会发出很大的\n噪音，也很耗费佣兵的体力。但是在没有出色\n的技巧和复杂的工具时，用力量破坏锁具也是明智\n之举。 This item improves \nyour chance by ", //JMich_SkillsModifiers: needs to be followed by a number	// TODO.Translate
 	L"\n \n该物品能够探测地下的金属物品。\n \n显然其主要用于在没有肉眼识别地雷的能力时探测地\n雷。但是你也可以用它发现埋在地下的宝藏。",
 	L"\n \n该物品能够用来引爆已经安装远程爆破引信的炸弹\n。\n \n先放置炸弹，时机一到再用它引爆。",
 	L"\n \n安装该引信的爆破物设置完成后\n，可以被远程控制器引爆。\n \n远程引信是设置陷阱的不二选择，因为它只会在你需要\n它爆炸的时候被引爆，而且留给你足够的时间跑\n开！",
 	L"\n \n安装该引信的爆破物设置完成后\n，该引信会开始倒数计时，并在设置的时间后\n被引爆。\n \n计时引信便宜并且易于安装，但是你必须给它\n设定合适的时间以便你能够跑开！",
 	L"\n \n该物品承有汽油。\n \n在你需要加油时十分有用。",
-	L"\n \n工具箱内装有各种能用来修复其他物品的工具。\n \n安排佣兵进行修复工作时该佣兵必须持有工具\n箱。",
+	L"\n \n工具箱内装有各种能用来修复其他物品的工具。\n \n安排佣兵进行修复工作时该佣兵必须持有工具\n箱。 This item modifies\nthe effectiveness of repair by ", //JMich_SkillsModifiers: need to be followed by a number	// TODO.Translate
 	L"\n \n将该物品佩戴于面部时，\n可以利用热成像原理，\n发现墙壁后方的敌人。",
 	L"\n \n这种功能强大的仪器利用X光搜索敌军。\n \n它可以在短时间内暴露一定范围中的敌人位置。\n请远离生殖器使用！",
 	L"\n \n该物品装有饮用水。\n \n口渴时饮用。",
@@ -7090,6 +7145,11 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \n这一战场的基础急救包提供了基本的医疗用品。\n \n可以被用来包扎受伤的角色以止血。\n \n如需要回复生命，使用名副其实的医药箱，并辅以大量的休息。",
 	L"\n \n这是名副其实的医药箱，可以用于外科手术或其他复杂的治疗。\n \n安排佣兵进行医疗工作时，该佣兵必须持有医\n药箱。",
 	L"\n \n该物品能够用于爆破锁具。\n \n使用它需要爆破技能以避免过早引爆。\n \n使用炸药是一个相对简单的破锁手段，但是会\n发出很大噪音，并且对于大部分佣兵来说过于\n危险。",
+	L"\n \nThis item will still your thirst\nif you drink it.",// TODO.Translate
+	L"\n \nThis item will still your hunger\nif you eat it.",
+	L"\n \nWith this ammo belt you can\nfeed someone else's MG.",
+	L"\n \nYou can feed an MG with ammo\nbelts stored in this vest.",
+	L"\n \nThis item improves your trap disarm chance by ",			// TODO.Translate
 };
 
 STR16 szUDBAdvStatsTooltipText[]=
@@ -7151,6 +7211,7 @@ STR16 szUDBAdvStatsTooltipText[]=
 	L"|卡|壳|阈|值",
 	L"|损|坏|阈|值",
 	L"|P|o|i|s|o|n |P|e|r|c|e|n|t|a|g|e",	// TODO.Translate
+	L"|D|i|r|t |M|o|d|i|f|i|e|r",			// TODO.Translate
 };
 
 // Alternate tooltip text for weapon Advanced Stats. Just different wording, nothing spectacular.
@@ -7213,6 +7274,7 @@ STR16 szUDBAdvStatsExplanationsTooltipText[]=
 	L"\n \n武器的卡壳阈值增加了(百分比)。\n \n该数值越高越好。",
 	L"\n \n武器的损坏阈值增加了(百分比)。\n \n该数值越高越好。",
 	L"\n \nThis is the percentage of damage dealt\nby this item that will be poisonous.\n\nUsefulness depends on wether enemy\nhas poison resistance or absorption.",	// TODO.Translate
+	L"\n \nA single shot causes this much dirt.\nAmmunition types and attachments can\naffect this value.\n \nLower is better.",	// TODO.Translate
 };
 
 STR16 szUDBAdvStatsExplanationsTooltipTextForWeapons[]=
@@ -7281,31 +7343,30 @@ STR16 gzNCTHlabels[]=
 // HEADROCK HAM 4: End new UDB texts and tooltips
 //////////////////////////////////////////////////////
 
-// TODO.Translate
 // HEADROCK HAM 5: Screen messages for sector inventory sorting reports.
 STR16 gzMapInventorySortingMessage[] =
 {
-	L"Finished sorting ammo into crates in sector %c%d.",
-	L"Finished removing attachments from items in sector %c%d.",
-	L"Finished ejecting ammo from weapons in sector %c%d.",
-	L"Finished stacking and merging all items in sector %c%d.",
+	L"已完成 分类并装箱所有的弹药 在区域 %c%d.",
+	L"已完成 移除所有物品上的附件 在区域 %c%d.",
+	L"已完成 退出所有武器里的子弹 在区域 %c%d.",
+	L"已完成 合并后堆叠了所有物品 在区域 %c%d.",
 };
 
 STR16 gzMapInventoryFilterOptions[] =
 {
-	L"Show all",
-	L"Guns",
-	L"Ammo",
-	L"Explosives",
-	L"Melee Weapons",
-	L"Armor",
-	L"LBE",
-	L"Kits",
-	L"Misc. Items",
-	L"Hide all",
+	L"全部显示",
+	L"枪械",
+	L"弹药",
+	L"炸药",
+	L"格斗武器",
+	L"护甲",
+	L"携行器",
+	L"工具",
+	L"杂物",
+	L"全部隐藏",
 };
 
-// Flugente FTW 1: Temperature-based text similar to HAM 4's condition-based text.
+// Flugente: Temperature-based text similar to HAM 4's condition-based text.
 STR16 gTemperatureDesc[] =
 {
 	L"当前温度为: ",
@@ -7319,6 +7380,19 @@ STR16 gTemperatureDesc[] =
 	L"致命",
 	L"未知",
 	L"."
+};
+
+// Flugente: food condition texts
+STR16 gFoodDesc[] =
+{
+	L"这食物 ",// Food is
+	L"非常新鲜啊",// fresh
+	L"看着还行吧",// good
+	L"挺一般的哎",// ok
+	L"有点难闻了",// stale
+	L"都变味了啊",// shabby
+	L"快要腐烂了",// rotting
+	L"！"// .
 };
 
 CHAR16* ranks[] = 
@@ -7369,4 +7443,16 @@ STR16	zNewTacticalMessages[]=
 	L"你选择了%S战役。 该战役是原版UB战役的玩家自定义游戏版本。你确认你要在 %S 战役下进行游戏吗?",			
 	L"如果你要使用编辑器的话，请选择一个战役，不要用默认战役。",			
 };
+
+// The_bob : pocket popup text defs
+STR16	gszPocketPopupText[]=
+{
+	L"榴弹发射器",	// POCKET_POPUP_GRENADE_LAUNCHERS,
+	L"火箭发射器",	// POCKET_POPUP_ROCKET_LAUNCHERS
+	L"格斗&投掷武器",	// POCKET_POPUP_MEELE_AND_THROWN
+	L"- 没有合适的弹药 -",	//POCKET_POPUP_NO_AMMO
+	L"- 区域存货没有武器 -",	//POCKET_POPUP_NO_GUNS
+	L"更多...",		//POCKET_POPUP_MOAR
+};
+
 #endif //CHINESE

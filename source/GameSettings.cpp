@@ -38,8 +38,11 @@
 	#include "InterfaceItemImages.h"
 #endif
 
-#include "KeyMap.h"
-#include "Timer Control.h"
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
+	#include "KeyMap.h"
+	#include "Timer Control.h"
+#endif
+
 #include "Text.h"
 #include "connect.h"
 #include "sgp_logger.h"
@@ -63,6 +66,9 @@
 // HEADROCK HAM 4: This file contains all the settings required to tweak the new Shooting Mechanism. There's lots of them.
 #define				CTH_COEFFICIENTS_FILE			"CTHConstants.ini"
 
+//DBrot: Settings for a mod that don't really fit in the Options file. This means GridNos for now.
+#define				MOD_SETTINGS_FILE						"Mod_Settings.ini" 
+
 #define				CD_ROOT_DIR						"DATA\\"
 
 GAME_SETTINGS		gGameSettings;
@@ -71,6 +77,8 @@ GAME_OPTIONS		gGameOptions;
 GAME_EXTERNAL_OPTIONS gGameExternalOptions;
 SKILL_TRAIT_VALUES gSkillTraitValues;  // SANDRO - added this one
 CTH_CONSTANTS gGameCTHConstants;	// HEADROCK HAM 4: CTH constants
+
+MOD_SETTINGS gModSettings;	//DBrot: mod specific settings
 
 extern	SGPFILENAME	gCheckFilenames[];
 extern	CHAR8		gzErrorMsg[256];
@@ -237,6 +245,8 @@ BOOLEAN LoadGameSettings()
 		gGameSettings.fOptions[TOPTION_QUIET_REPAIRING]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_QUIET_REPAIRING"				   ,  FALSE );
 		gGameSettings.fOptions[TOPTION_QUIET_DOCTORING]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_QUIET_DOCTORING"				   ,  FALSE );
 		
+
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 		if (!is_networked)
 			gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]		= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_AUTO_FAST_FORWARD_MODE"           ,  FALSE );
 		else
@@ -245,8 +255,17 @@ BOOLEAN LoadGameSettings()
 		// The "HIGHSPEED_TIMER" property from the ja2.ini is not set, disable the option
 		if (!IsHiSpeedClockMode())
 			gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]		= FALSE;
+#endif
 
+#ifdef ENABLE_ZOMBIES
 		gGameSettings.fOptions[TOPTION_ZOMBIES]							= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_ZOMBIES"						   ,  FALSE  );
+#endif
+
+		gGameSettings.fOptions[TOPTION_ENABLE_INVENTORY_POPUPS]         = iniReader.ReadBoolean("JA2 Game Settings","TOPTION_ENABLE_INVENTORY_POPUPS"          ,  TRUE ); // the_bob : enable popups for picking items from sector inv
+		
+		gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_SHOW_LAST_ENEMY"					,  FALSE );
+		 
+		gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]				= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_SHOW_LBE_CONTENT"					,  TRUE );
 
 		gGameSettings.fOptions[NUM_ALL_GAME_OPTIONS]                    = iniReader.ReadBoolean("JA2 Game Settings","NUM_ALL_GAME_OPTIONS"                     ,  FALSE );
 
@@ -404,8 +423,18 @@ BOOLEAN	SaveGameSettings()
 		settings << "TOPTION_QUIET_TRAINING					  = " << (gGameSettings.fOptions[TOPTION_QUIET_TRAINING]				    ?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_QUIET_REPAIRING				  = " << (gGameSettings.fOptions[TOPTION_QUIET_REPAIRING]				    ?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_QUIET_DOCTORING				  = " << (gGameSettings.fOptions[TOPTION_QUIET_DOCTORING]				    ?    "TRUE" : "FALSE" ) << endl;
+		
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 		settings << "TOPTION_AUTO_FAST_FORWARD_MODE           = " << (gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]			?    "TRUE" : "FALSE" ) << endl;
+#endif
+		settings << "TOPTION_SHOW_LAST_ENEMY				  = " << (gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]					?	 "TRUE"	: "FALSE" ) << endl;
+		settings << "TOPTION_SHOW_LBE_CONTENT				  = " << (gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]					?	 "TRUE"	: "FALSE" ) << endl;
+
+#ifdef ENABLE_ZOMBIES
 		settings << "TOPTION_ZOMBIES						  = " << (gGameSettings.fOptions[TOPTION_ZOMBIES]							?    "TRUE" : "FALSE" ) << endl;
+#endif
+		settings << "TOPTION_ENABLE_INVENTORY_POPUPS          = " << (gGameSettings.fOptions[TOPTION_ENABLE_INVENTORY_POPUPS]			?    "TRUE" : "FALSE" ) << endl; // the_bob : enable popups for picking items from sector inv
+
 		settings << "TOPTION_CHEAT_MODE_OPTIONS_HEADER        = " << (gGameSettings.fOptions[TOPTION_CHEAT_MODE_OPTIONS_HEADER]			?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_FORCE_BOBBY_RAY_SHIPMENTS        = " << (gGameSettings.fOptions[TOPTION_FORCE_BOBBY_RAY_SHIPMENTS]			?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_CHEAT_MODE_OPTIONS_END           = " << (gGameSettings.fOptions[TOPTION_CHEAT_MODE_OPTIONS_END]			?    "TRUE" : "FALSE" ) << endl;
@@ -532,9 +561,18 @@ void InitGameSettings()
 	gGameSettings.fOptions[ TOPTION_QUIET_TRAINING ]					= FALSE;
 	gGameSettings.fOptions[ TOPTION_QUIET_REPAIRING ]					= FALSE;
 	gGameSettings.fOptions[ TOPTION_QUIET_DOCTORING ]					= FALSE;
-	gGameSettings.fOptions[ TOPTION_AUTO_FAST_FORWARD_MODE ]			= FALSE;
-	gGameSettings.fOptions[ TOPTION_ZOMBIES ]							= FALSE;	// Flugente Zombies 1.0	
 
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
+	gGameSettings.fOptions[ TOPTION_AUTO_FAST_FORWARD_MODE ]			= FALSE;
+#endif
+	gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]						= FALSE;
+	gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]					= TRUE;
+
+#ifdef ENABLE_ZOMBIES
+	gGameSettings.fOptions[ TOPTION_ZOMBIES ]							= FALSE;	// Flugente Zombies 1.0	
+#endif
+
+	gGameSettings.fOptions[ TOPTION_ENABLE_INVENTORY_POPUPS ]			= TRUE;	// the_bob : enable popups for picking items from sector inv
 
 	// arynn: Cheat/Debug Menu
 	gGameSettings.fOptions[ TOPTION_CHEAT_MODE_OPTIONS_HEADER ]			= FALSE;	
@@ -594,6 +632,7 @@ void InitGameOptions()
 	gGameOptions.fUseNCTH = FALSE;
 	gGameOptions.fImprovedInterruptSystem = TRUE;
 	gGameOptions.fWeaponOverheating = TRUE;
+	gGameOptions.fFoodSystem = FALSE;
 
 	//CHRISL: override default inventory mode when in low res
 	if(IsNIVModeValid(true) == FALSE)
@@ -1084,12 +1123,27 @@ void LoadGameExternalOptions()
 
 	gGameExternalOptions.fAllowWalkingWithWeaponRaised		= iniReader.ReadBoolean("Tactical Gameplay Settings","ALLOW_WALKING_WITH_WEAPON_RAISED", TRUE);
 
+	// SANDRO - Alternative weapon holding (rifles fired from hip / pistols fired one-handed)
+	gGameExternalOptions.ubAllowAlternativeWeaponHolding			= iniReader.ReadInteger("Tactical Gameplay Settings","ALLOW_ALTERNATIVE_WEAPON_HOLDING", 3, 0, 3);
+	gGameExternalOptions.ubToAltWeaponHoldReadyAPsPerc				= iniReader.ReadInteger("Tactical Gameplay Settings","RAISE_TO_ALTWEAPHOLD_READY_APS_PERC", 25, 0, 100);
+	gGameExternalOptions.ubFromAltWeaponHoldReadyAPsPerc			= iniReader.ReadInteger("Tactical Gameplay Settings","RAISE_FROM_ALTWEAPHOLD_READY_APS_PERCENTAGE", 75, 0, 100);
+	gGameExternalOptions.ubAltWeaponHoldingFireSpeedBonus			= iniReader.ReadInteger("Tactical Gameplay Settings","FASTER_SHOT_FROM_ALTWEAPHOLD_PERC", 10, 0, 90);
+	gGameExternalOptions.ubAltWeaponHoldingCtHPenaly				= iniReader.ReadInteger("Tactical Gameplay Settings","CTH_PENALTY_FROM_ALTWEAPHOLD", 30, 0, 90);
+	gGameExternalOptions.ubAltWeaponHoldingAimingPenaly				= iniReader.ReadInteger("Tactical Gameplay Settings","AIMING_PENALY_FROM_ALTWEAPHOLD", 30, 0, 90);
+	gGameExternalOptions.ubAltWeaponHoldingAimLevelsReduced			= iniReader.ReadInteger("Tactical Gameplay Settings","AIMING_LEVELS_REDUCTION_ON_ALTWEAPHOLD", 50, 0, 90);
+
+	// Sandro: Energy cost on weapon manipulation
+	gGameExternalOptions.ubEnergyCostForWeaponWeight				= iniReader.ReadInteger("Tactical Gameplay Settings","ENERGY_COST_FOR_WEAPON_WEIGHT", 100, 0, 250);
+	gGameExternalOptions.ubEnergyCostForWeaponRecoilKick			= iniReader.ReadInteger("Tactical Gameplay Settings","ENERGY_COST_FOR_WEAPON_RECOIL_KICK", 100, 0, 250);
+
 	gGameExternalOptions.fWeaponResting						= iniReader.ReadBoolean("Tactical Gameplay Settings","WEAPON_RESTING",TRUE);
 	gGameExternalOptions.fDisplayWeaponRestingIndicator		= iniReader.ReadBoolean("Tactical Gameplay Settings","WEAPON_RESTING_DISPLAY",TRUE);
 	gGameExternalOptions.ubProneModifierPercentage			= iniReader.ReadInteger("Tactical Gameplay Settings","WEAPON_RESTING_PRONE_BONI_PERCENTAGE", 50, 0, 100);
 
 	gGameExternalOptions.fScopeModes						= iniReader.ReadBoolean("Tactical Gameplay Settings","USE_SCOPE_MODES", FALSE);
 	gGameExternalOptions.fDisplayScopeModes					= iniReader.ReadBoolean("Tactical Gameplay Settings","DISPLAY_SCOPE_MODES", FALSE);
+
+	gGameExternalOptions.ubExternalFeeding					= iniReader.ReadInteger("Tactical Gameplay Settings","EXTERNAL_FEEDING", 2, 0, 2);
 	
 	// WANNE: Externalized grid number of new merc when they arrive with the helicopter (by Jazz)
 	gGameExternalOptions.iInitialMercArrivalLocation		= iniReader.ReadInteger("Tactical Gameplay Settings","INITIAL_MERC_ARRIVAL_LOCATION", 4870 );
@@ -1242,6 +1296,8 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fAllowCollectiveInterrupts			= iniReader.ReadBoolean("Tactical Gameplay Settings", "ALLOW_COLLECTIVE_INTERRUPTS", TRUE);
 	gGameExternalOptions.fAllowInstantInterruptsOnSight		= iniReader.ReadBoolean("Tactical Gameplay Settings", "ALLOW_INSTANT_INTERRUPTS_ON_SPOTTING", FALSE);
 
+	gGameExternalOptions.fNoEnemyAutoReadyWeapon			= iniReader.ReadInteger("Tactical Gameplay Settings", "NO_ENEMY_AUTOMATIC_WEAPON_READYING", 1, 0, 2);
+
 	//################# Tactical Cover System Settings ##################
 
 	// CPT: Cover System Settings
@@ -1341,8 +1397,8 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fDisplayOverheatThermometer					= iniReader.ReadBoolean("Tactical Weapon Overheating Settings","OVERHEATING_DISPLAY_THERMOMETER",TRUE);
 	gGameExternalOptions.ubOverheatThermometerRedOffset					= iniReader.ReadInteger("Tactical Weapon Overheating Settings","OVERHEATING_DISPLAY_THERMOMETER_RED_OFFSET", 100, 0, 255);
 	gGameExternalOptions.iCooldownModificatorLonelyBarrel			    = iniReader.ReadFloat  ("Tactical Weapon Overheating Settings","OVERHEATING_COOLDOWN_MODIFICATOR_LONELYBARREL", 1.15f, 1.0f, 10.0f);
-	gGameExternalOptions.fSetZeroUponNewSector							= iniReader.ReadBoolean("Tactical Weapon Overheating Settings","OVERHEATING_SET_ZERO_UPON_NEW_SECTOR",TRUE);
 		
+#ifdef ENABLE_ZOMBIES
 	//################# Tactical Zombie Settings ##################
 	gGameExternalOptions.sZombieRiseBehaviour							= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_RISE_BEHAVIOUR", 0, 0, 3);
 	gGameExternalOptions.fZombieSpawnWaves								= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_SPAWN_WAVES", FALSE);
@@ -1354,14 +1410,29 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fZombieOnlyHeadshotsWork						= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_ONLY_HEADSHOTS_WORK", FALSE);
 	gGameExternalOptions.sZombieDifficultyLevel 						= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_DIFFICULTY_LEVEL", 2, 1, 4);
 	gGameExternalOptions.fZombieRiseWithArmour							= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_RISE_WITH_ARMOUR", TRUE);
+#endif
 
 	//################# Tactical Poison Settings ##################
 	gGameExternalOptions.ubPoisonBaseMedicalSkillToCure					= iniReader.ReadInteger("Tactical Poison Settings", "POISON_BASE_MEDICAL_SKILL_TO_CURE", 50, 1, 100);
+	gGameExternalOptions.sPoisonMedicalPtsToCureMultiplicator			= iniReader.ReadFloat("Tactical Poison Settings", "POISON_MEDICAL_POINTS_TO_CURE_MULTIPLICATOR", 0.5, 0.1, 10.0);
 	gGameExternalOptions.sZombiePoisonDamagePercentage					= iniReader.ReadInteger("Tactical Poison Settings", "ZOMBIE_POISON_DAMAGE_PERCENTAGE", 50, 0, 100);	
 	gGameExternalOptions.sPoisonInfectionDamageMultiplier				= iniReader.ReadFloat("Tactical Poison Settings", "POISON_INFECTION_DAMAGE_MULTIPLIER", 4.0, 1.0, 10.0);	
 
 	//################# Tactical Fortification Settings ##################
 	gGameExternalOptions.fFortificationAllowInHostileSector				= iniReader.ReadBoolean("Tactical Fortification Settings", "FORTIFICATION_ALLOW_IN_HOSTILE_SECTOR", FALSE);
+
+	//################# Tactical Food Settings ##################
+	gGameExternalOptions.usFoodDigestionHourlyBaseFood					= iniReader.ReadInteger("Tactical Food Settings", "FOOD_DIGESTION_HOURLY_BASE_FOOD",  20, 0, 250);
+	gGameExternalOptions.usFoodDigestionHourlyBaseDrink					= iniReader.ReadInteger("Tactical Food Settings", "FOOD_DIGESTION_HOURLY_BASE_DRINK",	130, 0, 250);
+	gGameExternalOptions.sFoodDigestionSleep							= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DIGESTION_SLEEP",				0.6f, 0.0f, 10.0f);
+	gGameExternalOptions.sFoodDigestionTravelVehicle					= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DIGESTION_TRAVEL_VEHICLE",	0.8f, 0.0f, 10.0f);
+	gGameExternalOptions.sFoodDigestionTravel							= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DIGESTION_TRAVEL",			1.5f, 0.0f, 10.0f);
+	gGameExternalOptions.sFoodDigestionAssignment						= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DIGESTION_ASSIGNMENT",		0.9f, 0.0f, 10.0f);
+	gGameExternalOptions.sFoodDigestionOnDuty							= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DIGESTION_ONDUTY",			1.0f, 0.0f, 10.0f);
+	gGameExternalOptions.sFoodDigestionCombat							= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DIGESTION_COMBAT",			2.0f, 0.0f, 10.0f);
+	
+	gGameExternalOptions.fFoodDecayInSectors							= iniReader.ReadBoolean("Tactical Food Settings", "FOOD_DECAY_IN_SECTORS", TRUE);
+	gGameExternalOptions.sFoodDecayModificator							= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DECAY_MODIFICATOR",			1.0f, 0.1f, 10.0f);
 
 	//################# Strategic Gamestart Settings ##################
 
@@ -1473,7 +1544,12 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.ubFacilityDangerRate				= iniReader.ReadInteger("Strategic Gameplay Settings","FACILITY_DANGER_RATE", 50, 0, 100);
 
 	// 2Points: Use new repair algorithm (Items are priorized based on type and damage to item, starting from equipped weapons, going to armor, then inventory)
-	gGameExternalOptions.fAdditionalRepairMode				= iniReader.ReadBoolean("Strategic Gameplay Settings", "ADDITIONAL_REPAIR_MODE", FALSE);	
+	gGameExternalOptions.fAdditionalRepairMode				= iniReader.ReadBoolean("Strategic Gameplay Settings", "ADDITIONAL_REPAIR_MODE", FALSE);
+
+	// Flugente: advanced repair/dirt system
+	gGameExternalOptions.fAdvRepairSystem					= iniReader.ReadBoolean("Strategic Gameplay Settings","ADVANCED_REPAIR", FALSE);
+	gGameExternalOptions.fDirtSystem						= iniReader.ReadBoolean("Strategic Gameplay Settings","DIRT_SYSTEM", FALSE);
+	gGameExternalOptions.usSectorDirtDivider				= iniReader.ReadInteger("Strategic Gameplay Settings","SECTOR_DIRT_DIVIDER", 1000, 1, 100000);
 
 	// CHRISL: Determine how Skyrider should handle landing in enemy occupied sectors
 	gGameExternalOptions.ubSkyriderHotLZ					= iniReader.ReadInteger("Strategic Gameplay Settings", "ALLOW_SKYRIDER_HOT_LZ", 0);
@@ -1783,6 +1859,13 @@ void LoadGameExternalOptions()
 	//gGameExternalOptions.fSaveGameSlot					= iniReader.ReadBoolean("Extension","SAVE_GAMES_SLOT",FALSE);
 	gGameExternalOptions.fSaveGameSlot						= TRUE;				
 
+	//DBrot: settings for the new show remaining hostiles feature
+	gGameExternalOptions.ubMarkerMode						= iniReader.ReadInteger("Overhead Map Settings", "MARKER_MODE", 0, 0, 2);
+	gGameExternalOptions.ubGridResolutionDay				= iniReader.ReadInteger("Overhead Map Settings", "DAYTIME_PRECISION", 0, 0, 5);
+	gGameExternalOptions.ubGridResolutionNight				= iniReader.ReadInteger("Overhead Map Settings", "NIGHTTIME_PRECISION", 0, 0, 5);
+	gGameExternalOptions.ubSoldiersLeft						= iniReader.ReadInteger("Overhead Map Settings", "MAX_SOLDIERS_LEFT", 1, 1, 64);
+
+	gGameExternalOptions.fRobotNoReadytime					= iniReader.ReadBoolean("Tactical Gameplay Settings", "ROBOT_NO_READYTIME", FALSE); 
 	
 	// WANNE: This is just a debug setting. Only in debug version we set that property to TRUE.
 	// In Release version this should always be set to FALSE
@@ -1793,6 +1876,7 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fEnableInventoryPoolQ = FALSE;
 #endif	
 	
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	////////// CLOCK SETTINGS //////////
 
 	// Key to artificially alter the clock so turns run faster
@@ -1803,6 +1887,7 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.iFastForwardPeriod			= (FLOAT)iniReader.ReadDouble("Clock Settings","FAST_FORWARD_PERIOD", 500, 1, 10000);
 	gGameExternalOptions.fClockSpeedPercent			= (FLOAT)iniReader.ReadDouble("Clock Settings","CLOCK_SPEED_PERCENT", 150, 100, 300);
 	gGameExternalOptions.iNotifyFrequency			= iniReader.ReadInteger("Clock Settings","UPDATE_FREQUENCY", 16000, 1000, 20000);	
+#endif
 }
 
 
@@ -1928,7 +2013,7 @@ void LoadSkillTraitsExternalSettings()
 	gSkillTraitValues.ubMAAPsChangeStanceReduction = iniReader.ReadInteger("Martial Arts","APS_CHANGE_STANCE_REDUCTION", 25, 0, 100);
 	gSkillTraitValues.ubMAApsTurnAroundReduction = iniReader.ReadInteger("Martial Arts","APS_TURN_AROUND_REDUCTION", 25, 0, 100);
 	gSkillTraitValues.ubMAAPsClimbOrJumpReduction = iniReader.ReadInteger("Martial Arts","APS_CLIMB_OR_JUMP_REDUCTION", 25, 0, 100);
-	gSkillTraitValues.ubMAReducedAPsRegisteredWhenMoving = iniReader.ReadInteger("Martial Arts","REDUCED_CHANCE_TO_BE_INTERRUPTED_WHEN_MOVING", 35, 0, 100);
+	gSkillTraitValues.ubMAReducedAPsRegisteredWhenMoving = iniReader.ReadInteger("Martial Arts","REDUCED_CHANCE_TO_BE_INTERRUPTED_WHEN_CHARGING_IN", 40, 0, 100);
 	gSkillTraitValues.ubMAChanceToCkickDoors = iniReader.ReadInteger("Martial Arts","CHANCE_KICK_DOORS_BONUS", 25, 0, 250);
 	gSkillTraitValues.fPermitExtraAnimationsOnlyToMA = iniReader.ReadBoolean("Martial Arts","PERMIT_EXTRA_ANIMATIONS_TO_EXPERT_MARTIAL_ARTS_ONLY", TRUE);
 
@@ -2020,7 +2105,7 @@ void LoadSkillTraitsExternalSettings()
 	gSkillTraitValues.ubSTStealthModeSpeedBonus = iniReader.ReadInteger("Stealthy","STEALTH_MODE_SPEED_BONUS", 50, 0, 100);
 	gSkillTraitValues.ubSTBonusToMoveQuietly = iniReader.ReadInteger("Stealthy","BONUS_TO_MOVE_STEALTHILY", 40, 0, 250);
 	gSkillTraitValues.ubSTStealthBonus = iniReader.ReadInteger("Stealthy","STEALTH_BONUS", 25, 0, 200);
-	gSkillTraitValues.ubSTReducedAPsRegistered = iniReader.ReadInteger("Stealthy","REDUCED_CHANCE_TO_BE_INTERRUPTED", 30, 0, 100);
+	gSkillTraitValues.ubSTReducedAPsRegistered = iniReader.ReadInteger("Stealthy","REDUCED_CHANCE_TO_BE_INTERRUPTED", 20, 0, 100);
 	gSkillTraitValues.ubSTStealthPenaltyForMovingReduction = iniReader.ReadInteger("Stealthy","CHANCE_TO_BE_SPOTTED_FOR_MOVING_REDUCTION", 25, 0, 100);
 
 	// ATHLETICS
@@ -2062,12 +2147,78 @@ void LoadSkillTraitsExternalSettings()
 	gSkillTraitValues.fSCThrowMessageIfAmbushPrevented = iniReader.ReadBoolean("Scouting","SHOW_MESSAGE_IF_AMBUSH_PREVENTED", TRUE);
 
 }
+//DBrot: Grids
+void LoadModSettings(){
+	CIniReader iniReader(MOD_SETTINGS_FILE);
+	gModSettings.ubHideoutSectorX = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_SECTOR_X", 10, 1, 16);
+	gModSettings.ubHideoutSectorY = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_SECTOR_Y", 1, 1, 16);
+	gModSettings.ubHideoutSectorZ = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_SECTOR_Z", 1, 0, 3);
+	gModSettings.iHideoutExitGrid = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_EXIT", 12722);
+
+	gModSettings.ubHideoutSurfaceX = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_SURFACE_X", 10, 1, 16);
+	gModSettings.ubHideoutSurfaceY = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_SURFACE_Y", 1, 1, 16);
+	gModSettings.ubHideoutSurfaceZ = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_SURFACE_Z", 0, 0, 3);
+	gModSettings.iHideoutEntryGrid = iniReader.ReadInteger("Rebel Hideout", "HIDEOUT_ENTRY", 7887);
+
+	gModSettings.iBasementEntry[0] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_1", 13362);
+	gModSettings.iBasementEntry[1] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_2", 13363);
+	gModSettings.iBasementEntry[2] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_3", 13364);
+	gModSettings.iBasementEntry[3] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_4", 13365);
+	gModSettings.iBasementEntry[4] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_5", 13325);
+	gModSettings.iBasementEntry[5] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_6", 13324);
+	gModSettings.iBasementEntry[6] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_7", 0);
+	gModSettings.iBasementEntry[7] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_8", 0);
+	gModSettings.iBasementEntry[8] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_9", 0);
+	gModSettings.iBasementEntry[9] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_ENTRY_10", 0);
+
+	gModSettings.iBasementExit[0] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_1", 8047);
+	gModSettings.iBasementExit[1] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_2", 8207);
+	gModSettings.iBasementExit[2] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_3", 8208);
+	gModSettings.iBasementExit[3] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_4", 8048);
+	gModSettings.iBasementExit[4] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_5", 7888);
+	gModSettings.iBasementExit[5] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_6", 7728);
+	gModSettings.iBasementExit[6] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_7", 7727);
+	gModSettings.iBasementExit[7] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_8", 7567);
+	gModSettings.iBasementExit[8] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_9", 0);
+	gModSettings.iBasementExit[9] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_10", 0);
+	gModSettings.iBasementExit[10] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_11", 0);
+	gModSettings.iBasementExit[11] = iniReader.ReadInteger("Rebel Hideout", "BASEMENT_EXIT_12", 0);
+
+	gModSettings.iFinalCrateGrid = iniReader.ReadInteger("Rebel Hideout", "FINAL_CRATE_GRID", 8207);
+	gModSettings.usCrateTileDef = iniReader.ReadInteger("Rebel Hideout", "CRATE_TILE_DEF", 411);
+	gModSettings.usTrapdoorTileDef = iniReader.ReadInteger("Rebel Hideout", "TRAPDOOR_TILE_DEF", 2041);
+	
+	gModSettings.usPornShopRoomHans = iniReader.ReadInteger("San Mona", "PORN_SHOP_ROOM_HANS", 49);
+	gModSettings.iHansGridNo = iniReader.ReadInteger("San Mona", "HANS_POSTION", 13523);
+	gModSettings.usPornShopRoomBrenda = iniReader.ReadInteger("San Mona", "PORN_SHOP_ROOM_BRENDA", 47);
+	gModSettings.usPornShopRoomTony = iniReader.ReadInteger("San Mona", "PORN_SHOP_ROOM_TONY", 50);
+
+	gModSettings.usLeatherShop = iniReader.ReadInteger("San Mona", "ANGELS_LEATHERSHOP", 2);
+	gModSettings.iBambiDoorGridNo = iniReader.ReadInteger("San Mona", "DOOR_TO_BAMBIS_ROOM", 12290);
+	gModSettings.iCarlaDoorGridNo = iniReader.ReadInteger("San Mona", "DOOR_TO_CARLAS_ROOM", 13413);
+	gModSettings.iCindyDoorGridNo = iniReader.ReadInteger("San Mona", "DOOR_TO_CINDYS_ROOM", 11173);
+	gModSettings.iMariaDoorGridNo = iniReader.ReadInteger("San Mona", "DOOR_TO_MARIAS_ROOM", 10852);
+
+	gModSettings.usBrothelRoomRangeStart = iniReader.ReadInteger("San Mona", "FIRST_ROOM_IN_BROTHEL", 91);
+	gModSettings.usBrothelRoomRangeEnd = iniReader.ReadInteger("San Mona", "LAST_ROOM_IN_BROTHEL", 119);
+	gModSettings.usBrothelGuardRoom = iniReader.ReadInteger("San Mona", "BROTHEL_GUARD_ROOM", 110);
+
+	gModSettings.iBrothelDoor1 = iniReader.ReadInteger("San Mona", "BROTHEL_DOOR_1", 11010);
+	gModSettings.iBrothelDoor2 = iniReader.ReadInteger("San Mona", "BROTHEL_DOOR_2", 11176);
+	gModSettings.iBrothelDoor3 = iniReader.ReadInteger("San Mona", "BROTHEL_DOOR_3", 11177);
+
+	gModSettings.ubOmertaDropOffX = iniReader.ReadInteger("Gear Dropoff", "OMERTA_DROPOFF_X", 9);
+	gModSettings.ubOmertaDropOffY = iniReader.ReadInteger("Gear Dropoff", "OMERTA_DROPOFF_Y", 1);
+	gModSettings.ubOmertaDropOffZ = iniReader.ReadInteger("Gear Dropoff", "OMERTA_DROPOFF_Z", 0);
+	gModSettings.iOmertaDropOff = iniReader.ReadInteger("Gear Dropoff", "OMERTA_DROPOFF_GRIDNO", 4868);
+
+
+}
 
 //kenkenken: IoV921+z.5 --> IoV…Ë÷√∫Ø ˝
 void LoadIoVSettings()
 {
 	CIniReader iniReader(IOV_SETTINGS_FILE);
-
 	gGameExternalOptions.ubStraightSightRange		  = iniReader.ReadInteger("Tactical Vision Settings","BASE_SIGHT_RANGE",15, 5, 100);
 	gGameExternalOptions.iMalfunctionRateDivisorBasic = iniReader.ReadInteger("Malfunction Settings","MALFUNCTION_RATE_DIVISOR_BASIC",100, 1, 255);
 	gGameExternalOptions.iMalfunctionRateDivisorBurst = iniReader.ReadInteger("Malfunction Settings","MALFUNCTION_RATE_DIVISOR_BURST",125, 1, 255);
@@ -2302,6 +2453,8 @@ void LoadGameAPBPConstants()
 	APBPConstants[AP_JUMPOFFWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPWALL",24),24);
 
 	APBPConstants[AP_FORTIFICATION] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_FORTIFICATION",80),80);
+	APBPConstants[AP_EAT] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_EAT",80),80);
+	APBPConstants[AP_CLEANINGKIT] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_CLEANINGKIT",80),80);
 
 	SetupMaxActionPointsAnimation();
 #undef ReadInteger

@@ -2689,43 +2689,43 @@ void CreateMouseRegionForBigImage( UINT16 usPosY, UINT8 ubCount, INT16 *pItemNum
 					mrValue = 255;				
 				if( mrValue >= 255)
 				{
-					mrStrNo = 19;
+					mrStrNo = 20; // zwwooooo: 2012/08/18 - start 19 > 20
 				}
 				else if( mrValue < 255 && mrValue >= 225)
 				{
-					mrStrNo = 20;
+					mrStrNo = 21;
 				}
 				else if( mrValue < 225 && mrValue >= 200)
 				{
-					mrStrNo = 21;
+					mrStrNo = 22;
 				}
 				else if( mrValue < 200 && mrValue >= 175)
 				{
-					mrStrNo = 22;
+					mrStrNo = 23;
 				}
 				else if( mrValue < 175 && mrValue >= 150)
 				{
-					mrStrNo = 23;
+					mrStrNo = 24;
 				}
 				else if( mrValue < 150 && mrValue >= 125)
 				{
-					mrStrNo = 24;
+					mrStrNo = 25;
 				}
 				else if( mrValue < 125 && mrValue >= 100)
 				{
-					mrStrNo = 25;
+					mrStrNo = 26;
 				}
 				else if( mrValue < 100 && mrValue >= 75)
 				{
-					mrStrNo = 26;
+					mrStrNo = 27;
 				}
 				else if( mrValue < 75 && mrValue >= 50)
 				{
-					mrStrNo = 27;
+					mrStrNo = 28;
 				}
 				else if( mrValue < 50)
 				{
-					mrStrNo = 28;
+					mrStrNo = 29;
 				}
 				//<-- IoV
 
@@ -2751,7 +2751,7 @@ void CreateMouseRegionForBigImage( UINT16 usPosY, UINT8 ubCount, INT16 *pItemNum
 					fWeight,								//Weight
 					GetWeightUnitString(),					//Weight units
 					//zwwooooo: IoV921+z.5 -->					
-					gWeaponStatsDesc[ 18 ], //Malfunction rate String
+					gWeaponStatsDesc[ 19 ], //Malfunction rate String. 2012/08/18: 18 > 19
 					gWeaponStatsDesc[ mrStrNo ], //Malfunction rate
 					//<-- IoV
 					attachStr
@@ -4105,10 +4105,12 @@ void HandleBobbyRGunsKeyBoardInput()
 				break;
 			}
 		}
+#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 		else
 		{
 			extern void HandleDefaultEvent(InputAtom *Event);
 			HandleDefaultEvent(&InputEvent);
 		}
+#endif
 	}
 }

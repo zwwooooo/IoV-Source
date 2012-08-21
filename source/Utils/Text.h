@@ -312,6 +312,7 @@ extern STR16 sEnemyTauntsRunAway[];
 extern STR16 sEnemyTauntsSeekNoise[];
 extern STR16 sEnemyTauntsAlert[];
 extern STR16 sEnemyTauntsGotHit[];
+extern STR16 sEnemyTauntsNoticedMerc[];
 //****
 
 extern STR16 sEnemyTauntsGunJam[]; //kenkenkenken: IoV921+z.5
@@ -614,12 +615,15 @@ extern STR16 gzItemDescGenIndexes[ 4 ];
 // HEADROCK HAM 4: Added list of condition strings
 extern STR16		gConditionDesc[ 9 ];
 
-// Flugente FTW1: Added list of temperature descriptions
+// Flugente: Added list of temperature descriptions
 extern STR16		gTemperatureDesc[ 11 ];
 
+// Flugente: Added list of food condition descriptions
+extern STR16		gFoodDesc[ 8 ];
+
 extern CHAR16		gMoneyStatsDesc[][ 14 ];
-// HEADROCK: Altered value to 16 //WarmSteel - And I need 17.
-extern CHAR16		gWeaponStatsDesc[][ 28 ]; //kenkenkenken: IoV921+z.5 = 28, 1.13 = 17
+// HEADROCK: Altered value to 16 //WarmSteel - And I need 17.	// Flugente: 17->19
+extern CHAR16		gWeaponStatsDesc[][ 29 ]; //kenkenkenken: IoV921+z.5 = 28, 1.13 = 17. 2012/08/18 modify: 29
 
 // HEADROCK: Added externs for Item Description Box icon and stat tooltips
 // Note that I've inflated some of these to 20 to avoid issues.
@@ -635,14 +639,14 @@ extern STR16		szUDBGenWeaponsStatsTooltipText[ 23 ];
 extern STR16		szUDBGenWeaponsStatsExplanationsTooltipText[ 23 ];
 extern STR16		szUDBGenArmorStatsTooltipText[ 3 ];
 extern STR16		szUDBGenArmorStatsExplanationsTooltipText[ 3 ];
-extern STR16		szUDBGenAmmoStatsTooltipText[ 5 ];						// Flugente Overheating: 3->4	poison: 4->5
-extern STR16		szUDBGenAmmoStatsExplanationsTooltipText[ 5 ];			// Flugente Overheating: 3->4	poison: 4->5
+extern STR16		szUDBGenAmmoStatsTooltipText[ 6 ];						// Flugente Overheating: 3->4	poison: 4->5	dirt: 5->6
+extern STR16		szUDBGenAmmoStatsExplanationsTooltipText[ 6 ];			// Flugente Overheating: 3->4	poison: 4->5	dirt: 5->6
 extern STR16		szUDBGenExplosiveStatsTooltipText[ 22 ];
 extern STR16		szUDBGenExplosiveStatsExplanationsTooltipText[ 22 ];
-extern STR16		szUDBGenSecondaryStatsTooltipText[ 26 ];
-extern STR16		szUDBGenSecondaryStatsExplanationsTooltipText[ 26 ];
-extern STR16		szUDBAdvStatsTooltipText[ 57 ];							// Flugente Overheating Weapons: 48->56 poison: 56->57
-extern STR16		szUDBAdvStatsExplanationsTooltipText[ 57 ];				// Flugente Overheating Weapons: 48->56 poison: 56->57
+extern STR16		szUDBGenSecondaryStatsTooltipText[ 31 ];				// Flugente Food System: 26 -> 28 external feeding: 28->30 JMich_SkillsModifiers: 31 for Defusal kit
+extern STR16		szUDBGenSecondaryStatsExplanationsTooltipText[ 31 ];	// Flugente Food System: 26 -> 28 external feeding: 28->30 JMich_SkillsModifiers: 31 for Defusal kit
+extern STR16		szUDBAdvStatsTooltipText[ 58 ];							// Flugente Overheating Weapons: 48->56 poison: 56->57 dirt: 57->58
+extern STR16		szUDBAdvStatsExplanationsTooltipText[ 58 ];				// Flugente Overheating Weapons: 48->56 poison: 56->57 dirt: 57->58
 extern STR16		szUDBAdvStatsExplanationsTooltipTextForWeapons[ 52 ];	// Flugente Overheating Weapons: 48->52
 
 // Headrock: End Externs
@@ -814,6 +818,10 @@ enum
 	CHOOSE_TRIPWIRE_NETWORK,
 
 	MERC_VITAL_STATS_WITH_POISON_POPUPTEXT,
+	MERC_VITAL_STATS_WITH_FOOD_POPUPTEXT,
+	MERC_VITAL_STATS_WITH_POISON_AND_FOOD_POPUPTEXT,
+
+	FUNCTION_SELECTION_STR,
 	
 	TEXT_NUM_TACTICAL_STR
 };
@@ -1788,6 +1796,7 @@ enum
 	GIO_NCTH_TITLE_TEXT,
 	GIO_IIS_TITLE_TEXT,
 	GIO_OVERHEATING_TITLE_TEXT,
+	GIO_FOODSYSTEM_TITLE_TEXT,
 	GIO_BR_QUANTITY_TEXT,
 
 	////////////////////////////////////
@@ -2145,6 +2154,11 @@ extern STR16 ChineseSpecString4;
 extern STR16 ChineseSpecString5;
 extern STR16 ChineseSpecString6;
 extern STR16 ChineseSpecString7;
+extern STR16 ChineseSpecString8;
+extern STR16 ChineseSpecString9;
+extern STR16 ChineseSpecString10;
+extern STR16 ChineseSpecString11;
+extern STR16 ChineseSpecString12;
 
 enum
 {
@@ -2169,7 +2183,19 @@ enum
 };
 extern STR16 Additional113Text[];
 extern STR16 ranks[];
-extern STR16 ranks[];
+//extern STR16 ranks[];
+
+enum
+{
+	POCKET_POPUP_GRENADE_LAUNCHERS,
+	POCKET_POPUP_ROCKET_LAUNCHERS,
+	POCKET_POPUP_MEELE_AND_THROWN,
+	POCKET_POPUP_NO_AMMO,
+	POCKET_POPUP_NO_GUNS,
+	POCKET_POPUP_MOAR
+};
+extern STR16	gszPocketPopupText[];
+
 
 // Enumeration support
 typedef struct Str8EnumLookupType {
