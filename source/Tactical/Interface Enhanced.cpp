@@ -3930,16 +3930,16 @@ void InternalInitEDBTooltipRegion( OBJECTTYPE * gpItemDescObject, UINT32 guiCurr
 		if ( gGameExternalOptions.fDirtSystem )
 		{
 			///////////////////// DIRT MODIFICATOR
-			if (cnt >= sFirstLine && cnt < sLastLine)
+			if ( Item[gpItemDescObject->usItem].usItemClass & (IC_GUN|IC_LAUNCHER) )
 			{
-				if ( Item[gpItemDescObject->usItem].usItemClass & (IC_GUN|IC_LAUNCHER) )
+				if (cnt >= sFirstLine && cnt < sLastLine )
 				{
 					swprintf( pStr, L"%s%s", szUDBAdvStatsTooltipText[ 57 ], szUDBAdvStatsExplanationsTooltipText[ 57 ]);
+					SetRegionFastHelpText( &(gUDBFasthelpRegions[ iFirstDataRegion + (cnt-sFirstLine) ]), pStr );
+					MSYS_EnableRegion( &gUDBFasthelpRegions[ iFirstDataRegion + (cnt-sFirstLine) ] );
 				}
-				SetRegionFastHelpText( &(gUDBFasthelpRegions[ iFirstDataRegion + (cnt-sFirstLine) ]), pStr );
-				MSYS_EnableRegion( &gUDBFasthelpRegions[ iFirstDataRegion + (cnt-sFirstLine) ] );
+				cnt++;
  			}
-			cnt++;
 		}
 
 		gubDescBoxTotalAdvLines = (UINT8)cnt;
@@ -6623,7 +6623,7 @@ void DrawWeaponValues( OBJECTTYPE * gpItemDescObject )
 			mprintf( usX, usY, pStr );
 		}
 
-		//zwwooooo: IoV921+z.5 故障率 EDB 显示功能 : 显示位置在“REPAIR EASE”下面 --> Modify: IoV z.6 (HAM5.x)
+		//zwwooooo: IoV921+z.5 故障率 EDB 显示功能 : 显示位置在“REPAIR EASE”下面 --> Modify: IoV z.6 (HAM5.x) >>2012.9.24 rewrite
 		if( UsingNewCTHSystem() == true ){ //只在开启NCTH才工作（注：因为显示位置问题，用“未开启NCTH才显示的MinRangeForAimBonus”的位置代替）
 			/////////////////// MalfunctionRate
 			{
@@ -6638,59 +6638,59 @@ void DrawWeaponValues( OBJECTTYPE * gpItemDescObject )
 				UINT16 mrValue = Weapon[gpItemDescObject->usItem].MalfunctionRate;
 				if (mrValue == 0)
 					mrValue = 255;
-				mrValue = mrValue * 100;
+				mrValue = mrValue * 100; // zwwooooo: 2012.9.24 use gWeaponStatsDescMalforIoV fun 0~10
 				if( mrValue >= 25500)
 				{
-					mrStrNo = 20; // zwwooooo: 2012/08/18 - start 19 > 20
+					mrStrNo = 1;
 				}
 				else if( mrValue < 25500 && mrValue >= 22500)
 				{
-					mrStrNo = 21;
+					mrStrNo = 2;
 				}
 				else if( mrValue < 22500 && mrValue >= 20000)
 				{
-					mrStrNo = 22;
+					mrStrNo = 3;
 				}
 				else if( mrValue < 20000 && mrValue >= 17500)
 				{
-					mrStrNo = 23;
+					mrStrNo = 4;
 				}
 				else if( mrValue < 17500 && mrValue >= 15000)
 				{
-					mrStrNo = 24;
+					mrStrNo = 5;
 				}
 				else if( mrValue < 15000 && mrValue >= 12500)
 				{
-					mrStrNo = 25;
+					mrStrNo = 6;
 				}
 				else if( mrValue < 12500 && mrValue >= 10000)
 				{
-					mrStrNo = 26;
+					mrStrNo = 7;
 				}
 				else if( mrValue < 10000 && mrValue >= 7500)
 				{
-					mrStrNo = 27;
+					mrStrNo = 8;
 				}
 				else if( mrValue < 7500 && mrValue >= 5000)
 				{
-					mrStrNo = 28;
+					mrStrNo = 9;
 				}
 				else if( mrValue < 5000)
 				{
-					mrStrNo = 29;
+					mrStrNo = 10;
 				}
 
 				// Print rate String
 				SetFontForeground( FONT_MCOLOR_WHITE );
 				sLeft = gItemDescGenRegions[ubNumLine][1].sLeft - 52;
 				sWidth = 50; //gItemDescGenRegions[ubNumLine][1].sRight - sLeft;
-				swprintf( pStr, L"%s", gWeaponStatsDesc[ 19 ] ); //Malfunction rate String. 2012/08/18: 18 > 19
+				swprintf( pStr, L"%s", gWeaponStatsDescMalforIoV[ 0 ] ); //Malfunction rate String. 2012/08/18: 18 > 19 >>2012.9.24 gWeaponStatsDescMalforIoV replace gWeaponStatsDesc
 				FindFontCenterCoordinates( sLeft, sTop, sWidth, sHeight, pStr, BLOCKFONT2, &usX, &usY);
 				mprintf( usX, usY, pStr );
 
 				// Print final value
 				SetFontForeground( 5 );
-				swprintf( pStr, L"%s", gWeaponStatsDesc[ mrStrNo ] ); //Malfunction rate
+				swprintf( pStr, L"%s", gWeaponStatsDescMalforIoV[ mrStrNo ] ); //Malfunction rate >>2012.9.24 gWeaponStatsDescMalforIoV replace gWeaponStatsDesc
 				mprintf( usX+50, usY, pStr );
 			}
 		}

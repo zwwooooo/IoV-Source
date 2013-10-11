@@ -7553,6 +7553,9 @@ void RenderLBENODEItems( OBJECTTYPE *pObj, int subObject )
 		if(sX != 0 && sY != 0)
 			BltVideoObjectFromIndex( guiSAVEBUFFER, guiAttachmentSlot, LBEInvPocketXY[cnt].fBigPocket, sX-7, sY-1, VO_BLT_SRCTRANSPARENCY, NULL );
 		lbePocket = LoadBearingEquipment[Item[pObj->usItem].ubClassIndex].lbePocketIndex[icPocket[pocketKey[cnt]]];
+		if( lbePocket == 0 && LoadBearingEquipment[Item[pObj->usItem].ubClassIndex].lbePocketsAvailable & (UINT16)pow((double)2, icPocket[pocketKey[cnt]]))
+			lbePocket = GetPocketFromAttachment(&pSoldier->inv[icLBE[pocketKey[cnt]]], icPocket[pocketKey[cnt]]);
+		
 		pObject = NULL;
 		if(wornItem == true)
 		{
@@ -12114,7 +12117,11 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 			swprintf( pStr2, L" [%s]", gMercProfiles[ (*pObject)[subObject]->data.ubImprintID ].zNickname );
 			wcscat( pStr, pStr2 );
 		}
-
+		if ( Item[usItem].usItemClass == IC_LBEGEAR){
+			CHAR16 plbeStr[20];
+			swprintf( plbeStr, L"\n%s %d/%d", gWeaponStatsDesc[19], GetVolumeAlreadyTaken(pObject, -1), LoadBearingEquipment[Item[usItem].ubClassIndex].lbeAvailableVolume);
+			wcscat( pStr, plbeStr );
+		}
 
 		// Add attachment string....
 		CHAR16	attachString[ 300 ];
@@ -13102,7 +13109,7 @@ void TransformationMenuPopup_Arm( OBJECTTYPE* pObj )
 			if ( screen == GAME_SCREEN )
 			{
 				// ignite explosions manually - this item is not in the WorldBombs-structure, so we can't add it to the queue
-				IgniteExplosion( (*pObj)[0]->data.misc.ubBombOwner - 2, gpItemDescSoldier->sX, gpItemDescSoldier->sY, (INT16) (gpWorldLevelData[gpItemDescSoldier->sGridNo].sHeight), gpItemDescSoldier->sGridNo, pObj->usItem, gpItemDescSoldier->pathing.bLevel, gpItemDescSoldier->ubDirection );
+				IgniteExplosion( gpItemDescSoldier->ubID, gpItemDescSoldier->sX, gpItemDescSoldier->sY, (INT16) (gpWorldLevelData[gpItemDescSoldier->sGridNo].sHeight), gpItemDescSoldier->sGridNo, pObj->usItem, gpItemDescSoldier->pathing.bLevel, gpItemDescSoldier->ubDirection );
 			}
 			else
 			{
