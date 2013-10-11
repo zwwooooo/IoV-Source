@@ -1565,6 +1565,7 @@ CHAR16 Message[][STRING_LENGTH] =
 
 	L"你不能将其附加在当前功能槽.",
 	L"%s 不适合打开的任何功能槽.",
+	L"There's not enough space for this pocket.", //TODO:Translate
 };
 
 
@@ -2114,7 +2115,7 @@ STR16 gzMercSkillTextNew[] =
 	L"班副",
 	L"技师",
 	L"救护兵",
-	L"Covert Ops",		// 10
+	L"Covert Ops",		// 10	// TODO.Translate
 	// Minor traits
 	L"双持",
 	L"近战",
@@ -2446,7 +2447,7 @@ STR16 sKeyDescriptionStrings[2] =
 
 //The headers used to describe various weapon statistics.
 
-CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from 18 to 28. 2012/08/18 modify: 19~29
+CHAR16		gWeaponStatsDesc[][ 19 ] =
 {
 	// HEADROCK: Changed this for Extended Description project
 	L"状态: ",
@@ -2472,61 +2473,10 @@ CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from
 	L"剩余弹药:",		//16
 	L"默认:",	//17 //WarmSteel - So we can also display default attachments
 	L"污垢:",	// 18	//added by Flugente	// TODO.Translate
-	//kenkenkenken: IoV921+z.5b2b3 -->
-	L"故障率:",		//19
-	L"x----",           //20
-	L"o----",          //21
-	L"ox---",         //22
-	L"oo---",        //23
-	L"oox--",       //24
-	L"ooo--",      //25
-	L"ooox-",     //26
-	L"oooo-",    //27
-	L"oooox",   //28
-	L"ooooo",  //29
-	//<-- IoV
+	L"Space:", // 19 //space left on Molle items //TODO.Translate
 };
 
 // HEADROCK: Several arrays of tooltip text for new Extended Description Box
-// Please note, several of these are artificially inflated to 19 entries to help fix a complication with
-// changing item type while watching its description box
-// HEADROCK HAM 5: Apparently this isn't used anymore... see the next array.
-STR16		gzWeaponStatsFasthelp[ 32 ] =
-{
-	L"精度",
-	L"杀伤",
-	L"射程",
-	L"",	//3
-	L"精瞄等级",
-	L"精瞄修正",
-	L"平均最佳激光瞄准距离",
-	L"消焰",
-	L"噪音（越低越好）",
-	L"可靠性",
-	L"修理难度",
-	L"精瞄加成所需最小距离",
-	L"命中修正",	
-	L"举枪AP",
-	L"单发AP",
-	L"点射AP",
-	L"连发AP",
-	L"上弹AP",
-	L"手动上弹AP",
-	L"",	//19
-	L"两角架修正",
-	L"连发数量/5AP",
-	L"点射/自动惩罚（越低越好）",	//22
-	L"投掷AP",	//20
-	L"发射AP",
-	L"捅人AP",
-	L"无法单发！",
-	L"无点射模式！",
-	L"无连发模式！",
-	L"格斗AP",
-	L"连发惩罚（越低越好）",
-    L"点射惩罚（越低越好）",
-};
-
 STR16		gzWeaponStatsFasthelpTactical[ 32 ] =
 {
 	// TODO.Translate
@@ -2950,10 +2900,13 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"生命: %d/%d\n毒性: %d/%d\n精力: %d/%d\n士气: %s\n口渴: %d%s\n饥饿: %d%s",
 
 	// added by Flugente: selection of a function to call in tactical
-	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Nothing",	// TODO.Translate
+	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Take off clothes",	// TODO.Translate
 
 	// added by Flugente: decide what to do with the corpses
 	L"1 - Decapitate 2 - Gut 3 - Take Clothes 4 - Take Body",	// TODO.Translate
+
+	// Flugente: weapon cleaning	// TODO.Translate
+	L"%s cleaned %s",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -6322,7 +6275,7 @@ STR16 MissingIMPSkillsDescriptions[] =
 	// Scouting
 	L"侦查：没有什么东西你觉察不到！ ± ",
 	// Covert ops // TODO.Translate
-	L"Covert Operations: You make 007 look like an amateur! ± ",
+	L"Covert Operations: You make 007 look like an amateur! ± ",		// TODO.Translate
 };
 
 STR16 NewInvMessage[] = 
@@ -6759,25 +6712,6 @@ STR16 Additional113Text[]=
 
 };
 
-//kenkenkenken: IoV921+z.5 -->
-STR16 sEnemyTauntsGunJam[]=
-{
-	L"草泥马! 关键时刻卡壳!",
-	L"内牛满面! 枪卡住了!",
-	L"怎么打不响! 马勒隔壁达!",
-
-	L"信春哥不卡壳! 哦也!",
-	L"空姐赐予我力量吧!",
-
-	L"杯具啊! 还是卡!",
-	L"我擦! 弄不出来!",
-
-	L"敌兵的武器卡壳了!",
-	L"敌兵排除卡壳成功!",
-	L"敌兵排除卡壳失败!",
-};
-//<-- IoV
-
 // SANDRO - Taunts (here for now, xml for future, I hope)
 // MINTY - Changed some of the following taunts to sound more natural
 STR16 sEnemyTauntsFireGun[]=
@@ -6960,7 +6894,7 @@ STR16 szUDBGenWeaponsStatsTooltipText[]=
 	L"|噪|音",
 	L"|可|靠|性",
 	L"|修|理|难|度",
-	//L"|精|瞄|最|低|有|效|距|离",
+	// L"|精|瞄|最|低|有|效|距|离",
 	L"|故|障|率", //zwwooooo: IoV921+z.5
 	L"|命|中|率|修|正",	
 	L"|举|枪|A|P",
@@ -6987,7 +6921,7 @@ STR16 szUDBGenWeaponsStatsExplanationsTooltipText[]=
 	L"\n \n该参数显示了武器开火时枪声传播的\n范围（格数）。\n \n此范围内的敌人均有可能听到枪声。\n \n该数值越低越好。",
 	L"\n \n决定了该武器使用时损耗的快慢。\n \n该数值越高越好。",
 	L"\n \n决定了修理该武器的难易。\n \n该数值越高越好。",
-	//L"\n \n瞄准镜提供瞄准命中率加成的最短距离。\n（再近就无效了）",
+	// L"\n \n瞄准镜提供瞄准命中率加成的最短距离。\n（再近就无效了）",
 	L"\n \n决定了武器发生故障的几率。\n \n少点OOXX比较好。", //zwwooooo: IoV921+z.5
 	L"\n \n激光瞄准器提供的命中率修正。",	
 	L"\n \n端枪准备开火所需的AP。\n \n举起该武器后，连续发射不会再消耗\n举枪AP。\n \n但是，除转向和开火之外的其他动作均会放\n下武器。\n \n该数值越低越好。",
@@ -7125,7 +7059,7 @@ STR16 szUDBGenSecondaryStatsTooltipText[]=
 	L"|A|m|m|o |B|e|l|t",
 	L"|A|m|m|o |V|e|s|t",
 	L"|D|e|f|u|s|a|l |K|i|t",	// TODO.Translate
-	L"|C|o|v|e|r|t |I|t|e|m",
+	L"|C|o|v|e|r|t |I|t|e|m",	// TODO.Translate
 };
 
 STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
@@ -7161,7 +7095,7 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \nWith this ammo belt you can\nfeed someone else's MG.",
 	L"\n \nYou can feed an MG with ammo\nbelts stored in this vest.",
 	L"\n \nThis item improves your trap disarm chance by ",			// TODO.Translate
-	L"\n \nThis item and everything attached/inside\nit is hidden from curious eyes.",
+	L"\n \nThis item and everything attached/inside\nit is hidden from curious eyes.",	// TODO.Translate
 };
 
 STR16 szUDBAdvStatsTooltipText[]=
@@ -7466,5 +7400,101 @@ STR16	gszPocketPopupText[]=
 	L"- 区域存货没有武器 -",	//POCKET_POPUP_NO_GUNS
 	L"更多...",		//POCKET_POPUP_MOAR
 };
+
+// Flugente: externalised texts for some features	// TODO.Translate
+STR16	szCovertTextStr[]=
+{
+	L"%s has camo!",
+	L"%s has a backpack!",
+	L"%s is seen carrying a corpse!",
+	L"%s wears suspicious LBE gear!",
+	L"%s possesses military hardware!",
+	L"%s carries too many guns!",
+	L"%s equipment is too good!",
+	L"%s gun has too many attachments!",
+	L"%s was seen performing suspicious activities!",
+	L"%s does not look like a civilian!",
+	L"%s bleeding was discovered!",
+	L"%s is drunk and doesn't look like a soldier!",
+	L"On closer inspection, %s's disguise does not hold!",
+	L"%s isn't supposed to be here!",
+	L"%s isn't supposed to be here at this time!",
+	L"%s was seen near a fresh corpse!",
+	L"%s equipment raises a few eyebrows!",
+	L"%s is seen targeting a soldier!",
+	L"%s has seen through %s disguise!",
+	L"No clothes item found in Items.xml!",
+	L"This does not work with the old trait system!",
+	L"Not enough Aps!",
+	L"Bad palette found!",
+	L"You need the covert skill to do this!",
+	L"No uniform found!",
+};
+
+STR16	szCorpseTextStr[]=
+{
+	L"No head item found in Items.xml!",
+	L"Corpse cannot be decapitated!",
+	L"No meat item found in Items.xml!",
+	L"Not possible, you sick, twisted individual!",
+	L"No clothes to take!",
+	L"%s cannot take clothes off of this corpse!",
+	L"This corpse cannot be taken!",
+	L"No free hand to carry corpse!",
+	L"No corpse item found in Items.xml!",
+	L"Invalid corpse ID!",
+};
+
+STR16	szFoodTextStr[]=
+{
+	L"%s does not want to eat %s",
+	L"%s does not want to drink %s",
+	L"%s ate %s",
+	L"%s drank %s",
+	L"%s's strength was damaged due to being overfed!",
+	L"%s's strength was damaged due to lack of nutrition!",
+	L"%s's health was damaged due to being overfed!",
+	L"%s's health was damaged due to lack of nutrition!",
+	L"%s's strength was damaged due to excessive drinking!",
+	L"%s's strength was damaged due to lack of water!",
+	L"%s's health was damaged due to excessive drinking!",
+	L"%s's health was damaged due to lack of water!",
+	L"Sectorwide canteen filling not possible, Food System is off!"
+};
+
+//kenkenkenken: IoV921+z.5b2b3 --> | >>2012.09.24 rewrite by zwwooooo
+CHAR16		gWeaponStatsDescMalforIoV[][ 10 ] =
+{
+	L"故障率:",		//0    //19
+	L"x----",       //1    //20
+	L"o----",       //2    //21
+	L"ox---",       //3    //22
+	L"oo---",       //4    //23
+	L"oox--",       //5    //24
+	L"ooo--",       //6    //25
+	L"ooox-",       //7    //26
+	L"oooo-",       //8    //27
+	L"oooox",       //9    //28
+	L"ooooo",       //10   //29
+};
+
+// EnemyTauntsGunJam
+STR16 sEnemyTauntsGunJam[]=
+{
+	L"草泥马! 关键时刻卡壳!",
+	L"内牛满面! 枪卡住了!",
+	L"怎么打不响! 马勒隔壁达!",
+
+	L"信春哥不卡壳! 哦也!",
+	L"空姐赐予我力量吧!",
+
+	L"杯具啊! 还是卡!",
+	L"我擦! 弄不出来!",
+
+	L"敌兵的武器卡壳了!",
+	L"敌兵排除卡壳成功!",
+	L"敌兵排除卡壳失败!",
+};
+//<-- IoV
 
 #endif //CHINESE

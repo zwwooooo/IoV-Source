@@ -2261,6 +2261,7 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 	INT32		iLoop2 = 0;
 	INT16		sTimesToRun = 0;
 	UINT8		curSlot = 0;
+	UINT8		ubVolumeTaken;
 	BOOLEAN		foundValidAttachment = FALSE;
 
 	if (pObj->exists() == false) {
@@ -2293,12 +2294,7 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 				fSameItem = TRUE;
 				break;
 			}
-			if (Item[pObj->usItem].usItemClass == IC_LBEGEAR && Item[usAttachment].usItemClass == IC_LBEGEAR){
-				if(LoadBearingEquipment[Item[pObj->usItem].ubClassIndex].lbeAvailableVolume	< (GetVolumeAlreadyTaken(pObj) +  LBEPocketType[LoadBearingEquipment[Item[usAttachment].ubClassIndex].lbePocketIndex[0]].pVolume)){
-					fNoSpace = TRUE;
-					break;
-				}
-			}
+
 			if ( IncompatibleAttachments[i][0] == NONE )
 				break;
 			if ( IncompatibleAttachments[i][0] == usAttachment && FindAttachment (pObj,IncompatibleAttachments[i][1],subObject) != 0 )
@@ -2307,6 +2303,12 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 				usSimilarItem = IncompatibleAttachments[i][1];
 				break;
 			}
+		}
+	}
+	if (Item[pObj->usItem].usItemClass == IC_LBEGEAR && Item[usAttachment].usItemClass == IC_LBEGEAR){
+		ubVolumeTaken = GetVolumeAlreadyTaken(pObj, slotCount);
+		if(LoadBearingEquipment[Item[pObj->usItem].ubClassIndex].lbeAvailableVolume	< (ubVolumeTaken +  LBEPocketType[GetFirstPocketOnItem(usAttachment)].pVolume)){
+			fNoSpace = TRUE;
 		}
 	}
 
@@ -2353,7 +2355,7 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 			//CHRISL: This should allow attachment swapping even if our attachments can't normally be on the weapon at the same time.
 			if(slotCount != -1 && pAttachment->exists() && usSimilarItem == pAttachment->usItem && FindAttachmentSlot(pObj, pAttachment->usItem, subObject) == slotCount)
 				fSimilarItems = FALSE;
-
+			
 			//If we have an item to return the existing attachment to.
 			if(ppAttachInSlot && pAttachment->exists())
 				*ppAttachInSlot = pAttachment;
@@ -2383,8 +2385,8 @@ BOOLEAN ValidItemAttachmentSlot( OBJECTTYPE * pObj, UINT16 usAttachment, BOOLEAN
 			return( FALSE );
 		}
 		else if (fNoSpace)
-		{	//DBrot: TODO - temporary string
-			if (fDisplayMessage) ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_UI_FEEDBACK, Message[ STR_ATTACHMENT_ALREADY ] );
+		{	
+			if (fDisplayMessage) ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_UI_FEEDBACK, Message[ STR_NO_SPACE_FOR_POCKET ] );
 			return( FALSE );
 		}
 		else if ( !foundValidAttachment && fDisplayMessage && !ValidMerge( usAttachment, pObj->usItem ) )
@@ -7856,12 +7858,32 @@ BOOLEAN ArmBomb( OBJECTTYPE * pObj, INT8 bSetting )
 	UINT32 ubWireNetworkFlag = 0;
 	if ( Item[pObj->usItem].tripwire == 1 && bSetting > 0 && bSetting < 17 ) // checks for safety
 	{
+		// we are placing it, so it's ours
+		ubWireNetworkFlag |= TRIPWIRE_NETWORK_OWNER_PLAYER;
+				
 		// the bSetting consists of the network number + 4 * (network hierarchy - 1)
+		INT8 netnr = bSetting % 4;
+		INT8 hierarchytimesfour = bSetting - netnr;
 
-		// account for placement by the enemy
-		INT8 editoradj = 16;
-		//if ( editor ) editoradj = 0;	or something like that
-		ubWireNetworkFlag = 1 << (editoradj - 1 + bSetting);
+		if ( 1 == netnr )
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_NET_1;
+		else if ( 2 == netnr )
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_NET_2;
+		else if ( 3 == netnr )
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_NET_3;
+		else
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_NET_4;
+
+		if ( 0 == hierarchytimesfour )
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_LVL_1;
+		else if ( 1 == hierarchytimesfour )
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_LVL_2;
+		else if ( 2 == hierarchytimesfour )
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_LVL_3;
+		else
+			ubWireNetworkFlag |= TRIPWIRE_NETWORK_LVL_4;
+
+		// TOOD: once tripwire can be placed in the editor, this has to be altered
 	}
 
 	if (fDefuse)	// TODO: doesn't work this way if both a detonator and a remote defuse is attached...
@@ -9182,20 +9204,128 @@ BOOLEAN ApplyCammo( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN *pfGoodAP
 	return( TRUE );
 }
 
-	// Flugente: apply disguise
-BOOLEAN ApplySpyKit( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj)
-{	
-	if (pObj->exists() == false || !HasItemFlag(pObj->usItem, (CLOTHES_CIVILIAN)) )
+// Flugente: apply clothes, and eventually disguise
+BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj)
+{
+	// this will only work with the new trait system
+	if (!gGameOptions.fNewTraitSystem)
 	{
-		return( FALSE );
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_ERROR_OLDTRAITS] );
+		return FALSE;
 	}
 
-	// we get the civilian disguise. AP costs will be checked and deducted here
-	if ( !pSoldier->DisguiseAsCivilian() )
-		return FALSE;
+	if ( !pSoldier || pObj->exists() == false )
+		return( FALSE );
 
-	UseKitPoints( pObj, 100, pSoldier );
+	UINT8 skilllevel = NUM_SKILL_TRAITS( pSoldier, COVERT_NT );
+
+	INT16 apcost = (APBPConstants[AP_DISGUISE] * ( 100 - gSkillTraitValues.sCODisguiseAPReduction * skilllevel))/100;
+	if ( !EnoughPoints( pSoldier, apcost, 0, TRUE ) )
+	{
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_NOT_ENOUGH_APS] );
+		return( FALSE );
+	}
+			
+	// determine clothes type
+	UINT32 clothestype = Item[pObj->usItem].clothestype;
+
+	// if not a clothes item, nothing to see here
+	if ( clothestype == 0 || clothestype > CLOTHES_MAX )
+	{
+		ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_NO_UNIFORM_FOUND] );
+		return( FALSE);
+	}
 	
+	UINT8 filler = 0;
+	// if it has a vest, wear it
+	bool newvest  = FALSE;	
+	if ( GetPaletteRepIndexFromID(Clothes[clothestype].vest, &filler) )
+		newvest = TRUE;
+
+	// if it has pants, wear them
+	bool newpants = FALSE;
+	if ( GetPaletteRepIndexFromID(Clothes[clothestype].pants, &filler) )
+		newpants = TRUE;
+	
+	if ( newvest || newpants )
+	{
+		UINT16 usPaletteAnimSurface = LoadSoldierAnimationSurface( pSoldier, pSoldier->usAnimState );
+
+		if ( usPaletteAnimSurface != INVALID_ANIMATION_SURFACE )
+		{
+			if ( newvest )
+			{
+				// if we are already wearing a vest, give us back that item
+				if ( pSoldier->bSoldierFlagMask & SOLDIER_NEW_VEST )
+				{
+					UINT16 vestitem = 0;
+					if ( GetFirstClothesItemWithSpecificData(&vestitem, pSoldier->VestPal, "blank")  )
+					{
+						CreateItem( vestitem, 100, &gTempObject );
+						if ( !AutoPlaceObject( pSoldier, &gTempObject, FALSE ) )
+							AddItemToPool( pSoldier->sGridNo, &gTempObject, 1, 0, 0, -1 );
+					}
+					else
+						ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_NO_CLOTHES_ITEM] );
+				}
+
+				SET_PALETTEREP_ID( pSoldier->VestPal, Clothes[clothestype].vest );
+				pSoldier->bSoldierFlagMask |= SOLDIER_NEW_VEST;
+			}
+
+			if ( newpants )
+			{
+				// if we are already wearing a vest, give us back that item
+				if ( pSoldier->bSoldierFlagMask & SOLDIER_NEW_PANTS )
+				{
+					UINT16 pantsitem = 0;
+					if ( GetFirstClothesItemWithSpecificData(&pantsitem, "blank", pSoldier->PantsPal)  )
+					{
+						CreateItem( pantsitem, 100, &gTempObject );
+						if ( !AutoPlaceObject( pSoldier, &gTempObject, FALSE ) )
+							AddItemToPool( pSoldier->sGridNo, &gTempObject, 1, 0, 0, -1 );
+					}
+					else
+						ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_NO_CLOTHES_ITEM] );
+				}
+
+				SET_PALETTEREP_ID( pSoldier->PantsPal, Clothes[clothestype].pants );
+				pSoldier->bSoldierFlagMask |= SOLDIER_NEW_PANTS;
+			}
+
+			// Use palette from HVOBJECT, then use substitution for pants, etc
+			memcpy( pSoldier->p8BPPPalette, gAnimSurfaceDatabase[ usPaletteAnimSurface ].hVideoObject->pPaletteEntry, sizeof( pSoldier->p8BPPPalette ) * 256 );
+
+			SetPaletteReplacement( pSoldier->p8BPPPalette, pSoldier->HeadPal );
+			SetPaletteReplacement( pSoldier->p8BPPPalette, pSoldier->VestPal );
+			SetPaletteReplacement( pSoldier->p8BPPPalette, pSoldier->PantsPal );
+			SetPaletteReplacement( pSoldier->p8BPPPalette, pSoldier->SkinPal );
+
+			pSoldier->CreateSoldierPalettes();
+
+			UseKitPoints( pObj, 100, pSoldier );
+
+			DeductPoints( pSoldier, apcost, 0 );
+		}
+
+		if ( pSoldier->bSoldierFlagMask & SOLDIER_NEW_VEST && pSoldier->bSoldierFlagMask & SOLDIER_NEW_PANTS )
+		{
+			// first, remove the covert flags, adn then reapply the correct ones, in case we switch between civilina and military garb
+			pSoldier->bSoldierFlagMask &= ~(SOLDIER_COVERT_CIV|SOLDIER_COVERT_SOLDIER);
+
+			// we now have to determine wether we are currently wearing civilian or military clothes
+			for ( int i = UNIFORM_ENEMY_ADMIN; i <= UNIFORM_ENEMY_ELITE; ++i )
+			{
+				if ( pSoldier->VestPal == gUniformColors[ i ].vest && pSoldier->PantsPal == gUniformColors[ i ].pants )
+					pSoldier->bSoldierFlagMask |= SOLDIER_COVERT_SOLDIER;
+			}
+
+			// if not dressed as a soldier, we must be dressed as a civilian
+			if ( !(pSoldier->bSoldierFlagMask & SOLDIER_COVERT_SOLDIER) )
+				pSoldier->bSoldierFlagMask |= SOLDIER_COVERT_CIV;
+		}
+	}
+		
 	return( TRUE );
 }
 
@@ -13821,16 +13951,20 @@ BOOLEAN HasAttachmentOfClass( OBJECTTYPE * pObj, UINT32 aFlag )
 	return( FALSE );
 }
 //DBrot: calculate the volume already taken up by other pouches attached to this carrier
-UINT8 GetVolumeAlreadyTaken(OBJECTTYPE * pObj){
+UINT8 GetVolumeAlreadyTaken(OBJECTTYPE * pObj, INT16 exceptSlot){
 	UINT8 sum=0;
 	if ( pObj->exists() )
 	{
-		// check all attachments
-		attachmentList::iterator iterend = (*pObj)[0]->attachments.end();
-		for (attachmentList::iterator iter = (*pObj)[0]->attachments.begin(); iter != iterend; ++iter) 
-		{
-			if ( iter->exists() && Item[iter->usItem].usItemClass == IC_LBEGEAR){
-				sum += LBEPocketType[LoadBearingEquipment[Item[iter->usItem].ubClassIndex].lbePocketIndex[0]].pVolume;
+		std::vector<UINT16>	usAttachmentSlotIndexVector = GetItemSlots(pObj);
+		OBJECTTYPE* pAttachment; 
+		UINT16 slotCount;
+		for (slotCount = 0; slotCount < usAttachmentSlotIndexVector.size(); slotCount++ ){
+			if( slotCount == exceptSlot)
+				continue;
+			
+			pAttachment = (*pObj)[0]->GetAttachmentAtIndex(slotCount);
+			if(pAttachment->exists() && Item[pAttachment->usItem].usItemClass == IC_LBEGEAR){
+				sum += LBEPocketType[GetFirstPocketOnItem(pAttachment->usItem)].pVolume;
 			}
 		}
 	}
@@ -13839,19 +13973,29 @@ UINT8 GetVolumeAlreadyTaken(OBJECTTYPE * pObj){
 //DBrot: search the attachments for a pocket
 INT16 GetPocketFromAttachment(OBJECTTYPE * pObj, UINT8 pMap){
 	std::vector<UINT16>	usAttachmentSlotIndexVector = GetItemSlots(pObj);
-	OBJECTTYPE* pAttachment; // = (*pObject)[ubStatusIndex]->GetAttachmentAtIndex(slotCount);
+	OBJECTTYPE* pAttachment; 
 	UINT16 slotCount;
 	for (slotCount = 0; slotCount < usAttachmentSlotIndexVector.size(); slotCount++ ){
 		if(AttachmentSlots[usAttachmentSlotIndexVector[slotCount]].ubPocketMapping -1 == pMap){
 			pAttachment = (*pObj)[0]->GetAttachmentAtIndex(slotCount);
 			if(pAttachment->exists() && Item[pAttachment->usItem].usItemClass == IC_LBEGEAR){
-				return(LoadBearingEquipment[Item[pAttachment->usItem].ubClassIndex].lbePocketIndex[0]);
+				return(GetFirstPocketOnItem(pAttachment->usItem));
+				
 			}
 		}
 	}
 	return 0;
 }
-
+UINT8 GetFirstPocketOnItem(UINT16 usIndex){
+	UINT8 pPocket = 0;
+	for(UINT8 i = 0; i < LoadBearingEquipment[Item[usIndex].ubClassIndex].lbePocketIndex.size(); i++){
+		pPocket = LoadBearingEquipment[Item[usIndex].ubClassIndex].lbePocketIndex[i];
+		if(pPocket){
+			return pPocket;
+		}
+	}
+	return pPocket;
+}
 
 extern void HandleSight(SOLDIERTYPE *pSoldier, UINT8 ubSightFlags);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14525,4 +14669,71 @@ FLOAT GetItemDirtIncreaseFactor( OBJECTTYPE * pObj, BOOLEAN fConsiderAmmo )
 	dirtincreasefactor = max(0.0f, dirtincreasefactor);
 
 	return dirtincreasefactor;
+}
+
+// Flugente: retrieve a specific clothes item, if such a thing exists
+BOOLEAN	GetFirstClothesItemWithSpecificData( UINT16* pusItem, PaletteRepID aPalVest, PaletteRepID aPalPants )
+{
+	bool vestok  = FALSE;
+	bool pantsok = FALSE;
+
+	UINT8 filler = 0;
+	if ( !GetPaletteRepIndexFromID(aPalVest, &filler) )
+		vestok = TRUE;
+
+	if ( !GetPaletteRepIndexFromID(aPalPants, &filler) )
+		pantsok = TRUE;
+
+	// getting the best item isn't straightforward. As combo clothes can be found first, we will search for each item whose clothestype matches, and retreive the loest item that has
+	// the lowest clothestype
+	UINT32 bestclothestype = 999999;
+	UINT16 bestitem = 0;
+
+	register UINT16 i;
+	for (i = 1; i < MAXITEMS; ++i)
+	{
+		if ( Item[i].clothestype > 0 )
+		{
+			bool tmpvestok  = vestok;
+			bool tmppantsok = pantsok;
+
+			UINT8 vestpalid = 0;
+			GetPaletteRepIndexFromID(aPalVest, &vestpalid);
+
+			// if we are looking for vests, do so
+			if ( !tmpvestok  )
+			{				
+				if ( COMPARE_PALETTEREP_ID(aPalVest, Clothes[Item[i].clothestype].vest) )
+				{
+					tmpvestok = TRUE;
+				}
+			}
+
+			// if we are looking for pants, do so
+			if ( !tmppantsok )
+			{
+				if ( COMPARE_PALETTEREP_ID(aPalPants, Clothes[Item[i].clothestype].pants) )
+				{
+					tmppantsok = TRUE;
+				}
+			}
+
+			if ( tmpvestok && tmppantsok )
+			{	
+				if ( Item[i].clothestype < bestclothestype )
+				{
+					bestclothestype = Item[i].clothestype;
+					bestitem = i;
+				}
+			}
+		}
+	}
+
+	if ( bestitem > 0 )
+	{
+		*pusItem = bestitem;
+		return( TRUE );
+	}
+
+	return( FALSE );
 }

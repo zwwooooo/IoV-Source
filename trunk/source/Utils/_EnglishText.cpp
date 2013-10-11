@@ -1565,6 +1565,7 @@ CHAR16 Message[][STRING_LENGTH] =
 
 	L"You cannot attach %s to this slot.",
 	L"The %s will not fit in any open slots.",
+	L"There's not enough space for this pocket.",
 };
 
 
@@ -2446,7 +2447,7 @@ STR16 sKeyDescriptionStrings[2] =
 
 //The headers used to describe various weapon statistics.
 
-CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from 18 to 28. 2012/08/18 modify: 19~29
+CHAR16		gWeaponStatsDesc[][ 19 ] =
 {
 	// HEADROCK: Changed this for Extended Description project
 	L"Status:",
@@ -2472,61 +2473,10 @@ CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from
 	L"Remaining ammo:",		//16
 	L"Default:",	//17 //WarmSteel - So we can also display default attachments
 	L"Dirt:",	// 18	//added by Flugente
-	//kenkenkenken: IoV921+z.5b2b3 -->
-	L"故障率:",		//19
-	L"x----",           //20
-	L"o----",          //21
-	L"ox---",         //22
-	L"oo---",        //23
-	L"oox--",       //24
-	L"ooo--",      //25
-	L"ooox-",     //26
-	L"oooo-",    //27
-	L"oooox",   //28
-	L"ooooo",  //29
-	//<-- IoV
+	L"Space:", // 19 //space left on Molle items
 };
 
 // HEADROCK: Several arrays of tooltip text for new Extended Description Box
-// Please note, several of these are artificially inflated to 19 entries to help fix a complication with
-// changing item type while watching its description box
-// HEADROCK HAM 5: Apparently this isn't used anymore... see the next array.
-STR16		gzWeaponStatsFasthelp[ 32 ] =
-{
-	L"Accuracy",
-	L"Damage",
-	L"Range",
-	L"",	//3
-	L"Aiming Levels",
-	L"Aiming Modifier",
-	L"Average Best Laser Range",
-	L"Flash Suppression",
-	L"Loudness (lower is better)",
-	L"Reliability",
-	L"Repair Ease",
-	L"Min. Range for Aiming Bonus",
-	L"To-Hit Modifier",
-	L"APs to ready",
-	L"APs to fire Single",
-	L"APs to fire Burst",
-	L"APs to fire Auto",
-	L"APs to Reload",
-	L"APs to Reload Manually",
-	L"",	//19
-	L"Bipod Modifier",
-	L"Autofire shots per 5 AP",
-	L"Burst/Auto Penalty (Lower is better)",	//22
-	L"APs to Throw",
-	L"APs to Launch",
-	L"APs to Stab",
-	L"No Single Shot!",
-	L"No Burst Mode!",
-	L"No Auto Mode!",
-	L"APs to Bash",
-	L"Autofire Penalty (Lower is better)",
-    L"Burst Penalty (Lower is better)",
-};
-
 STR16		gzWeaponStatsFasthelpTactical[ 32 ] =
 {
 	L"|R|a|n|g|e\n \nThe effective range of this weapon. Attacking from\nbeyond this range will lead to massive penalties.\n \nHigher is better.",
@@ -2949,10 +2899,13 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Health: %d/%d\nPoison: %d/%d\nEnergy: %d/%d\nMorale: %s\nWater: %d%s\nFood: %d%s",
 
 	// added by Flugente: selection of a function to call in tactical
-	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Nothing",
+	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Take off clothes",
 
 	// added by Flugente: decide what to do with the corpses
 	L"1 - Decapitate 2 - Gut 3 - Take Clothes 4 - Take Body",
+
+	// Flugente: weapon cleaning
+	L"%s cleaned %s",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -6742,25 +6695,6 @@ STR16 Additional113Text[]=
 
 };
 
-//kenkenkenken: IoV921+z.5 -->
-STR16 sEnemyTauntsGunJam[]=
-{
-	L"What the fuck??? Jammed!",
-	L"Aww FUUUUCK! Gun jammed!",
-	L"Gun jammed! Arrrrrrrrgh!",
-
-	L"Yay! Unjammed finally!",
-	L"We're good! Unjammed!!",
-
-	L"No! Come the fuck on!!!",
-	L"God help me unjam this!",
-
-	L"Enemy's gun jammed!",
-	L"Enemy successfully unjammed!",
-	L"Enemy failed to unjam the gun!",
-};
-//<-- IoV
-
 // SANDRO - Taunts (here for now, xml for future, I hope)
 // MINTY - Changed some of the following taunts to sound more natural
 STR16 sEnemyTauntsFireGun[]=
@@ -6942,7 +6876,7 @@ STR16 szUDBGenWeaponsStatsTooltipText[]=
 	L"|L|o|u|d|n|e|s|s",
 	L"|R|e|l|i|a|b|i|l|i|t|y",
 	L"|R|e|p|a|i|r |E|a|s|e",
-	//L"|M|i|n|. |R|a|n|g|e |f|o|r |A|i|m|i|n|g |B|o|n|u|s",
+	// L"|M|i|n|. |R|a|n|g|e |f|o|r |A|i|m|i|n|g |B|o|n|u|s",
 	L"|M|a|l|f|u|n|c|t|i|o|n", //zwwooooo: IoV921+z.5
 	L"|T|o|-|H|i|t |M|o|d|i|f|i|e|r",
 	L"|A|P|s |t|o |R|e|a|d|y",
@@ -6969,7 +6903,7 @@ STR16 szUDBGenWeaponsStatsExplanationsTooltipText[]=
 	L"\n \nWhen firing this weapon, Loudness is the\ndistance (in tiles) that the sound of\ngunfire will travel.\n \nEnemies within this distance will probably\nhear the shot.\n \nLower is better.",
 	L"\n \nDetermines how quickly this weapon will degrade\nwith use.\n \nHigher is better.",
 	L"\n \nDetermines how difficult it is to repair this weapon.\n \nHigher is better.",
-	//L"\n \nThe minimum range at which a scope can provide it's aimBonus.",
+	// L"\n \nThe minimum range at which a scope can provide it's aimBonus.",
 	L"\n \n Weapons' malfunction rate.\n \nLess OOXX is better.", //zwwooooo: IoV921+z.5
 	L"\n \nTo hit modifier granted by laser sights.",
 	L"\n \nThe number of APs required to bring this\nweapon up to firing stance.\n \nOnce the weapon is raised, you may fire repeatedly\nwithout paying this cost again.\n \nA weapon is automatically 'Unreadied' if its\nwielder performs any action other than\nfiring or turning.\n \nLower is better.",
@@ -7448,5 +7382,101 @@ STR16	gszPocketPopupText[]=
 	L"- no guns in inventory -",	//POCKET_POPUP_NO_GUNS
 	L"more...",		//POCKET_POPUP_MOAR
 };
+
+// Flugente: externalised texts for some features
+STR16	szCovertTextStr[]=
+{
+	L"%s has camo!",
+	L"%s has a backpack!",
+	L"%s is seen carrying a corpse!",
+	L"%s wears suspicious LBE gear!",
+	L"%s possesses military hardware!",
+	L"%s carries too many guns!",
+	L"%s equipment is too good!",
+	L"%s gun has too many attachments!",
+	L"%s was seen performing suspicious activities!",
+	L"%s does not look like a civilian!",
+	L"%s bleeding was discovered!",
+	L"%s is drunk and doesn't look like a soldier!",
+	L"On closer inspection, %s's disguise does not hold!",
+	L"%s isn't supposed to be here!",
+	L"%s isn't supposed to be here at this time!",
+	L"%s was seen near a fresh corpse!",
+	L"%s equipment raises a few eyebrows!",
+	L"%s is seen targeting a soldier!",
+	L"%s has seen through %s disguise!",
+	L"No clothes item found in Items.xml!",
+	L"This does not work with the old trait system!",
+	L"Not enough Aps!",
+	L"Bad palette found!",
+	L"You need the covert skill to do this!",
+	L"No uniform found!",
+};
+
+STR16	szCorpseTextStr[]=
+{
+	L"No head item found in Items.xml!",
+	L"Corpse cannot be decapitated!",
+	L"No meat item found in Items.xml!",
+	L"Not possible, you sick, twisted individual!",
+	L"No clothes to take!",
+	L"%s cannot take clothes off of this corpse!",
+	L"This corpse cannot be taken!",
+	L"No free hand to carry corpse!",
+	L"No corpse item found in Items.xml!",
+	L"Invalid corpse ID!",
+};
+
+STR16	szFoodTextStr[]=
+{
+	L"%s does not want to eat %s",
+	L"%s does not want to drink %s",
+	L"%s ate %s",
+	L"%s drank %s",
+	L"%s's strength was damaged due to being overfed!",
+	L"%s's strength was damaged due to lack of nutrition!",
+	L"%s's health was damaged due to being overfed!",
+	L"%s's health was damaged due to lack of nutrition!",
+	L"%s's strength was damaged due to excessive drinking!",
+	L"%s's strength was damaged due to lack of water!",
+	L"%s's health was damaged due to excessive drinking!",
+	L"%s's health was damaged due to lack of water!",
+	L"Sectorwide canteen filling not possible, Food System is off!"
+};
+
+//kenkenkenken: IoV921+z.5b2b3 --> | >>2012.09.24 rewrite by zwwooooo
+CHAR16		gWeaponStatsDescMalforIoV[][ 10 ] =
+{
+	L"Mal rate:",	//0    //19
+	L"x----",       //1    //20
+	L"o----",       //2    //21
+	L"ox---",       //3    //22
+	L"oo---",       //4    //23
+	L"oox--",       //5    //24
+	L"ooo--",       //6    //25
+	L"ooox-",       //7    //26
+	L"oooo-",       //8    //27
+	L"oooox",       //9    //28
+	L"ooooo",       //10   //29
+};
+
+//sEnemyTauntsGunJam
+STR16 sEnemyTauntsGunJam[]=
+{
+	L"What the fuck??? Jammed!",
+	L"Aww FUUUUCK! Gun jammed!",
+	L"Gun jammed! Arrrrrrrrgh!",
+
+	L"Yay! Unjammed finally!",
+	L"We're good! Unjammed!!",
+
+	L"No! Come the fuck on!!!",
+	L"God help me unjam this!",
+
+	L"Enemy's gun jammed!",
+	L"Enemy successfully unjammed!",
+	L"Enemy failed to unjam the gun!",
+};
+//<-- IoV
 
 #endif //ENGLISH

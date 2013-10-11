@@ -2683,49 +2683,49 @@ void CreateMouseRegionForBigImage( UINT16 usPosY, UINT8 ubCount, INT16 *pItemNum
 				}
 
 				//kenkenkenken: IoV921+z.5 -->
-				UINT8 mrStrNo;
+				UINT8 mrStrNo; // zwwooooo: 2012.9.24 use gWeaponStatsDescMalforIoV fun 0~10
 				UINT16 mrValue = Weapon[ pItemNumbers[ i ] ].MalfunctionRate;
 				if (mrValue == 0)
 					mrValue = 255;				
 				if( mrValue >= 255)
 				{
-					mrStrNo = 20; // zwwooooo: 2012/08/18 - start 19 > 20
+					mrStrNo = 1;
 				}
 				else if( mrValue < 255 && mrValue >= 225)
 				{
-					mrStrNo = 21;
+					mrStrNo = 2;
 				}
 				else if( mrValue < 225 && mrValue >= 200)
 				{
-					mrStrNo = 22;
+					mrStrNo = 3;
 				}
 				else if( mrValue < 200 && mrValue >= 175)
 				{
-					mrStrNo = 23;
+					mrStrNo = 4;
 				}
 				else if( mrValue < 175 && mrValue >= 150)
 				{
-					mrStrNo = 24;
+					mrStrNo = 5;
 				}
 				else if( mrValue < 150 && mrValue >= 125)
 				{
-					mrStrNo = 25;
+					mrStrNo = 6;
 				}
 				else if( mrValue < 125 && mrValue >= 100)
 				{
-					mrStrNo = 26;
+					mrStrNo = 7;
 				}
 				else if( mrValue < 100 && mrValue >= 75)
 				{
-					mrStrNo = 27;
+					mrStrNo = 8;
 				}
 				else if( mrValue < 75 && mrValue >= 50)
 				{
-					mrStrNo = 28;
+					mrStrNo = 9;
 				}
 				else if( mrValue < 50)
 				{
-					mrStrNo = 29;
+					mrStrNo = 10;
 				}
 				//<-- IoV
 
@@ -2751,8 +2751,8 @@ void CreateMouseRegionForBigImage( UINT16 usPosY, UINT8 ubCount, INT16 *pItemNum
 					fWeight,								//Weight
 					GetWeightUnitString(),					//Weight units
 					//zwwooooo: IoV921+z.5 -->					
-					gWeaponStatsDesc[ 19 ], //Malfunction rate String. 2012/08/18: 18 > 19
-					gWeaponStatsDesc[ mrStrNo ], //Malfunction rate
+					gWeaponStatsDescMalforIoV[ 0 ], //Malfunction rate String. 2012/08/18: 18 > 19 >>2012.9.24 gWeaponStatsDescMalforIoV replace gWeaponStatsDesc
+					gWeaponStatsDescMalforIoV[ mrStrNo ], //Malfunction rate >>2012.9.24 gWeaponStatsDescMalforIoV replace gWeaponStatsDesc
 					//<-- IoV
 					attachStr
 					);
