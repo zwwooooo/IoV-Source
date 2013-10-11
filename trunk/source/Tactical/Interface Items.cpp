@@ -24,11 +24,9 @@
 	#include "sys globals.h"
 	#include "cursors.h"
 	#include "radar screen.h"
-	#include "worldman.h"
 	#include "Font Control.h"
 	#include "render dirty.h"
 	#include "utilities.h"
-	#include "Sound Control.h"
 	#include "Interface Panels.h"
 	#include "Animation Control.h"
 	#include "Soldier Control.h"
@@ -59,11 +57,9 @@
 	#include "english.h"
 	#include "keys.h"
 	#include "Strategicmap.h"
-	#include "Arms Dealer Init.h"
 	#include "soldier macros.h"
 	#include "game clock.h"
 	#include "squads.h"
-	#include "LaptopSave.h"
 	#include "MessageBoxScreen.h"
 	#include "Language Defines.h"
 	#include "GameSettings.h"
@@ -3744,24 +3740,47 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 				// Flugente: check for underbarrel weapons and use that object if necessary
 				OBJECTTYPE*	pObjShown = pObject;
 				INVTYPE		*pItemShown = pItem;
-				if ( pItem->usItemClass == IC_GUN && pSoldier && ( pSoldier->bWeaponMode == WM_ATTACHED_UB || pSoldier->bWeaponMode == WM_ATTACHED_UB_BURST || pSoldier->bWeaponMode == WM_ATTACHED_UB_AUTO ) )
+				if ( pItem->usItemClass == IC_GUN && pSoldier )
 				{
-					OBJECTTYPE  *pObjectUnderBarrel = FindAttachment_UnderBarrel( pObject );
-
-					if ( pObjectUnderBarrel )
+					if ( pSoldier->bWeaponMode == WM_ATTACHED_UB || pSoldier->bWeaponMode == WM_ATTACHED_UB_BURST || pSoldier->bWeaponMode == WM_ATTACHED_UB_AUTO )
 					{
-						INVTYPE		*pItemUnderBarrel;
-						if ( ubStatusIndex < RENDER_ITEM_ATTACHMENT1 )
-						{
-							pItemUnderBarrel = &Item[ pObjectUnderBarrel->usItem ];
-						}
-						else
-						{
-							pItemUnderBarrel = &Item[ (*pObjectUnderBarrel)[iter]->GetAttachmentAtIndex( ubStatusIndex - RENDER_ITEM_ATTACHMENT1 )->usItem ];
-						}
+						OBJECTTYPE  *pObjectUnderBarrel = FindAttachedWeapon( pObject, IC_GUN );
 
-						pObjShown = pObjectUnderBarrel;
-						pItemShown = pItemUnderBarrel;
+						if ( pObjectUnderBarrel )
+						{
+							INVTYPE		*pItemUnderBarrel;
+							if ( ubStatusIndex < RENDER_ITEM_ATTACHMENT1 )
+							{
+								pItemUnderBarrel = &Item[ pObjectUnderBarrel->usItem ];
+							}
+							else
+							{
+								pItemUnderBarrel = &Item[ (*pObjectUnderBarrel)[iter]->GetAttachmentAtIndex( ubStatusIndex - RENDER_ITEM_ATTACHMENT1 )->usItem ];
+							}
+
+							pObjShown = pObjectUnderBarrel;
+							pItemShown = pItemUnderBarrel;
+						}
+					}
+					else if ( pSoldier->bWeaponMode == WM_ATTACHED_BAYONET )
+					{
+						OBJECTTYPE  *pObjectUnderBarrel = FindAttachedWeapon( pObject, IC_BLADE );
+
+						if ( pObjectUnderBarrel )
+						{
+							INVTYPE		*pItemUnderBarrel;
+							if ( ubStatusIndex < RENDER_ITEM_ATTACHMENT1 )
+							{
+								pItemUnderBarrel = &Item[ pObjectUnderBarrel->usItem ];
+							}
+							else
+							{
+								pItemUnderBarrel = &Item[ (*pObjectUnderBarrel)[iter]->GetAttachmentAtIndex( ubStatusIndex - RENDER_ITEM_ATTACHMENT1 )->usItem ];
+							}
+
+							pObjShown = pObjectUnderBarrel;
+							pItemShown = pItemUnderBarrel;
+						}
 					}
 				}
 
@@ -4087,7 +4106,12 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 					swprintf( pStr, New113Message[MSG113_UB_AUTO] );
 					SetFontForeground( FONT_ORANGE );
 				}
-
+				else if(pSoldier->bWeaponMode == WM_ATTACHED_BAYONET)
+				{
+					swprintf( pStr, New113Message[MSG113_BAYONET] );
+					SetFontForeground( FONT_ORANGE );
+				}
+								
 				// Get length of string
 				uiStringLength=StringPixLength(pStr, ITEM_FONT );
 
@@ -10905,6 +10929,9 @@ void RemoveItemPickupMenu( )
 		// Unfreese guy!
 		gItemPickupMenu.pSoldier->flags.fPauseAllAnimation = FALSE;
 
+		// Flugente: remove the marker notifying we are currently stealing
+		gItemPickupMenu.pSoldier->bSoldierFlagMask &= ~SOLDIER_ACCESSTEAMMEMBER;
+
 		// Remove graphics!
 		DeleteVideoObjectFromIndex( gItemPickupMenu.uiPanelVo );
 
@@ -12857,7 +12884,7 @@ void ItemDescTransformRegionCallback( MOUSE_REGION *pRegion, INT32 reason )
 				{
 					iTransformIndex++;
 					
-					UINT16 apcost = APBPConstants[AP_INVENTORY_EXPLOSIVE_ACTIVATE];
+					UINT16 usAPCost = APBPConstants[AP_INVENTORY_ARM];
 
 					// test wether item is already armed
 					INT8 detonatortype;
@@ -12871,24 +12898,24 @@ void ItemDescTransformRegionCallback( MOUSE_REGION *pRegion, INT32 reason )
 					{
 						fHaveToDisarm = TRUE;
 
-						if ( apcost > 0 && gTacticalStatus.uiFlags & INCOMBAT && gTacticalStatus.uiFlags & TURNBASED )
+						if ( usAPCost > 0 && gTacticalStatus.uiFlags & INCOMBAT && gTacticalStatus.uiFlags & TURNBASED )
 						{
-							swprintf (MenuRowText, L"Disarm (%d AP)", apcost );
+							swprintf (MenuRowText, szInventoryArmTextStr[STR_INV_ARM_DISARM_AP], usAPCost );
 						}
 						else
 						{
-							swprintf (MenuRowText, L"Disarm");
+							swprintf (MenuRowText, szInventoryArmTextStr[STR_INV_ARM_DISARM]);
 						}
 					}
 					else
 					{
-						if ( apcost > 0 && gTacticalStatus.uiFlags & INCOMBAT && gTacticalStatus.uiFlags & TURNBASED )
+						if ( usAPCost > 0 && gTacticalStatus.uiFlags & INCOMBAT && gTacticalStatus.uiFlags & TURNBASED )
 						{
-							swprintf (MenuRowText, L"Arm (%d AP)", apcost );
+							swprintf (MenuRowText, szInventoryArmTextStr[STR_INV_ARM_ARM_AP], usAPCost );
 						}
 						else
 						{
-							swprintf (MenuRowText, L"Arm");
+							swprintf (MenuRowText, szInventoryArmTextStr[STR_INV_ARM_ARM]);
 						}
 					}
 
@@ -12905,17 +12932,17 @@ void ItemDescTransformRegionCallback( MOUSE_REGION *pRegion, INT32 reason )
 				{
 					iTransformIndex++;
 
-					UINT16 apcost = 20;
+					UINT16 usAPCost = APBPConstants[AP_INVENTORY_ARM];
 
 					CHAR16 MenuRowText[300];
 
-					if ( apcost > 0 && gTacticalStatus.uiFlags & INCOMBAT && gTacticalStatus.uiFlags & TURNBASED )
+					if ( usAPCost > 0 && gTacticalStatus.uiFlags & INCOMBAT && gTacticalStatus.uiFlags & TURNBASED )
 					{
-						swprintf (MenuRowText, L"Blow up (%d AP)", apcost );
+						swprintf (MenuRowText, szInventoryArmTextStr[STR_INV_ARM_BLOWUP_AP], usAPCost );
 					}
 					else
 					{
-						swprintf (MenuRowText, L"Blow up");
+						swprintf (MenuRowText, szInventoryArmTextStr[STR_INV_ARM_BLOWUP]);
 					}
 
 					// Generate a new option for the menu
@@ -13111,6 +13138,21 @@ void TransformationMenuPopup_Arm( OBJECTTYPE* pObj )
 		// if this is grenade, blow it up, no dialogue settings here
 		if ( Item[pObj->usItem].usItemClass == IC_GRENADE )
 		{
+			// Start reading transformation data with APBP costs.
+			UINT16 usAPCost = APBPConstants[AP_INVENTORY_ARM];
+			INT32 iBPCost   = APBPConstants[BP_INVENTORY_ARM];
+	
+			// Check whether our soldier can afford this transformation!
+			if (!EnoughPoints( gpItemDescSoldier, (INT16)usAPCost, iBPCost, true ))
+			{
+				return;
+			}
+			else
+			{
+				// Soldier can afford the transformation. Deduct APBP as necessary.
+				DeductPoints( gpItemDescSoldier, (INT16)usAPCost, iBPCost, false );
+			}
+
 			INT8 screen = guiCurrentScreen;
 			if ( screen == GAME_SCREEN )
 			{

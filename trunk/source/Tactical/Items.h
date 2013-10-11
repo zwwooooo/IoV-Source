@@ -195,8 +195,8 @@ void WaterDamage( SOLDIERTYPE *pSoldier );
 
 INT8 FindObj( SOLDIERTYPE * pSoldier, UINT16 usItem, INT8 bLower = 0, INT8 bUpper = NUM_INV_SLOTS );
 
-BOOLEAN ApplyCammo( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN *pfGoodAPs );
-BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj);	// Flugente: apply clothes, and eventually disguise
+BOOLEAN ApplyCammo( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN *pfGoodAPs, BOOLEAN fUseAPs = TRUE );
+BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN fUseAPs = TRUE );	// Flugente: apply clothes, and eventually disguise
 
 UINT32 ConvertProfileMoneyValueToObjectTypeMoneyValue( UINT8 ubStatus );
 UINT8 ConvertObjectTypeMoneyValueToProfileMoneyValue( UINT32 uiMoneyAmount );
@@ -211,7 +211,7 @@ UINT16 FindReplacementMagazineIfNecessary( UINT16 usOldGun, UINT16 usOldAmmo, UI
 
 BOOLEAN DamageItemOnGround( OBJECTTYPE * pObject, INT32 sGridNo, INT8 bLevel, INT32 iDamage, UINT8 ubOwner );
 
-BOOLEAN ApplyCanteen( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN *pfGoodAPs );
+BOOLEAN ApplyCanteen( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN *pfGoodAPs, BOOLEAN fUseAPs = TRUE );
 BOOLEAN ApplyElixir( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, BOOLEAN *pfGoodAPs );
 
 BOOLEAN CompatibleFaceItem( UINT16 usItem1, UINT16 usItem2 );
@@ -347,12 +347,12 @@ BOOLEAN IsGrenadeLauncherAttached( OBJECTTYPE * pObj, UINT8 subObject = 0 );
 OBJECTTYPE* FindAttachment_GrenadeLauncher( OBJECTTYPE * pObj );
 UINT16 GetAttachedGrenadeLauncher( OBJECTTYPE * pObj );
 
-// JMich & Flugente: functions for underbarrel weapons
-INT16 GetUnderBarrelStatus( OBJECTTYPE * pObj );
-BOOLEAN IsUnderBarrelAttached( OBJECTTYPE * pObj, UINT8 subObject = 0 );
-OBJECTTYPE* FindAttachment_UnderBarrel( OBJECTTYPE * pObj );
-UINT16 GetAttachedUnderBarrel( OBJECTTYPE * pObj );
-OBJECTTYPE* GetUsedWeapon( OBJECTTYPE * pObj );
+// JMich & Flugente: functions for underbarrel weapons and bayonets
+// As we can have both underbarrel gun and a bayonet, use usFlag to specify (IC_GUN or IC_BLADE are used here, or both)
+INT16 GetUnderBarrelStatus( OBJECTTYPE * pObj, UINT32 usFlag );
+BOOLEAN IsWeaponAttached( OBJECTTYPE * pObj, UINT32 usFlag, UINT8 subObject = 0 );
+OBJECTTYPE* FindAttachedWeapon( OBJECTTYPE * pObj, UINT32 usFlag );
+UINT16 GetAttachedWeapon( OBJECTTYPE * pObj, UINT32 usFlag );
 
 INT8 FindRocketLauncher( SOLDIERTYPE * pSoldier );
 INT8 FindRocketLauncherOrCannon( SOLDIERTYPE * pSoldier );
@@ -418,6 +418,9 @@ FLOAT GetHighestScopeMagnificationFactor( OBJECTTYPE *pObj );
 FLOAT GetScopeMagnificationFactor( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj, FLOAT uiRange );
 FLOAT GetBestScopeMagnificationFactor( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj, FLOAT uiRange );
 FLOAT GetProjectionFactor( OBJECTTYPE *pObj );
+// Flugente: projection factor while using scope modes excludes those factors coming from not-used scopes and sights
+FLOAT GetScopeModeProjectionFactor( SOLDIERTYPE *pSoldier, OBJECTTYPE * pObj );
+
 FLOAT GetScopeRangeMultiplier( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj, FLOAT d2DDistance );
 INT32 GetGunAccuracy( OBJECTTYPE *pObj );
 INT32 GetAccuracyModifier( OBJECTTYPE *pObj );
@@ -481,12 +484,15 @@ OBJECTTYPE* GetExternalFeedingObject(SOLDIERTYPE* pSoldier, OBJECTTYPE * pObject
 
 BOOLEAN DeductBulletViaExternalFeeding(SOLDIERTYPE* pSoldier, OBJECTTYPE * pObject);
 
+#define MAX_PRISON_ROOMS 16
 // Flugente: additional xml data for sectors
 typedef struct
 {
 	UINT8		usWaterType;			// type of water source in this sector
 	UINT16		usNaturalDirt;			// extra dirt percentage when firing in this sector
 	UINT8		usCurfewValue;			// determines wether mercs disguising as civilian are automatically discovered (certain sectors are 'restricted' to civilians)
+	UINT16		usPrisonRoomNumber[MAX_PRISON_ROOMS];		// room numbers of prisons
+
 } SECTOR_EXT_DATA;
 
 // get dirt increase for object with attachments, fConsiderAmmo: with ammo
@@ -504,6 +510,9 @@ BOOLEAN	GetFirstClothesItemWithSpecificData( UINT16* pusItem, PaletteRepID aPalV
 
 // Flugente: function to determine what item a random item spawns
 BOOLEAN GetItemFromRandomItem( UINT16 usRandomItem, UINT16* pusNewItem );
+
+// Flugente: can item be applied to other people?
+BOOLEAN ItemCanBeAppliedToOthers( UINT16 usItem );
 
 #endif
 

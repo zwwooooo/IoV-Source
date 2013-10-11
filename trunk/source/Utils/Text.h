@@ -303,7 +303,9 @@ extern STR16 gzIMPCharacterTraitText[];
 extern STR16 gzIMPAttitudesText[];
 extern STR16 gzIMPColorChoosingText[];
 extern STR16 sColorChoiceExplanationTexts[];
-extern STR16 gzIMPDisabilityTraitText[];
+extern STR16 gzIMPDisabilityTraitText[];			// added by Flugente
+extern STR16 gzIMPDisabilityTraitEmailTextDeaf[];	// added by Flugente
+extern STR16 gzIMPDisabilityTraitEmailTextShortSighted[];
 extern STR16 sEnemyTauntsFireGun[];
 extern STR16 sEnemyTauntsFireLauncher[];
 extern STR16 sEnemyTauntsThrow[];
@@ -692,6 +694,10 @@ enum
 	STR_COVERT_UNIFORM_NOORDER,
 	STR_COVERT_SURRENDER_FAILED,
 	STR_COVERT_UNCOVER_SINGLE,
+	STR_COVERT_TEST_OK,
+	STR_COVERT_TEST_FAIL,
+	STR_COVERT_STEAL_FAIL,
+	STR_COVERT_APPLYITEM_STEAL_FAIL,
 	TEXT_NUM_COVERT_STR
 };
 
@@ -768,6 +774,20 @@ enum
 };
 
 extern STR16		szMTATextStr[];
+
+enum
+{
+	STR_INV_ARM_BLOWUP_AP,
+	STR_INV_ARM_BLOWUP,
+	STR_INV_ARM_ARM_AP,
+	STR_INV_ARM_ARM,
+	STR_INV_ARM_DISARM_AP,
+	STR_INV_ARM_DISARM,
+
+	TEXT_NUM_INV_ARM_STR
+};
+
+extern STR16		szInventoryArmTextStr[];
 
 enum
 {
@@ -874,6 +894,7 @@ enum
 	MILITIA_TEAM_MERC_NAME,
 	CIV_TEAM_MERC_NAME,
 	ZOMBIE_TEAM_MERC_NAME,
+	POW_TEAM_MERC_NAME,
 	
 	//The text for the 'exiting sector' gui
 	EXIT_GUI_TITLE_STR,
@@ -948,10 +969,14 @@ enum
 	WEAPON_CLEANING_STR,
 	PRISONER_NO_PRISONS_STR,
 	PRISONER_DECIDE_STR,
+	PRISONER_LETGO_STR,
 	PRISONER_OFFER_SURRENDER,
 	PRISONER_DEMAND_SURRENDER_STR,
 	PRISONER_OFFER_SURRENDER_STR,
 	PRISONER_TALK_STR,
+	MILITIA_DROP_EQ_STR,
+	SPY_SELFTEST_STR,
+	UNUSED_STR,
 	
 	TEXT_NUM_TACTICAL_STR
 };
@@ -2252,6 +2277,7 @@ enum
 	MSG113_UB,
 	MSG113_UB_BRST,
 	MSG113_UB_AUTO,
+	MSG113_BAYONET,
 	MSG113_SNIPER,
 	MSG113_UNABLETOSPLITMONEY,
 	MSG113_ARRIVINGREROUTED,

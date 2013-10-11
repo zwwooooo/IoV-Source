@@ -420,6 +420,8 @@ typedef struct
 	FLOAT	sFoodDecayModificator;
 
 	UINT8	usFoodMaxPoisoning;
+
+	BOOLEAN fFoodEatingSounds;
 	
 	//Animation settings
 	FLOAT giPlayerTurnSpeedUpFactor;
@@ -472,6 +474,23 @@ typedef struct
 	INT8	bGreenMilitiaEquipmentQualityModifier;
 	INT8	bRegularMilitiaEquipmentQualityModifier;
 	INT8	bVeteranMilitiaEquipmentQualityModifier;
+
+	// Flugente - militia equipment
+	BOOLEAN	fMilitiaUseSectorInventory;
+	BOOLEAN fMilitiaUseSectorInventory_Armour;
+	BOOLEAN fMilitiaUseSectorInventory_Face;
+	BOOLEAN fMilitiaUseSectorInventory_Melee;
+	BOOLEAN fMilitiaUseSectorInventory_Gun;
+	BOOLEAN fMilitiaUseSectorInventory_Ammo;
+	BOOLEAN fMilitiaUseSectorInventory_Grenade;
+	BOOLEAN fMilitiaUseSectorInventory_Launcher;
+	UINT16 usMilitiaAmmo_Min;
+	UINT16 usMilitiaAmmo_Max;
+	UINT16 usMilitiaAmmo_OptimalMagCount;
+	BOOLEAN	fMilitiaUseSectorClassSpecificTaboos;
+
+	// Flugente - allow accessing other mercs inventory via 'stealing'
+	BOOLEAN fAccessOtherMercInventories;
 
 	// WDS - Improve Tony's and Devin's inventory like BR's
 	BOOLEAN tonyUsesBRSetting;
@@ -607,6 +626,8 @@ typedef struct
 	INT32 ubEnemiesItemDrop;
 
 	BOOLEAN	gfUseExternalLoadscreens;
+	BOOLEAN gfUseLoadScreenHints;		// added by Flugente
+	UINT32	ubAdditionalDelayUntilLoadScreenDisposal;		// added by WANNE to have time to read the load screen hints
 
 	//tais: nsgi
 	BOOLEAN gfUseNewStartingGearInterface;
@@ -793,6 +814,10 @@ typedef struct
 
 	UINT8 ubSuppressionToleranceMax;
 	UINT8 ubSuppressionToleranceMin;
+
+	// Flugente: suppression modifiers for player and other teams
+	UINT16 usSuppressionEffectivenessPlayer;
+	UINT16 usSuppressionEffectivenessAI;
 
 	// HEADROCK HAM B2: Suppression Shock effectiveness (percentage, 100 = "normal", 0 = deactivated. Range 0-65535)
 	UINT16 usSuppressionShockEffect;
@@ -1118,6 +1143,10 @@ typedef struct
 	
 	//Enemy Rank Legion 2 by Jazz
 	BOOLEAN fEnemyRank;
+
+	// Flugente: soldier profiles
+	BOOLEAN	fSoldierProfiles_Enemy;
+	BOOLEAN	fSoldierProfiles_Militia;
 	
 	BOOLEAN fShowCamouflageFaces;
 
@@ -1130,6 +1159,16 @@ typedef struct
 	UINT8 ubChanceTonyAvailable; // silversurfer/SANDRO
 
 	BOOLEAN fShowSkillsInHirePage;
+
+	UINT8 ubMercRandomStats;
+	
+	UINT8 ubMercRandomStatsRange;
+	
+	UINT8 ubMercRandomExpRange;
+
+	BOOLEAN fMercRandomStartSalary;
+
+	UINT8 ubMercRandomStartSalaryPercentMod;
 
 	BOOLEAN fBobbyRayFastShipments;
 
@@ -1154,7 +1193,7 @@ typedef struct
 	BOOLEAN	fDisplayOverheatThermometer;			// Should a 'thermometer' for guns and replacable barrels be displayed?
 	UINT8	ubOverheatThermometerRedOffset;			// amount of red colour while temperature is below threshold
 	FLOAT   iCooldownModificatorLonelyBarrel;		// Cooldown modificator for barrels left alone in the landscape ;-)
-	FLOAT	iOverheatTemperatureGlobalModfier;		// a global modifier to the singel shot temperature value, if one feels that all values should be lower/higher
+	FLOAT	iOverheatTemperatureGlobalModfier;		// a global modifier to the single shot temperature value, if one feels that all values should be lower/higher
 	
 	// Flugente: Weapon Mounting
 	BOOLEAN	fWeaponResting;							// Should it be possible to rest your weapon on structures in crouched position?
@@ -1171,17 +1210,21 @@ typedef struct
 	// Flugente: advanced repair/dirt system
 	BOOLEAN	fAdvRepairSystem;						// allow thresholds to repairing
 	BOOLEAN fOnlyRepairGunsArmour;					// we can only repair guns and armour
+	BOOLEAN fMercsCanDoAdvancedRepairs;				// allow mercs with technician/engineer trait (New Trait System) to raise weapon threshold
 	BOOLEAN fDirtSystem;							// allow dirt on items increase the chance for weapon jamming
+	BOOLEAN fFullRepairCleansGun;					// repairing a gun up to its current repair threshold also cleans the gun
 	UINT32	usSectorDirtDivider;					// divide a guns dirt factor by this to get dirt increase for every turn
+	FLOAT	iDirtGlobalModifier;					// a global modifier to dirt generation, if one feels that all values should be lower/higher
 
 	// Flugente: prisoner related settings
 	BOOLEAN fAllowPrisonerSystem;
 	BOOLEAN	fEnemyCanSurrender;
+	BOOLEAN fDisplaySurrenderSValues;
+	FLOAT	fSurrenderMultiplier;
 	BOOLEAN	fPlayerCanAsktoSurrender;
 	UINT8	ubPrisonerReturntoQueenChance;
 	UINT8	ubPrisonerProcessDefectChance;
 	UINT8	ubPrisonerProcessInfoBaseChance;
-	UINT8	ubPrisonerProcessInfoDetectChance;
 	UINT8	ubPrisonerProcessInfoNumberChance;
 	UINT8	ubPrisonerProcessInfoDirectionChance;
 	UINT8	ubPrisonerProcessRansomBaseChance;
@@ -1212,6 +1255,9 @@ typedef struct
 	UINT8	ubGridResolutionNight;					//DBrot: how precise we want to show their location - adjust for shorter night time ranges ... or don't
 
 	BOOLEAN fRobotNoReadytime;						//DBrot: should the robot need to ready his gun?
+
+	// Flugente: externalised squad names
+	BOOLEAN fUseXMLSquadNames;
 
 } GAME_EXTERNAL_OPTIONS;
 
@@ -1632,6 +1678,8 @@ typedef struct
 	UINT8 ubOmertaDropOffY;
 	UINT8 ubOmertaDropOffZ;
 	INT32 iOmertaDropOff;
+
+	INT32 sRocketRifleGridNo;
 
 }MOD_SETTINGS;
 

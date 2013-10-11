@@ -317,6 +317,7 @@ STR16			BoxFilter[] =
 STR16 iEditorItemStatsButtonsText[] =
 {
 	L"Delete",
+	L"Delete item (|D|e|l)",
 };
 
 STR16 FaceDirs[8] = 
@@ -354,11 +355,11 @@ STR16 iEditorMercsToolbarText[] =
  L"Schedule mode",
  L"Schedule mode",
  L"DELETE",
- L"Delete currently selected merc (DEL).",
+ L"Delete currently selected merc (|D|e|l)",
  L"NEXT", //20
- L"Find next merc (SPACE).",
+ L"Find next merc (|S|p|a|c|e)",
  L"Toggle priority existance",
- L"Toggle whether or not placement has/naccess to all doors.",
+ L"Toggle whether or not placement has/naccess to all doors",
  
  //Orders
  L"STATIONARY",
@@ -445,10 +446,12 @@ STR16 iEditorBuildingsToolbarText[] =
 	L"Draw room number",
 	L"Erase room numbers",
 
-	L"Toggle erase mode",
-	L"Undo last change",
-	L"Cycle brush size",
-
+	L"Toggle |Erase mode",
+	L"Undo last change (|B|a|c|k|s|p|a|c|e)",
+	L"Cycle brush size (|A/|Z)",
+	L"Roofs (|H)",
+	L"|Walls", //30
+	L"Room Info (|N)",
 };
 
 STR16 iEditorItemsToolbarText[] =
@@ -463,7 +466,9 @@ STR16 iEditorItemsToolbarText[] =
 	L"E3",
 	L"Triggers",
 	L"Keys",
-	L"Rnd",
+	L"Rnd", //10
+	L"Previous (|,)",		// previous page
+	L"Next (|.)",		// next page
 };
 
 STR16 iEditorMapInfoToolbarText[] =
@@ -471,9 +476,9 @@ STR16 iEditorMapInfoToolbarText[] =
 	L"Add ambient light source", //0
 	L"Toggle fake ambient lights.",
 	L"Add exit grids (r-clk to query existing).",
-	L"Cycle brush size",
-	L"Undo last change",
-	L"Toggle erase mode",
+	L"Cycle brush size (|A/|Z)",
+	L"Undo last change (|B|a|c|k|s|p|a|c|e)",
+	L"Toggle |Erase mode",
 	L"Specify north point for validation purposes.",
 	L"Specify west point for validation purposes.",
 	L"Specify east point for validation purposes.",
@@ -484,14 +489,14 @@ STR16 iEditorMapInfoToolbarText[] =
 
 STR16 iEditorOptionsToolbarText[]=
 {
-	L"New map",  //0
+	L"New outdoor level",  //0
 	L"New basement",
 	L"New cave level",
-	L"Save map",
-	L"Load map",
+	L"Save map (|C|t|r|l+|S)",
+	L"Load map (|C|t|r|l+|L)",
 	L"Select tileset",
 	L"Leave Editor mode",
-	L"Exit game.",
+	L"Exit game (|A|l|t+|X)",
 	L"Create radar map",
 	L"When checked, the map will be saved in original JA2 map format.\nThis option is only valid on 'normal' size maps that do not reference grid numbers (e.g: exit grids) > 25600.",
 	L"When checked and you load a map, the map will be enlarged automatically depending on the selected Rows and Cols.",
@@ -499,20 +504,20 @@ STR16 iEditorOptionsToolbarText[]=
 
 STR16 iEditorTerrainToolbarText[] =
 {
-	L"Draw ground textures", //0
+	L"Draw |Ground textures", //0
 	L"Set map ground textures",
-	L"Place banks and cliffs",
-	L"Draw roads",
-	L"Draw debris",
-	L"Place trees & bushes",
-	L"Place rocks",
-	L"Place barrels & other junk",
+	L"Place banks and |Cliffs",
+	L"Draw roads (|P)",
+	L"Draw |Debris",
+	L"Place |Trees & bushes",
+	L"Place |Rocks",
+	L"Place barrels & |Other junk",
 	L"Fill area",
-	L"Undo last change",
-	L"Toggle erase mode", //10
-	L"Cycle brush size",
-	L"Raise brush density",
-	L"Lower brush density",
+	L"Undo last change (|B|a|c|k|s|p|a|c|e)",
+	L"Toggle |Erase mode", //10
+	L"Cycle brush size (|A/|Z)",
+	L"Raise brush density (|])",
+	L"Lower brush density (|[)",
 };
 
 STR16 iEditorTaskbarInternalText[]=
@@ -523,6 +528,12 @@ STR16 iEditorTaskbarInternalText[]=
 	L"Mercs",
 	L"Map Info",
 	L"Options",
+	L"|./|,: Cycle 'width: xx' dimensions\n|P|g |U|p/|P|g |D|n: Previous/Next tile for selected object(s)/in smart method", //Terrain fasthelp text
+	L"|./|,: Cycle 'width: xx' dimensions\n|P|g |U|p/|P|g |D|n: Previous/Next tile for selected object(s)/in smart method", //Buildings fasthelp text
+	L"|C|t|r|l+|/: Place new item under mouse cursor\n|/: Place same item under mouse cursor", //Items fasthelp text
+	L"|1-|9: Set waypoints\n|C|t|r|l+|C/|C|t|r|l+|V: Copy/Paste merc", //Mercs fasthelp text
+	L"|C|t|r|l+|G: Go to grid no\n \n|I: Toggle overhead map\n|J: Toggle draw high ground\n|K: Toggle high ground markers\n|S|h|i|f|t+|L: Toggle map edge points\n|S|h|i|f|t+|T: Toggle treetops\n|U: Toggle world raise\n \n|./|,: Cycle 'width: xx' dimensions", //Map Info fasthelp text
+	L"|C|t|r|l+|N: Create new map\n \n|F|5: Show Summary Info/Country Map\n|F|1|0: Remove all lights\n|F|1|1: Reverse schedules\n|F|1|2: Clear schedules\n \n|S|h|i|f|t+|R: Toggle random placement based on quantity of selected object(s)", //Options fasthelp text
 };
 
 //Editor Taskbar Utils.cpp
@@ -1068,9 +1079,9 @@ STR16 pUpdateItemStatsPanelText[] =
 
 STR16 pSetupGameTypeFlagsText[] =
 {
-	L"Item appears in both Sci-Fi and Realistic modes. (|B)", //0
-	L"Item appears in |Realistic mode only.",
-	L"Item appears in |Sci-Fi mode only.",
+	L"Item appears in both Sci-Fi and Realistic modes", //0
+	L"Item appears in Realistic mode only",
+	L"Item appears in Sci-Fi mode only",
 };
 
 STR16 pSetupGunGUIText[] =
@@ -1940,15 +1951,15 @@ STR16 pRemoveMercStrings[] =
 
 STR16 pAttributeMenuStrings[] =
 {
-	L"力量",	//"Strength",
-	L"灵巧",	//"Dexterity",
-	L"敏捷",	//"Agility",
 	L"生命",	//"Health",
-	L"枪法",	//"Marksmanship",
-	L"医疗",	//"Medical",
-	L"机械",	//"Mechanical",
+	L"敏捷",	//"Agility",
+	L"灵巧",	//"Dexterity",
+	L"力量",	//"Strength",
 	L"领导",	//"Leadership",
+	L"枪法",	//"Marksmanship",
+	L"机械",	//"Mechanical",
 	L"爆破",	//"Explosives",
+	L"医疗",	//"Medical",
 	L"取消",	//"Cancel",
 };
 
@@ -2120,8 +2131,7 @@ STR16 gzMercSkillTextNew[] =
 	L"格斗家",
 	L"班副",
 	L"技师",
-	L"救护兵",
-	L"特工",		// L"Covert Ops",
+	L"救护兵",	
 	// Minor traits
 	L"双持",
 	L"近战",
@@ -2133,6 +2143,8 @@ STR16 gzMercSkillTextNew[] =
 	L"爆破",
 	L"教学",
 	L"侦察",		// 20
+	// covert ops is a major trait that was added later
+	L"特工",		// L"Covert Ops",
 	// second names for major skills
 	L"机枪手",
 	L"掷弹兵",
@@ -2143,6 +2155,16 @@ STR16 gzMercSkillTextNew[] =
 	L"班长",
 	L"工兵",
 	L"军医",
+	L"Placeholder",		// 30
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",		// 35
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",		// 39
 	L"间谍",				// 30
 	L"更多...",
 };
@@ -2844,6 +2866,7 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"民兵",
 	L"平民",
 	L"僵尸",
+	L"PRISONER",//TODO.Translate
 	L"离开分区",
 	L"确定",
 	L"取消",
@@ -2910,8 +2933,8 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	// added by Flugente: selection of a function to call in tactical
 	L"你想要做的是什么？",
 	L"装满水壶",
-	L"清理枪支污垢",
-	L"清理所有枪支污垢",
+	L"清理枪支污垢（佣兵）",
+	L"清理所有枪支污垢（小队）",
 	L"脱掉衣服",
 
 	// added by Flugente: decide what to do with the corpses
@@ -2926,11 +2949,14 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 
 	// added by Flugente: decide what to do with prisoners
 	L"你现在没有可用的监狱关押这些俘虏，你不得不放他们走。", //L"You have no prison for these prisoners, you have to let them go",
-	L"Yes - 将俘虏送入监狱      No - 放俘虏离开这里", //L"Yes - Send prisoners to jail      No - Let them go",
+	L"将俘虏送入监狱", //L"Let them go",
+	L"放俘虏离开这里",
 	L"你想要做什么？",
 	L"劝说敌人投降",
 	L"Offer surrender",//TODO.Translate
 	L"交谈",
+	L"Militia inspection",//TODO.Translate
+	L"unused",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -4218,7 +4244,7 @@ STR16			MercInfo[] =
 	L"合计: ",	//"Total:",
 	L"阵亡",	//"Deceased",
 
-	L"看起来你雇佣了太多的佣兵。最多只能雇18人。",	//"Looks like you're trying to hire too many mercs. Your limit is 18.",
+	L"你的队伍已经满员了。",	//L"You have a full team of mercs already.",
 	L"购买装备？",	//"Buy Equipment?",	
 	L"不可雇佣",	//"Unavailable",
 	L"Unsettled Bills", //TODO.Translate
@@ -4719,7 +4745,7 @@ STR16			AimPopUpText[] =
 
 	//If you try to hire more mercs than game can support
 
-	L"你的队伍现有18人，已经满员了。",	//"You have a full team of 18 mercs already.",
+	L"你的队伍已经满员了。",	//L"You have a full team of mercs already.",
 
 	L"预录消息",	//"Pre-recorded message",
 	L"留言已记录",	//"Message recorded",
@@ -5057,6 +5083,7 @@ STR16		zMarksMapScreenText[] =
 STR16 pLandMarkInSectorString[] =
 {
 	L"第%d小队在%s地区发现有人",
+	L"Squad %s has noticed someone in sector %s",// TODO.Translate
 };
 
 // confirm the player wants to pay X dollars to build a militia force in town
@@ -6142,6 +6169,7 @@ STR16 New113Message[] =
 	L"UB",			// INFO: UB = Under Barrel
 	L"UBRST",
 	L"UAUTO",
+	L"BAYONET",
 	L"狙击手！",
 	L"已经点选物品，此时无法分钱。",
 	L"新兵的会合地被挪至 %s, 因降落地点 %s 目前由敌人占据。",
@@ -6634,7 +6662,21 @@ STR16 gzIMPDisabilityTraitText[]=
 	L"怕虫",
 	L"健忘",
 	L"神经错乱",
+	L"Deaf",
+	L"Shortsighted",
 	L"I.M.P. 性格缺陷",
+};
+
+STR16 gzIMPDisabilityTraitEmailTextDeaf[] =// TODO.Translate
+{
+	L"We bet you're glad this isn't voicemail.",
+	L"You've either visited to many discos in your teens, or were to close a massive artillery bombardment. Or just old. Either way, your team better learn sign language.",
+};
+
+STR16 gzIMPDisabilityTraitEmailTextShortSighted[] =
+{
+	L"You'll be screwed if you ever lose your glasses.",
+	L"That happens when you spend your days in front of glowing rectangles. You should have eaten more carrots. Ever seen a rabbit with glasses? Figures.",
 };
 
 // HEADROCK HAM 3.6: Error strings for assigning a merc to a facility
@@ -7476,6 +7518,10 @@ STR16	szCovertTextStr[]=
 	L"%s wears a disorderly uniform!",// TODO.Translate
 	L"In retrospect, asking for surrender in disguise wasn't the best idea...",
 	L"%s was uncovered!",
+	L"%s's disguise seems to be ok...",
+	L"%s's disguise will not hold.",
+	L"%s was caught stealing!",
+	L"%s tried to manipulate %s's inventory."
 };
 
 STR16	szCorpseTextStr[]=
@@ -7516,12 +7562,12 @@ STR16	szPrisonerTextStr[]=
 	L"%d 名俘虏已供出同伙位置", //L"%d prisoners revealed enemy positions.",
 	L"%d 名俘虏已加入我方阵营", //L"%d prisoners joined our cause.",
 	L"俘虏掀起大规模暴动！在 %s 监狱！", //L"Prisoners start a massive riot in %s!",
-	L"俘虏被押送前往 %s 监狱", //L"Prisoners were sent to %s!",
+	L"俘虏被押送前往 %s 监狱", //L"The army now occupies the prison in %s, the prisoners were freed!",
 	L"俘虏已被释放！", //L"Prisoners have been released!",
 	L"军队已占领 %s 监狱，俘虏已被释放！", //L"The army now occupies the prison in %s, the prisoners were freed!",
 	L"这敌人丫宁死不从！",//L"The enemy refuses to surrender!",
-	L"The enemy refuses to take you as prisoners - they prefer you dead!",	// TODO.Translate
-	L"This behaviour is set OFF in your ini settings.",
+	L"敌人不肯拿你当囚犯 - 他们宁愿你死！",	//L"The enemy refuses to take you as prisoners - they prefer you dead!",
+	L"This behaviour is set OFF in your ini settings.",	// TODO.Translate
 };
 
 STR16	szMTATextStr[]=	// TODO.Translate
@@ -7531,6 +7577,16 @@ STR16	szMTATextStr[]=	// TODO.Translate
 	L"removing a fortification",
 	L"filling sandbags",
 	L"%s had to stop %s.",
+};
+
+STR16	szInventoryArmTextStr[]= // TODO.Translate
+{
+	L"Blow up (%d AP)",
+	L"Blow up",
+	L"Arm (%d AP)",
+	L"Arm",
+	L"Disarm (%d AP)",
+	L"Disarm",
 };
 
 //kenkenkenken: IoV921+z.5b2b3 --> | >>2012.09.24 rewrite by zwwooooo
