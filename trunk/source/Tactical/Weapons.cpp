@@ -49,7 +49,6 @@
 	#include "Drugs And Alcohol.h" // HEADROCK HAM 4: Get drunk level
 	#include "LOS.h" // HEADROCK HAM 4: Required for new shooting mechanism. Alternately, maybe move the functions to LOS.h.
 	#include "Campaign Types.h"	// added by Flugente
-    #include "civ quotes.h" //kenkenkenken: IoV921+z.5
 #endif
 
 //forward declarations of common classes to eliminate includes
@@ -416,7 +415,6 @@ weaponStartElementHandle(void *userData, const XML_Char *name, const XML_Char **
                 strcmp(name, "BurstAniDelay") == 0 || // Lesh: add new field (field itself)
 				strcmp(name, "APsToReloadManually") == 0 ||
 				strcmp(name, "ManualReloadSound") == 0 ||
-				strcmp(name, "MalfunctionRate") == 0 || //kenkenkenken: IoV921+z.5
 				strcmp(name, "ubAimLevels") == 0  ||// HEADROCK HAM 4: Allowed aiming levels for this gun.
 				strcmp(name, "bRecoilX") == 0 || // HEADROCK HAM 4:
 				strcmp(name, "bRecoilY") == 0 || // HEADROCK HAM 4:
@@ -710,13 +708,6 @@ weaponEndElementHandle(void *userData, const XML_Char *name)
 			pData->curElement = WEAPON_ELEMENT_WEAPON;
 			pData->curWeapon.HeavyGun = (BOOLEAN) atof(pData->szCharData);
 		}
-		//kenkenkenken: IoV921+z.5 -->
-		else if(strcmp(name, "MalfunctionRate") == 0)
-		{
-			pData->curElement = WEAPON_ELEMENT_WEAPON;
-            pData->curWeapon.MalfunctionRate = (UINT8) atol(pData->szCharData);
-		}
-		//<-- IoV
 
 		pData->maxReadDepth--;
 	}
@@ -894,7 +885,6 @@ BOOLEAN WriteWeaponStats()
 			FilePrintf(hFile,"\t\t<usOverheatingDamageThreshold>%4.2f</usOverheatingDamageThreshold>\r\n",			Weapon[cnt].usOverheatingDamageThreshold);
 			FilePrintf(hFile,"\t\t<usOverheatingSingleShotTemperature>%4.2f</usOverheatingSingleShotTemperature>\r\n",			Weapon[cnt].usOverheatingSingleShotTemperature);
 			FilePrintf(hFile,"\t\t<HeavyGun>%d</HeavyGun>\r\n",			Weapon[cnt].HeavyGun);
-			FilePrintf(hFile,"\t\t<MalfunctionRate>%d</MalfunctionRate>\r\n",			Weapon[cnt].MalfunctionRate); //kenkenkenken: IoV921+z.5
 			
 
 			FilePrintf(hFile,"\t</WEAPON>\r\n");
@@ -946,8 +936,8 @@ UINT16 GunRange( OBJECTTYPE * pObj, SOLDIERTYPE * pSoldier ) // SANDRO - added a
 
 		UINT16 usRange = GetModifiedGunRange(pObj->usItem);
 
-		// rng = usRange + GetRangeBonus(pObj);
-		rng = ( Weapon[ pObj->usItem ].usRange * GetRangeBonusIoV(pObj) ) / 10000; //kenkenkenken: IoV921+z.3 rng改为按比例增加射程公式
+		// Snap: attachment status is factored into the range bonus calculation
+		rng = usRange + GetRangeBonus(pObj);
 
 		// SANDRO - STOMP traits - Gunslinger bonus range with pistols
 		if ( pSoldier != NULL && Item[ pObj->usItem ].usItemClass & IC_GUN )
@@ -1404,126 +1394,6 @@ BOOLEAN CheckForGunJam( SOLDIERTYPE * pSoldier )
 	return( FALSE ); 
 } 
 
-//kenkenkenken: IoV921+z.5 Add CheckForGunJam Function --> IoV自定义故障率函数
-BOOLEAN CheckForGunJamIoV( SOLDIERTYPE * pSoldier ) 
-{ 
-	OBJECTTYPE * pObj; 
- 
-	if ( ( pSoldier->flags.uiStatusFlags & SOLDIER_PC ) || ( pSoldier->flags.uiStatusFlags & SOLDIER_ENEMY ) ) 
-	{		 
-		if ( Item[pSoldier->usAttackingWeapon].usItemClass == IC_GUN && !EXPLOSIVE_GUN( pSoldier->usAttackingWeapon ) ) 
-		{ 
-			pObj = &(pSoldier->inv[pSoldier->ubAttackingHand]); 
-			if ((*pObj)[0]->data.gun.bGunAmmoStatus > 0) 
-			{ 
-				int malfunctionRate = Weapon[pObj->usItem].MalfunctionRate;
-
-				if (malfunctionRate == 0)
-					malfunctionRate = 255;
-
-				int condition = (*pObj)[0]->data.gun.bGunStatus;
-
-				int malfunctionRateDivisor;
-
-				if ( !pSoldier->bDoBurst )
-				{
-					malfunctionRateDivisor = gGameExternalOptions.iMalfunctionRateDivisorBasic;
-				}
-				else
-				{
-					malfunctionRateDivisor = gGameExternalOptions.iMalfunctionRateDivisorBurst;
-				}
-
-				if (condition == 100) //zwwooooo IoV924 z.6b1: If condition is 100, then reduce half jamChance
-				{
-					malfunctionRateDivisor = ( malfunctionRateDivisor * 50 ) / 100;
-				}
-
-				int jamChance = ( ( malfunctionRate * condition ) / malfunctionRateDivisor ) - gGameExternalOptions.ubWeaponReliabilityReductionPerRainIntensity * gbCurrentRainIntensity;
-
-				if (jamChance < 0) 
-					jamChance = 0;
-				
-				if ( !PreRandom( jamChance ) || gfNextFireJam )				
-				{ 
-					gfNextFireJam = FALSE; 
-				 
-					(*pObj)[0]->data.gun.bGunAmmoStatus *= -1; 
-				 
-					DeductAmmo( pSoldier, pSoldier->ubAttackingHand ); 
-				 
-					if (pSoldier->flags.uiStatusFlags & SOLDIER_PC){
-						TacticalCharacterDialogue( pSoldier, QUOTE_JAMMED_GUN );
-					}else{
-						ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, sEnemyTauntsGunJam[ 7 ], pSoldier->name );				 
-						StartEnemyTaunt( pSoldier, TAUNT_GUN_JAM );
-					}					
-					return( TRUE ); 
-				} 
-			} 
-			else if ((*pObj)[0]->data.gun.bGunAmmoStatus < 0) 
-			{ 
-				if(EnoughPoints(pSoldier, APBPConstants[AP_UNJAM], APBPConstants[BP_UNJAM], FALSE))
-				{
-					DeductPoints(pSoldier, APBPConstants[AP_UNJAM], APBPConstants[BP_UNJAM]);
-					INT8 bChanceMod;
-
-					int iResult;
-					
-					if (pSoldier->flags.uiStatusFlags & SOLDIER_PC){
-
-						if ( Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].EasyUnjam )
-							bChanceMod = 100;
-						else
-							bChanceMod = (INT8) ((Item[pObj->usItem].bReliability + Item[(*pObj)[0]->data.gun.usGunAmmoItem].bReliability)* 4);
-
-						iResult = SkillCheck( pSoldier, UNJAM_GUN_CHECK, bChanceMod);
-
-					}else{						
-						
-						if (!PreRandom( 2 )){
-							iResult = 0;
-						}else{
-							iResult = 1;
-						}
-
-					}
-					
-					if (iResult > 0) 
-					{ 
-						(*pObj)[0]->data.gun.bGunAmmoStatus *= -1; 
-					 
-						if (pSoldier->flags.uiStatusFlags & SOLDIER_PC){
-							if (bChanceMod < 100)
-							{
-								StatChange( pSoldier, MECHANAMT, 5, FALSE ); 
-								StatChange( pSoldier, DEXTAMT, 5, FALSE ); 
-							}					 
-							DirtyMercPanelInterface( pSoldier, DIRTYLEVEL2 ); 
-						}else{
-							ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, sEnemyTauntsGunJam[ 8 ], pSoldier->name );					 
-							StartEnemyTaunt( pSoldier, TAUNT_GUN_UNJAM_S );
-						}
-					 
-						return( 255 ); 
-					} 
-					else 
-					{ 
-						if (pSoldier->flags.uiStatusFlags & SOLDIER_ENEMY){
-							ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, sEnemyTauntsGunJam[ 9 ], pSoldier->name );						
-							StartEnemyTaunt( pSoldier, TAUNT_GUN_UNJAM_F );
-						}
-						return( TRUE ); 
-					} 
-				}
-				else
-					return( TRUE );
-			} 
-		} 		
-	}
-	return( FALSE ); 
-}
-//<--IoV end.
 
 BOOLEAN	OKFireWeapon( SOLDIERTYPE *pSoldier )
 {
@@ -1548,8 +1418,7 @@ BOOLEAN	OKFireWeapon( SOLDIERTYPE *pSoldier )
 		}
 	}
 
-	//bGunJamVal = CheckForGunJam( pSoldier );
-	bGunJamVal = CheckForGunJamIoV( pSoldier ); //kenkenkenken: IoV921+z.5 调用IoV自定义故障率函数
+	bGunJamVal = CheckForGunJam( pSoldier );
 
 	if ( bGunJamVal == 255 )
 	{
@@ -2388,7 +2257,7 @@ BOOLEAN UseGunNCTH( SOLDIERTYPE *pSoldier , INT32 sTargetGridNo )
 			iOverheatReliabilityMalus = (INT16)floor(overheatjampercentage*overheatjampercentage);
 	}
 
-	GunIncreaseHeat( pObjAttHand );
+	GunIncreaseHeat( pObjAttHand, pSoldier );
 
 	// CJC: since jamming is no longer affected by reliability, increase chance of status going down for really unreliabile guns
  	//INT16 ammoReliability = 0; // Madd: ammo reliability affects gun
@@ -3000,7 +2869,7 @@ BOOLEAN UseGun( SOLDIERTYPE *pSoldier , INT32 sTargetGridNo )
 	}
 
 	INT16 iOverheatReliabilityMalus = 0;
-	// Flugente FTW 1: Increase Weapon Temperature
+	// Flugente: Increase Weapon Temperature
 	if ( gGameOptions.fWeaponOverheating )
 	{
 		FLOAT overheatjampercentage = GetGunOverheatDamagePercentage( pObjUsed );		// ... how much above the gun's usOverheatingDamageThreshold are we? ...
@@ -3009,7 +2878,7 @@ BOOLEAN UseGun( SOLDIERTYPE *pSoldier , INT32 sTargetGridNo )
 			iOverheatReliabilityMalus = (INT16)floor(overheatjampercentage*overheatjampercentage);
 	}
 
-	GunIncreaseHeat( pObjUsed );
+	GunIncreaseHeat( pObjUsed, pSoldier );
 
 	/* //WarmSteel - Replaced with GetReliability( pObj )
 	// CJC: since jamming is no longer affected by reliability, increase chance of status going down for really unreliabile guns
@@ -4126,7 +3995,7 @@ BOOLEAN UseLauncher( SOLDIERTYPE *pSoldier, INT32 sTargetGridNo )
   // ATE: Check here if the launcher should fail 'cause of bad status.....
   if ( WillExplosiveWeaponFail( pSoldier, pgunobj ) )
   {
-	GunIncreaseHeat( pgunobj );
+	GunIncreaseHeat( pgunobj, pSoldier );
     // Explode dude!
 
     // So we still should have ABC > 0
@@ -4143,7 +4012,7 @@ BOOLEAN UseLauncher( SOLDIERTYPE *pSoldier, INT32 sTargetGridNo )
     return( FALSE );
   }
 
-	GunIncreaseHeat( pgunobj );
+	GunIncreaseHeat( pgunobj, pSoldier );
 
 	// Flugente: if we are using a rifle grenade, we also use up one of the gun's bullets
 	if ( IsAttachmentClass(pgunobj->usItem, AC_RIFLEGRENADE) )
@@ -4152,7 +4021,7 @@ BOOLEAN UseLauncher( SOLDIERTYPE *pSoldier, INT32 sTargetGridNo )
 			(*pObj)[0]->data.gun.ubGunShotsLeft--;
 
 		// increase heat, as we 'fired' a bullet
-		GunIncreaseHeat( pObj );
+		GunIncreaseHeat( pObj, pSoldier );
 	}
 
 	if ( Weapon[ usItemNum ].sSound != NO_WEAPON_SOUND  )
@@ -11659,7 +11528,7 @@ void CalcMagFactorSimple( SOLDIERTYPE *pSoldier, FLOAT d2DDistance, INT16 bAimTi
 }
 
 // Flugente: Increase temperature/dirt of gun in ubAttackingHand due to firing a shot
-void GunIncreaseHeat( OBJECTTYPE *pObj )
+void GunIncreaseHeat( OBJECTTYPE *pObj, SOLDIERTYPE* pSoldier )
 {
 	if ( gGameOptions.fWeaponOverheating )
 	{
