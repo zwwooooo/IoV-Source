@@ -5619,25 +5619,36 @@ void RemoveProhibitedAttachments(SOLDIERTYPE* pSoldier, OBJECTTYPE* pObj, UINT16
 				if(usInfiniteLoopCount > 10){	//run through the loop 10 times before we drop items.
 					//Anything that's still in our tempAttachList couldn't be attached, and should be dropped.
 					for (attachmentList::iterator iter = tempAttachList.begin(); iter != tempAttachList.end();) {
-						if (iter->exists()) {
-							if ( pSoldier && AutoPlaceObject( pSoldier, &(*iter), FALSE ) )
+						if (iter->exists())
+						{
+							// Flugente: placing objects at a soldier is only advised if the soldier exists in the first place
+							if ( pSoldier )
 							{
-								iter = tempAttachList.erase(iter);
-							} else {	// put it on the ground
-								INT8 pathing = (pSoldier?pSoldier->pathing.bLevel:0);
-								INT32 sGridNo = (pSoldier?pSoldier->sGridNo:0);
-								AutoPlaceObjectToWorld(pSoldier, &(*iter), TRUE);
-								iter = tempAttachList.erase(iter);
-								/*if(guiCurrentItemDescriptionScreen == MAP_SCREEN && fShowMapInventoryPool){
+								if ( !AutoPlaceObject( pSoldier, &(*iter), FALSE ) )
+								{
+									AutoPlaceObjectToWorld(pSoldier, &(*iter), TRUE);
+								}
+							}
+							else
+							{
+								// put it on the ground
+								INT32 sGridNo = 1;
+
+								if(guiCurrentItemDescriptionScreen == MAP_SCREEN && fShowMapInventoryPool)
+								{
 									AutoPlaceObjectInInventoryStash(&(*iter), sGridNo);
 									//AddItemToPool( sGridNo, &(*iter), 1, pathing, WORLD_ITEM_REACHABLE, 0 );
-									iter = tempAttachList.erase(iter);
-								} else {
-									AddItemToPool( sGridNo, &(*iter), 1, pathing, WORLD_ITEM_REACHABLE, 0 );
-									iter = tempAttachList.erase(iter);
-								}*/
+								}
+								else
+								{
+									AddItemToPool( sGridNo, &(*iter), 1, 0, WORLD_ITEM_REACHABLE, 0 );
+								}																
 							}
-						} else {
+
+							iter = tempAttachList.erase(iter);
+						}
+						else
+						{
 							++iter;
 						}
 					}
@@ -9921,7 +9932,7 @@ INT16 GetRangeBonus( OBJECTTYPE * pObj )
 	return( bonus );
 }
 
-//kenkenkenken: IoV R921+z.3 -->
+//zwwooooo - IoV: change RangeBonus to ratable (Orange by kenkenkenken in IoV921)
 INT32 GetRangeBonusIoV( OBJECTTYPE * pObj )
 {
 	INT32 bonus = 10000;
@@ -9938,7 +9949,6 @@ INT32 GetRangeBonusIoV( OBJECTTYPE * pObj )
 	}
 	return( bonus );
 }
-//<-- IoV
 
 INT16 LaserBonus( const INVTYPE * pItem, INT32 iRange, UINT8 bLightLevel )
 {
@@ -11080,6 +11090,16 @@ INT16 GetDayVisionRangeBonus( SOLDIERTYPE * pSoldier, UINT8 bLightLevel )
 
 	//ADB and AXP 28.03.2007: CtH bug fix: We also want to check on a firing weapon, "raised" alone is not enough ;)
 	bool usingGunScope = WeaponReady(pSoldier);
+
+	// Flugente 2013-06-20: determine the lightlevel modifier, according to ChrisL:
+	//CHRISL: Since this is a daytime calculation, I think we want the difference between NORMAL_LIGHTLEVEL_NIGHT and
+	//	NORMAL_LIGHTLEVEL_DAY.  To just use NORMAL_LIGHTLEVEL_NIGHT is the same as basing the calculation off of the
+	//	difference between NORMAL_LIGHTLEVEL_NIGHT and 0, which represent bright light.
+	int lightlevelmultiplier = NORMAL_LIGHTLEVEL_NIGHT - __max(bLightLevel,NORMAL_LIGHTLEVEL_DAY);
+
+	// the divisor must not be 0, for obvious reasons!
+	int lightleveldivisor    = NORMAL_LIGHTLEVEL_NIGHT - NORMAL_LIGHTLEVEL_DAY;
+
 	// CHRISL:
 	for (int i = BODYPOSSTART; i < BODYPOSFINAL; i++)
 	{
@@ -11106,16 +11126,13 @@ INT16 GetDayVisionRangeBonus( SOLDIERTYPE * pSoldier, UINT8 bLightLevel )
 			if (!IsWeapon(usItem) )//|| (IsWeapon(usItem) && usingGunScope == true ) )
 			{
 				bonus += BonusReduceMore( idiv( pItem->dayvisionrangebonus
-					* (NORMAL_LIGHTLEVEL_NIGHT - bLightLevel), NORMAL_LIGHTLEVEL_NIGHT ),
+					* lightlevelmultiplier, lightleveldivisor ),
 					(*pObj)[0]->data.objectStatus );
 			}
 		}
 	}
 
 	// Snap: check only attachments on a raised weapon!
-	//CHRISL: Since this is a daytime calculation, I think we want the difference between NORMAL_LIGHTLEVEL_NIGHT and
-	//	NORMAL_LIGHTLEVEL_DAY.  To just use NORMAL_LIGHTLEVEL_NIGHT is the same as basing the calculation off of the
-	//	difference between NORMAL_LIGHTLEVEL_NIGHT and 0, which represent bright light.
 	if ( usingGunScope == true )
 	{
 		// SANDRO - added scouting check
@@ -11132,7 +11149,7 @@ INT16 GetDayVisionRangeBonus( SOLDIERTYPE * pSoldier, UINT8 bLightLevel )
 					if(iter->exists() && !IsAttachmentClass(iter->usItem, AC_SCOPE|AC_SIGHT|AC_IRONSIGHT ) )
 					{
 						sScopebonus += BonusReduceMore( idiv( Item[iter->usItem].dayvisionrangebonus
-						* (NORMAL_LIGHTLEVEL_NIGHT - __max(bLightLevel,NORMAL_LIGHTLEVEL_DAY)), (NORMAL_LIGHTLEVEL_NIGHT-NORMAL_LIGHTLEVEL_DAY) ),
+						* lightlevelmultiplier, lightleveldivisor ),
 						(*iter)[0]->data.objectStatus );
 					}
 				}
@@ -11147,7 +11164,7 @@ INT16 GetDayVisionRangeBonus( SOLDIERTYPE * pSoldier, UINT8 bLightLevel )
 					if ( (&pSoldier->inv[HANDPOS]) == pObj  && ObjList[pSoldier->bScopeMode] != NULL && pSoldier->bScopeMode != USE_ALT_WEAPON_HOLD )
 						// now apply the bonus from the scope we use
 						sScopebonus += BonusReduceMore( idiv( Item[ObjList[pSoldier->bScopeMode]->usItem].dayvisionrangebonus
-								* (NORMAL_LIGHTLEVEL_NIGHT - __max(bLightLevel,NORMAL_LIGHTLEVEL_DAY)), (NORMAL_LIGHTLEVEL_NIGHT-NORMAL_LIGHTLEVEL_DAY) ),
+								* lightlevelmultiplier, lightleveldivisor ),
 								(*ObjList[pSoldier->bScopeMode])[0]->data.objectStatus );
 				}
 			}
@@ -11158,7 +11175,7 @@ INT16 GetDayVisionRangeBonus( SOLDIERTYPE * pSoldier, UINT8 bLightLevel )
 					if(iter->exists() )
 					{
 						sScopebonus += BonusReduceMore( idiv( Item[iter->usItem].dayvisionrangebonus
-						* (NORMAL_LIGHTLEVEL_NIGHT - __max(bLightLevel,NORMAL_LIGHTLEVEL_DAY)), (NORMAL_LIGHTLEVEL_NIGHT-NORMAL_LIGHTLEVEL_DAY) ),
+						* lightlevelmultiplier, lightleveldivisor ),
 						(*iter)[0]->data.objectStatus );
 					}
 				}
@@ -12661,93 +12678,92 @@ FLOAT GetBestScopeMagnificationFactor( SOLDIERTYPE *pSoldier, OBJECTTYPE * pObj,
 		else
 			CurrentFactor = 1.0f;
 
-		// Actual Scope Mag Factor is what we get at the distance the target's at.
-		ActualCurrentFactor = __min(CurrentFactor, (TargetMagFactor/rangeModifier));
-
-		// as we only use once scope, we can return from here
-		return( __max(1.0f, ActualCurrentFactor) );
+		// with scope modes we just return the scope factor of the selected optics
+		return( __max(1.0f, CurrentFactor) );
 	}
-
-	if (TargetMagFactor <= 1.0f)
+	// if not using scope modes find the best scope
+	else
 	{
-		// Target is at Iron Sights range. No scope is required.
-		return 1.0f;
-	}
-
-	if ( pObj->exists() == true && UsingNewCTHSystem() == true )
-	{
-		// Real Scope Magnification Factor from the item
-		CurrentFactor = __max(1.0f, Item[pObjUsed->usItem].scopemagfactor);
-
-		if (CurrentFactor > 1.0f)
+		if (TargetMagFactor <= 1.0f)
 		{
-			// Actual Scope Mag Factor is what we get at the distance the target's at.
-			ActualCurrentFactor = __min(CurrentFactor, (TargetMagFactor/rangeModifier));
-
-			if (ActualCurrentFactor >= CurrentFactor)
-			{
-				// This scope gives no penalty. Record this as the best factor found so far.
-				BestFactor = CurrentFactor;
-				iBestTotalPenalty = 0;
-			}
-			else
-			{
-				// This scopes gives a penalty for shooting under its range.
-				FLOAT dScopePenaltyRatio = (CurrentFactor * rangeModifier / TargetMagFactor);
-				INT32 iScopePenalty = (INT32)((dScopePenaltyRatio * gGameCTHConstants.AIM_TOO_CLOSE_SCOPE) * (CurrentFactor / 2));
-
-				// There's no previous scope to compare with so record this as the best factor for now.
-				BestFactor = CurrentFactor;
-				iBestTotalPenalty = iScopePenalty;
-			}
-
+			// Target is at Iron Sights range. No scope is required.
+			return 1.0f;
 		}
-		
-		// Now perform the same process for each scope installed on the item. The difference is, we also compare to 
-		// BestTotalPenalty to find the scope that gives the least penalty compared to its bonus.
-		for (attachmentList::iterator iter = (*pObjUsed)[0]->attachments.begin(); iter != (*pObjUsed)[0]->attachments.end(); ++iter) 
-		{
-			if (iter->exists() && Item[iter->usItem].scopemagfactor > 1.0f)
-			{
-				// Real Scope Magnification Factor from the item
-				CurrentFactor = __max(1.0f, Item[iter->usItem].scopemagfactor);
 
+		if ( pObj->exists() == true && UsingNewCTHSystem() == true )
+		{
+			// Real Scope Magnification Factor from the item
+			CurrentFactor = __max(1.0f, Item[pObjUsed->usItem].scopemagfactor);
+
+			if (CurrentFactor > 1.0f)
+			{
 				// Actual Scope Mag Factor is what we get at the distance the target's at.
 				ActualCurrentFactor = __min(CurrentFactor, (TargetMagFactor/rangeModifier));
 
 				if (ActualCurrentFactor >= CurrentFactor)
 				{
-					// This scope gives no penalty. Is it any better than the ones we've already processed?
-					if (iBestTotalPenalty >= 0 && CurrentFactor > BestFactor)
-					{
-						// This is the best scope we've found so far. Record it.
-						BestFactor = CurrentFactor;
-						iBestTotalPenalty = 0;
-					}
+					// This scope gives no penalty. Record this as the best factor found so far.
+					BestFactor = CurrentFactor;
+					iBestTotalPenalty = 0;
 				}
 				else
 				{
-					// This scope will give a penalty if used. Is it worth using compared to other scopes found?
+					// This scopes gives a penalty for shooting under its range.
 					FLOAT dScopePenaltyRatio = (CurrentFactor * rangeModifier / TargetMagFactor);
 					INT32 iScopePenalty = (INT32)((dScopePenaltyRatio * gGameCTHConstants.AIM_TOO_CLOSE_SCOPE) * (CurrentFactor / 2));
 
-					// Is this scope any better than the ones we've already processed?
-					if (iScopePenalty < iBestTotalPenalty)
+					// There's no previous scope to compare with so record this as the best factor for now.
+					BestFactor = CurrentFactor;
+					iBestTotalPenalty = iScopePenalty;
+				}
+			}
+		
+			// Now perform the same process for each scope installed on the item. The difference is, we also compare to 
+			// BestTotalPenalty to find the scope that gives the least penalty compared to its bonus.
+			for (attachmentList::iterator iter = (*pObjUsed)[0]->attachments.begin(); iter != (*pObjUsed)[0]->attachments.end(); ++iter) 
+			{
+				if (iter->exists() && Item[iter->usItem].scopemagfactor > 1.0f)
+				{
+					// Real Scope Magnification Factor from the item
+					CurrentFactor = __max(1.0f, Item[iter->usItem].scopemagfactor);
+
+					// Actual Scope Mag Factor is what we get at the distance the target's at.
+					ActualCurrentFactor = __min(CurrentFactor, (TargetMagFactor/rangeModifier));
+
+					if (ActualCurrentFactor >= CurrentFactor)
 					{
-						// This is the best scope we've found so far. Record it.
-						BestFactor = CurrentFactor;
-						iBestTotalPenalty = iScopePenalty;
+						// This scope gives no penalty. Is it any better than the ones we've already processed?
+						if (iBestTotalPenalty <= 0 && CurrentFactor > BestFactor)
+						{
+							// This is the best scope we've found so far. Record it.
+							BestFactor = CurrentFactor;
+							iBestTotalPenalty = 0;
+						}
+					}
+					else
+					{
+						// This scope will give a penalty if used. Is it worth using compared to other scopes found?
+						FLOAT dScopePenaltyRatio = (CurrentFactor * rangeModifier / TargetMagFactor);
+						INT32 iScopePenalty = (INT32)((dScopePenaltyRatio * gGameCTHConstants.AIM_TOO_CLOSE_SCOPE) * (CurrentFactor / 2));
+
+						// Is this scope any better than the ones we've already processed?
+						// this new formula takes gaps between different scopes into account because
+						// even with a penalty a higher power scope is not necessarily a bad choice
+						// 10x sniper scopes still suck though, at the moment they are useless because of the big penalty
+						if (dScopePenaltyRatio <= CurrentFactor / (( CurrentFactor + BestFactor ) /2 -1 )  && CurrentFactor > BestFactor)
+						{
+							// This is the best scope we've found so far. Record it.
+							BestFactor = CurrentFactor;
+							iBestTotalPenalty = iScopePenalty;
+						}
 					}
 				}
 			}
 		}
-
+		// Now that we have selected the best available scope, don't use it if we get a penalty and have a functional laser
+		if(iBestTotalPenalty < 0 && iProjectionFactor > 1.0f)
+			BestFactor = 1.0f;
 	}
-
-	// Now that we have selected the best available scope, don't use it if we get a penalty and have a functional laser
-	if(iBestTotalPenalty < 0 && iProjectionFactor > 1.0f)
-		BestFactor = 1.0f;
-
 	return( __max(1.0f, BestFactor) );
 }
 
@@ -12813,6 +12829,11 @@ FLOAT GetScopeRangeMultiplier( SOLDIERTYPE *pSoldier, OBJECTTYPE *pObj, FLOAT d2
 	FLOAT	rangeModifier = gGameCTHConstants.SCOPE_RANGE_MULTIPLIER;
 
 	iScopeFactor = GetScopeMagnificationFactor( pSoldier, pObj, d2DDistance );
+
+	// if we are not using a scope we will not apply "SCOPE_RANGE_MULTIPLIER"
+	if ( iScopeFactor <= 1.0 )
+		rangeModifier = 1.0;
+
 	if( gGameOptions.fNewTraitSystem )
 	{
 		if(iScopeFactor > 5.0f)
@@ -12849,7 +12870,10 @@ UINT8 AllowedAimingLevelsNCTH( SOLDIERTYPE *pSoldier, INT32 sGridNo )
 	aimLevels = Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].ubAimLevels;
 	fTwoHanded = Item[pSoldier->inv[pSoldier->ubAttackingHand].usItem].twohanded;
 	// weaponRange = Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].usRange + GetRangeBonus(&pSoldier->inv[pSoldier->ubAttackingHand]);
-	weaponRange = ( Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].usRange * GetRangeBonusIoV(&pSoldier->inv[pSoldier->ubAttackingHand]) ) / 10000; //kenkenkenken: IoV921+z.3 按比例增加射程
+
+	//zwwooooo - IoV: change RangeBonus to ratable (Orange by kenkenkenken in IoV921)
+	weaponRange = ( Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].usRange * GetRangeBonusIoV(&pSoldier->inv[pSoldier->ubAttackingHand]) ) / 10000;
+
 	weaponType = Weapon[pSoldier->inv[pSoldier->ubAttackingHand].usItem].ubWeaponType;
 	fUsingBipod = FALSE;
 
