@@ -12,14 +12,12 @@
 	#include "opplist.h"
 	#include "ai.h"
 	#include "font control.h"
-	#include "sys globals.h"
 	#include "Animation COntrol.h"
 	#include "los.h"
 	#include "fov.h"
 	#include "dialogue control.h"
 	#include "lighting.h"
 	#include "environment.h"
-	#include "Points.h"
 	#include "interface dialogue.h"
 	#include "message.h"
 	#include "soldier profile.h"
@@ -57,6 +55,9 @@
 #endif
 
 #include "connect.h"
+#include "../ModularizedTacticalAI/include/Plan.h"
+#include "../ModularizedTacticalAI/include/PlanFactoryLibrary.h"
+#include "../ModularizedTacticalAI/include/AbstractPlanFactory.h"
 
 //rain
 //#define VIS_DIST_DECREASE_PER_RAIN_INTENSITY 20
@@ -914,9 +915,11 @@ void HandleSight(SOLDIERTYPE *pSoldier, UINT8 ubSightFlags)
 if(gGameExternalOptions.bWeSeeWhatMilitiaSeesAndViceVersa)
 	RadioSightings(pSoldier,EVERYBODY, MILITIA_TEAM);
 
-//haydent
-if(is_networked &&  pSoldier->bSide == 0 && pSoldier->bTeam != OUR_TEAM)
-	RadioSightings(pSoldier,EVERYBODY, OUR_TEAM);
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
+	//haydent
+	if(is_networked &&  pSoldier->bSide == 0 && pSoldier->bTeam != OUR_TEAM)
+		RadioSightings(pSoldier,EVERYBODY, OUR_TEAM);
+#endif
 
 //ddd}
 			// if it's our local player's merc
@@ -1421,13 +1424,15 @@ void EndMuzzleFlash( SOLDIERTYPE * pSoldier )
 	}
 */	
 
-//ddd{
+
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
 //haydent
 if(is_networked &&  pSoldier->bSide == 0)
 {
 	//stay visible
 }
 else
+#endif
 {
 	if(gGameExternalOptions.bWeSeeWhatMilitiaSeesAndViceVersa)	
 	{	if ( pSoldier->bTeam != gbPlayerNum && pSoldier->bTeam != MILITIA_TEAM )
@@ -1439,8 +1444,9 @@ else
 			pSoldier->bVisible = 0; // indeterminate state
 	}
 }//haydent
-//ddd}
-	
+
+
+
 	for (uiLoop = 0; uiLoop < guiNumMercSlots; uiLoop++)
 	{
 		pOtherSoldier = MercSlots[ uiLoop ];
@@ -1482,8 +1488,12 @@ else
 					}
 					//ddd}
 
+					
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
 					//haydent
-					if(is_networked &&  pOtherSoldier->bSide == 0 && pOtherSoldier->bTeam != OUR_TEAM)pSoldier->bVisible = TRUE; // yes, still seen
+					if(is_networked &&  pOtherSoldier->bSide == 0 && pOtherSoldier->bTeam != OUR_TEAM)
+						pSoldier->bVisible = TRUE; // yes, still seen
+#endif
 				}
 			}
 		}
@@ -1527,8 +1537,6 @@ void TurnOffTeamsMuzzleFlashes( UINT8 ubTeam )
 INT8 DecideHearing( SOLDIERTYPE * pSoldier )
 {
 	// calculate the hearing value for the merc...
-
-	INT8		bSlot;
 	INT8		bHearing;
 
 	if ( TANK( pSoldier ) )
@@ -1559,14 +1567,7 @@ INT8 DecideHearing( SOLDIERTYPE * pSoldier )
 			bHearing += 1 * NUM_SKILL_TRAITS( pSoldier, NIGHTOPS_OT );
 	}
 
-	//bSlot = FindObj( pSoldier, EXTENDEDEAR );
-	//if ( bSlot == HEAD1POS || bSlot == HEAD2POS)
-	bSlot = FindHearingAid(pSoldier);
-	if ( bSlot != -1 )
-	{
-		// at 81-100% adds +5, at 61-80% adds +4, at 41-60% adds +3, etc.
-		bHearing += GetHearingRangeBonus(pSoldier);	// pSoldier->inv[bSlot][0]->data.objectStatus / 20 + 1;
-	}
+	bHearing += pSoldier->GetHearingBonus();
 
 	// adjust for dark conditions
 	switch ( ubAmbientLightLevel )
@@ -1845,13 +1846,16 @@ void HandleManNoLongerSeen( SOLDIERTYPE * pSoldier, SOLDIERTYPE * pOpponent, INT
 				pOpponent->bVisible = 0;
 			}
 */			
-//ddd{
+
+
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
 //haydent
 if(is_networked &&  pSoldier->bSide == 0)
 {
 	//stay visible
 }
 else
+#endif
 {
 	if(gGameExternalOptions.bWeSeeWhatMilitiaSeesAndViceVersa)
 	{ if ( (pSoldier->bTeam == gbPlayerNum || pSoldier->bTeam == MILITIA_TEAM) && !(pOpponent->bTeam == gbPlayerNum || pOpponent->bTeam == MILITIA_TEAM ) )
@@ -1862,7 +1866,6 @@ else
 		if ( pSoldier->bTeam == gbPlayerNum && pOpponent->bTeam != gbPlayerNum )
 			pOpponent->bVisible = 0;
 	}
-	//ddd}
 }//haydent
 		}
 	}
@@ -2154,67 +2157,21 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 	DebugMsg (TOPIC_JA2,DBG_LEVEL_3,"ManSeesMan");
 
 	if (pSoldier->ubID >= TOTAL_SOLDIERS)
-	{
-		/*
-		#ifdef BETAVERSION
-		NumMessage("ManSeesMan: ERROR - ptr->guynum = ",ptr->guynum);
-		#endif
-		*/
 		return;
-	}
-
 	if (pOpponent->ubID >= TOTAL_SOLDIERS)
-	{
-		/*
-		#ifdef BETAVERSION
-		NumMessage("ManSeesMan: ERROR - oppPtr->guynum = ",oppPtr->guynum);
-		#endif
-		*/
 		return;
-	}
-
 	// if we're somehow looking while inactive, at base, dying or already dead
 	if (!pSoldier->bActive || !pSoldier->bInSector || (pSoldier->stats.bLife < OKLIFE))
-	{
-		/*
-		#ifdef BETAVERSION
-		sprintf(tempstr,"ManSeesMan: ERROR - %s is SEEING ManSeesMan while inactive/at base/dead/dying",ExtMen[ptr->guynum].name);
-		PopMessage(tempstr);
-		#endif
-		*/
 		return;
-	}
-
 	// if we're somehow seeing a guy who is inactive, at base, or already dead
 	if (!pOpponent->bActive || !pOpponent->bInSector || pOpponent->stats.bLife <= 0)
-	{
-		/*
-		#ifdef BETAVERSION
-		sprintf(tempstr,"ManSeesMan: ERROR - %s sees %s, ManSeesMan, who is inactive/at base/dead",ExtMen[ptr->guynum].name,ExtMen[oppPtr->guynum].name);
-		PopMessage(tempstr);
-		#endif
-		*/
 		return;
-	}
-
-
 	// if we're somehow seeing a guy who is on the same team
 	if (pSoldier->bTeam == pOpponent->bTeam)
-	{
-		/*
-		#ifdef BETAVERSION
-		sprintf(tempstr,"ManSeesMan: ERROR - on SAME TEAM.  ptr->guynum = %d, oppPtr->guynum = %d",
-		ptr->guynum,oppPtr->guynum);
-		PopMessage(tempstr);
-		#endif
-		*/
 		return;
-	}
-
 	// Flugente: if the other guy is in med or deep water and wearing scua gear, then we cannot see him as he is submerged
 	if ( pOpponent->UsesScubaGear() )
 		return;
-
 	// Flugente: update our sight concerning this guy, otherwise we could get way with open attacks because this does not get updated
 	pSoldier->RecognizeAsCombatant(pOpponent->ubID);
 
@@ -2355,15 +2312,6 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 				{
 					switch( pSoldier->ubProfile )
 					{
-						/*
-						case MIKE:
-						if ( gfPlayerTeamSawMike && !( gMercProfiles[ pSoldier->ubProfile ].ubMiscFlags2 & PROFILE_MISC_FLAG2_SAID_FIRSTSEEN_QUOTE ) )
-						{
-						InitiateConversation( pSoldier, pOpponent, NPC_INITIAL_QUOTE, 0 );
-						gMercProfiles[ pSoldier->ubProfile ].ubMiscFlags2 |= PROFILE_MISC_FLAG2_SAID_FIRSTSEEN_QUOTE;
-						}
-						break;
-						*/
 					case IGGY:
 						if ( ! ( gMercProfiles[ pSoldier->ubProfile ].ubMiscFlags2 & PROFILE_MISC_FLAG2_SAID_FIRSTSEEN_QUOTE ) )
 						{
@@ -2708,8 +2656,11 @@ else
 	SEE_MENT = TRUE;
 }
 
-//haydent
-if((is_networked &&  pSoldier->bSide == 0 && pSoldier->bTeam != OUR_TEAM) && (pOpponent->bVisible <= 0))SEE_MENT = TRUE;
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
+	//haydent
+	if((is_networked &&  pSoldier->bSide == 0 && pSoldier->bTeam != OUR_TEAM) && (pOpponent->bVisible <= 0))
+		SEE_MENT = TRUE;
+#endif
 
 //ddd}
 
@@ -2813,7 +2764,10 @@ if(SEE_MENT)
 		// ATE: Check stance, change to threatending
 		ReevaluateEnemyStance( pSoldier, pSoldier->usAnimState );
 	}
-
+    AI::tactical::AIInputData ai_input(AI::tactical::AIInputData::Visual(), pOpponent, sOppGridNo, bOppLevel, ubCaller, ubCaller2);
+    AI::tactical::PlanInputData plan_input((gTacticalStatus.uiFlags & TURNBASED)!=0, gTacticalStatus);
+    AI::tactical::PlanFactoryLibrary* plan_lib(AI::tactical::PlanFactoryLibrary::instance());
+    plan_lib->update_plan(pSoldier->bAIIndex, pSoldier, ai_input);
 }
 
 
@@ -2889,14 +2843,16 @@ void OtherTeamsLookForMan(SOLDIERTYPE *pOpponent)
 		pOpponent->bVisible = 0;
 	}
 */	
-//ddd{
 
+
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
 //haydent
 if(is_networked &&  pOpponent->bSide == 0)
 {
 	//stay visible
 }
 else
+#endif
 {
 
 	if(gGameExternalOptions.bWeSeeWhatMilitiaSeesAndViceVersa)
@@ -2912,7 +2868,6 @@ else
 
 }//haydent
 
-//ddd}
 #ifdef TESTOPPLIST
 	DebugMsg( TOPIC_JA2OPPLIST, DBG_LEVEL_3,
 			String("OTHERTEAMSLOOKFORMAN ID %d(%S) team %d side %d",pOpponent->ubID,pOpponent->name,pOpponent->bTeam,pOpponent->bSide ));
@@ -3402,14 +3357,15 @@ void BetweenTurnsVisibilityAdjustments(void)
 	{
 		if (pSoldier->bActive && pSoldier->bInSector && pSoldier->stats.bLife)
 		{
-			//ddd{
 			BOOLEAN SEE_MENT = FALSE;
 
+#ifdef ENABLE_MP_FRIENDLY_PLAYERS_SHARE_SAME_FOV
 		if(is_networked &&  pSoldier->bSide == 0)//haydent
 		{
 			//stay visible
 		}
 		else
+#endif
 		{
 			
 			if (gGameExternalOptions.bWeSeeWhatMilitiaSeesAndViceVersa)
@@ -3421,7 +3377,7 @@ void BetweenTurnsVisibilityAdjustments(void)
 			}
 
 		}//haydent
-			//ddd}
+			
 /*comm by ddd
 #ifdef WE_SEE_WHAT_MILITIA_SEES_AND_VICE_VERSA
 			if (!PTR_OURTEAM && pSoldier->bTeam != MILITIA_TEAM)
@@ -6333,14 +6289,12 @@ void HearNoise(SOLDIERTYPE *pSoldier, UINT8 ubNoiseMaker, INT32 sGridNo, INT8 bL
 	INT8		bDirection;
 	BOOLEAN fMuzzleFlash = FALSE;
 
-//	DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String( "%d hears noise from %d (%d/%d) volume %d", pSoldier->ubID, ubNoiseMaker, sGridNo, bLevel, ubVolume ) );
-
-
 	if ( pSoldier->ubBodyType == CROW )
 	{
 		CrowsFlyAway( pSoldier->bTeam );
 		return;
 	}
+//	DebugMsg( TOPIC_JA2, DBG_LEVEL_3, String( "%d hears noise from %d (%d/%d) volume %d", pSoldier->ubID, ubNoiseMaker, sGridNo, bLevel, ubVolume ) );
 
 	// "Turn head" towards the source of the noise and try to see what's there
 
@@ -6649,6 +6603,10 @@ void HearNoise(SOLDIERTYPE *pSoldier, UINT8 ubNoiseMaker, INT32 sGridNo, INT8 bL
 			}
 		}
 	}
+    AI::tactical::AIInputData ai_input(AI::tactical::AIInputData::Auditive(), ubNoiseMaker, sGridNo, bLevel, ubVolume, ubNoiseType);
+    AI::tactical::PlanInputData plan_input((gTacticalStatus.uiFlags & TURNBASED)!=0, gTacticalStatus);
+    AI::tactical::PlanFactoryLibrary* plan_lib(AI::tactical::PlanFactoryLibrary::instance());
+    plan_lib->update_plan(pSoldier->bAIIndex, pSoldier, ai_input);
 }
 
 void TellPlayerAboutNoise( SOLDIERTYPE *pSoldier, UINT8 ubNoiseMaker, INT32 sGridNo, INT8 bLevel, UINT8 ubVolume, UINT8 ubNoiseType, UINT8 ubNoiseDir )

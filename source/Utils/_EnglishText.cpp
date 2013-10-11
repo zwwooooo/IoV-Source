@@ -317,6 +317,7 @@ STR16			BoxFilter[] =
 STR16 iEditorItemStatsButtonsText[] =
 {
 	L"Delete",
+	L"Delete item (|D|e|l)",
 };
 
 STR16 FaceDirs[8] = 
@@ -354,11 +355,11 @@ STR16 iEditorMercsToolbarText[] =
  L"Schedule mode",
  L"Schedule mode",
  L"DELETE",
- L"Delete currently selected merc (DEL).",
+ L"Delete currently selected merc (|D|e|l)",
  L"NEXT", //20
- L"Find next merc (SPACE).",
+ L"Find next merc (|S|p|a|c|e)",
  L"Toggle priority existance",
- L"Toggle whether or not placement has/naccess to all doors.",
+ L"Toggle whether or not placement has/naccess to all doors",
  
  //Orders
  L"STATIONARY",
@@ -445,10 +446,12 @@ STR16 iEditorBuildingsToolbarText[] =
 	L"Draw room number",
 	L"Erase room numbers",
 
-	L"Toggle erase mode",
-	L"Undo last change",
-	L"Cycle brush size",
-
+	L"Toggle |Erase mode",
+	L"Undo last change (|B|a|c|k|s|p|a|c|e)",
+	L"Cycle brush size (|A/|Z)",
+	L"Roofs (|H)",
+	L"|Walls", //30
+	L"Room Info (|N)",
 };
 
 STR16 iEditorItemsToolbarText[] =
@@ -463,7 +466,9 @@ STR16 iEditorItemsToolbarText[] =
 	L"E3",
 	L"Triggers",
 	L"Keys",
-	L"Rnd",
+	L"Rnd", //10
+	L"Previous (|,)",		// previous page
+	L"Next (|.)",		// next page
 };
 
 STR16 iEditorMapInfoToolbarText[] =
@@ -471,9 +476,9 @@ STR16 iEditorMapInfoToolbarText[] =
 	L"Add ambient light source", //0
 	L"Toggle fake ambient lights.",
 	L"Add exit grids (r-clk to query existing).",
-	L"Cycle brush size",
-	L"Undo last change",
-	L"Toggle erase mode",
+	L"Cycle brush size (|A/|Z)",
+	L"Undo last change (|B|a|c|k|s|p|a|c|e)",
+	L"Toggle |Erase mode",
 	L"Specify north point for validation purposes.",
 	L"Specify west point for validation purposes.",
 	L"Specify east point for validation purposes.",
@@ -484,14 +489,14 @@ STR16 iEditorMapInfoToolbarText[] =
 
 STR16 iEditorOptionsToolbarText[]=
 {
-	L"New map",  //0
+	L"New outdoor level",  //0
 	L"New basement",
 	L"New cave level",
-	L"Save map",
-	L"Load map",
+	L"Save map (|C|t|r|l+|S)",
+	L"Load map (|C|t|r|l+|L)",
 	L"Select tileset",
 	L"Leave Editor mode",
-	L"Exit game.",
+	L"Exit game (|A|l|t+|X)",
 	L"Create radar map",
 	L"When checked, the map will be saved in original JA2 map format.\nThis option is only valid on 'normal' size maps that do not reference grid numbers (e.g: exit grids) > 25600.",
 	L"When checked and you load a map, the map will be enlarged automatically depending on the selected Rows and Cols.",
@@ -499,20 +504,20 @@ STR16 iEditorOptionsToolbarText[]=
 
 STR16 iEditorTerrainToolbarText[] =
 {
-	L"Draw ground textures", //0
+	L"Draw |Ground textures", //0
 	L"Set map ground textures",
-	L"Place banks and cliffs",
-	L"Draw roads",
-	L"Draw debris",
-	L"Place trees & bushes",
-	L"Place rocks",
-	L"Place barrels & other junk",
+	L"Place banks and |Cliffs",
+	L"Draw roads (|P)",
+	L"Draw |Debris",
+	L"Place |Trees & bushes",
+	L"Place |Rocks",
+	L"Place barrels & |Other junk",
 	L"Fill area",
-	L"Undo last change",
-	L"Toggle erase mode", //10
-	L"Cycle brush size",
-	L"Raise brush density",
-	L"Lower brush density",
+	L"Undo last change (|B|a|c|k|s|p|a|c|e)",
+	L"Toggle |Erase mode", //10
+	L"Cycle brush size (|A/|Z)",
+	L"Raise brush density (|])",
+	L"Lower brush density (|[)",
 };
 
 STR16 iEditorTaskbarInternalText[]=
@@ -523,6 +528,12 @@ STR16 iEditorTaskbarInternalText[]=
 	L"Mercs",
 	L"Map Info",
 	L"Options",
+	L"|./|,: Cycle 'width: xx' dimensions\n|P|g |U|p/|P|g |D|n: Previous/Next tile for selected object(s)/in smart method", //Terrain fasthelp text
+	L"|./|,: Cycle 'width: xx' dimensions\n|P|g |U|p/|P|g |D|n: Previous/Next tile for selected object(s)/in smart method", //Buildings fasthelp text
+	L"|C|t|r|l+|/: Place new item under mouse cursor\n|/: Place same item under mouse cursor", //Items fasthelp text
+	L"|1-|9: Set waypoints\n|C|t|r|l+|C/|C|t|r|l+|V: Copy/Paste merc", //Mercs fasthelp text
+	L"|C|t|r|l+|G: Go to grid no\n \n|I: Toggle overhead map\n|J: Toggle draw high ground\n|K: Toggle high ground markers\n|S|h|i|f|t+|L: Toggle map edge points\n|S|h|i|f|t+|T: Toggle treetops\n|U: Toggle world raise\n \n|./|,: Cycle 'width: xx' dimensions", //Map Info fasthelp text
+	L"|C|t|r|l+|N: Create new map\n \n|F|5: Show Summary Info/Country Map\n|F|1|0: Remove all lights\n|F|1|1: Reverse schedules\n|F|1|2: Clear schedules\n \n|S|h|i|f|t+|R: Toggle random placement based on quantity of selected object(s)", //Options fasthelp text
 };
 
 //Editor Taskbar Utils.cpp
@@ -1068,9 +1079,9 @@ STR16 pUpdateItemStatsPanelText[] =
 
 STR16 pSetupGameTypeFlagsText[] =
 {
-	L"Item appears in both Sci-Fi and Realistic modes. (|B)", //0
-	L"Item appears in |Realistic mode only.",
-	L"Item appears in |Sci-Fi mode only.",
+	L"Item appears in both Sci-Fi and Realistic modes", //0
+	L"Item appears in Realistic mode only",
+	L"Item appears in Sci-Fi mode only",
 };
 
 STR16 pSetupGunGUIText[] =
@@ -1940,15 +1951,15 @@ STR16 pRemoveMercStrings[] =
 
 STR16 pAttributeMenuStrings[] =
 {
-	L"Strength",
-	L"Dexterity",
-	L"Agility",
 	L"Health",
-	L"Marksmanship",
-	L"Medical",
-	L"Mechanical",
+	L"Agility",
+	L"Dexterity",
+	L"Strength",
 	L"Leadership",
+	L"Marksmanship",
+	L"Mechanical",
 	L"Explosives",
+	L"Medical",
 	L"Cancel",
 };
 
@@ -2112,7 +2123,7 @@ STR16 gzMercSkillTextNew[] =
 {
 	// Major traits
 	L"No Skill",		// 0
-	L"Auto Weapons",
+	L"Auto Weapons",	// 1
 	L"Heavy Weapons",
 	L"Marksman",
 	L"Hunter",
@@ -2120,21 +2131,22 @@ STR16 gzMercSkillTextNew[] =
 	L"Hand to Hand",
 	L"Deputy",
 	L"Technician",
-	L"Paramedic",
-	L"Covert Ops",		// 10
+	L"Paramedic",		// 9	
 	// Minor traits
-	L"Ambidextrous",
+	L"Ambidextrous",	// 10
 	L"Melee",
 	L"Throwing",
 	L"Night Ops",
-	L"Stealthy",		// 15
-	L"Athletics",
+	L"Stealthy",
+	L"Athletics",		// 15
 	L"Bodybuilding",
 	L"Demolitions",
 	L"Teaching",
-	L"Scouting",		// 20
+	L"Scouting",		// 19
+	// covert ops is a major trait that was added later
+	L"Covert Ops",		// 20
 	// second names for major skills
-	L"Machinegunner",
+	L"Machinegunner",	// 21
 	L"Bombardier",
 	L"Sniper",
 	L"Ranger",
@@ -2142,8 +2154,19 @@ STR16 gzMercSkillTextNew[] =
 	L"Martial Arts",
 	L"Squadleader",
 	L"Engineer",
-	L"Doctor",
-	L"Spy",				// 30
+	L"Doctor",			// 20	
+	// placeholders for minor traits
+	L"Placeholder",		// 30
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",		// 35
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",
+	L"Placeholder",		// 39
+	L"Spy",				// 40
 	L"More...",
 };
 //////////////////////////////////////////////////////////
@@ -2843,6 +2866,7 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"MILITIA",
 	L"CIVILIAN",
 	L"ZOMBIE",
+	L"PRISONER",
 	L"Exiting Sector",
 	L"OK",
 	L"Cancel",
@@ -2909,8 +2933,8 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	// added by Flugente: selection of a function to call in tactical
 	L"What do you want to do?",
 	L"Fill canteens",
-	L"Clean gun",
-	L"Clean all guns",
+	L"Clean guns (Merc)",
+	L"Clean guns (Team)",
 	L"Take off clothes",
 
 	// added by Flugente: decide what to do with the corpses
@@ -2925,11 +2949,15 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 
 	// added by Flugente: decide what to do with prisoners
 	L"You have no prison for these prisoners, you have to let them go",
-	L"Yes - Send prisoners to jail      No - Let them go",
+	L"Where do you want to send the prisoners?",
+	L"Let them go",
 	L"What do you want to do?",
 	L"Demand surrender",
 	L"Offer surrender",
 	L"Talk",
+	L"Militia inspection",
+	L"Test disguise",
+	L"unused",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -4217,7 +4245,7 @@ STR16			MercInfo[] =
 	L"Total:",
 	L"Deceased",
 
-	L"Looks like you're trying to hire too many mercs. Your limit is 18.",
+	L"You have a full team of mercs already.",
 	L"Buy Equipment?",
 	L"Unavailable",
 	L"Unsettled Bills",
@@ -5056,6 +5084,7 @@ STR16		zMarksMapScreenText[] =
 STR16 pLandMarkInSectorString[] =
 {
 	L"Squad %d has noticed someone in sector %s",
+	L"Squad %s has noticed someone in sector %s",
 };
 
 // confirm the player wants to pay X dollars to build a militia force in town
@@ -6140,6 +6169,7 @@ STR16 New113Message[] =
 	L"UB",
 	L"UBRST",
 	L"UAUTO",
+	L"BAYONET",
 	L"Sniper!",
 	L"Unable to split money due to having an item on your cursor.",
 	L"Arrival of new recruits is being rerouted to sector %s, as scheduled drop-off point of sector %s is enemy occupied.",
@@ -6617,7 +6647,21 @@ STR16 gzIMPDisabilityTraitText[]=
 	L"Fear of Insects",
 	L"Forgetful",
 	L"Psychotic",
+	L"Deaf",
+	L"Shortsighted",
 	L"I.M.P. Disabilities",
+};
+
+STR16 gzIMPDisabilityTraitEmailTextDeaf[] =
+{
+	L"We bet you're glad this isn't voicemail.",
+	L"You've either visited to many discos in your teens, or were to close a massive artillery bombardment. Or just old. Either way, your team better learn sign language.",
+};
+
+STR16 gzIMPDisabilityTraitEmailTextShortSighted[] =
+{
+	L"You'll be screwed if you ever lose your glasses.",
+	L"That happens when you spend your days in front of glowing rectangles. You should have eaten more carrots. Ever seen a rabbit with glasses? Figures.",
 };
 
 // HEADROCK HAM 3.6: Error strings for assigning a merc to a facility
@@ -7461,6 +7505,10 @@ STR16	szCovertTextStr[]=
 	L"%s wears a disorderly uniform!",
 	L"In retrospect, asking for surrender in disguise wasn't the best idea...",
 	L"%s was uncovered!",
+	L"%s's disguise seems to be ok...",
+	L"%s's disguise will not hold.",
+	L"%s was caught stealing!",
+	L"%s tried to manipulate %s's inventory."
 };
 
 STR16	szCorpseTextStr[]=
@@ -7501,7 +7549,7 @@ STR16	szPrisonerTextStr[]=
 	L"%d prisoners revealed enemy positions.",
 	L"%d prisoners joined our cause.",
 	L"Prisoners start a massive riot in %s!",
-	L"Prisoners were sent to %s!",
+	L"%d prisoners were sent to %s!",
 	L"Prisoners have been released!",
 	L"The army now occupies the prison in %s, the prisoners were freed!",
 	L"The enemy refuses to surrender!",
@@ -7516,6 +7564,16 @@ STR16	szMTATextStr[]=
 	L"removing a fortification",
 	L"filling sandbags",
 	L"%s had to stop %s.",
+};
+
+STR16	szInventoryArmTextStr[]=
+{
+	L"Blow up (%d AP)",
+	L"Blow up",
+	L"Arm (%d AP)",
+	L"Arm",
+	L"Disarm (%d AP)",
+	L"Disarm",
 };
 
 //kenkenkenken: IoV921+z.5b2b3 --> | >>2012.09.24 rewrite by zwwooooo

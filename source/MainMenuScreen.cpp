@@ -5,12 +5,9 @@
 	#include "sgp.h"
 	#include "screenids.h"
 	#include "Timer Control.h"
-	#include "sys globals.h"
-	#include "fade screen.h"
 	#include "sysutil.h"
 	#include "vobject_blitters.h"
 	#include "MercTextBox.h"
-	#include "wcheck.h"
 	#include "cursors.h"
 	#include "font control.h"
 	#include "mainmenuscreen.h"
@@ -18,7 +15,6 @@
 	#include "render dirty.h"
 	#include "music control.h"
 	#include "GameSettings.h"
-	#include "GameScreen.h"
 	#include "SaveLoadScreen.h"
 	#include "SaveLoadGame.h"
 	#include "Options Screen.h"
@@ -32,10 +28,8 @@
 	#include "Multi Language Graphic Utils.h"
 	#include "Encrypted File.h"
 	#include "ja2 splash.h"
-	#include "GameVersion.h"
 #endif
 
-#include "mercs.h"
 #include "gamesettings.h"
 #include "connect.h"
 #include "strategic.h"
@@ -351,19 +345,18 @@ void ExitMainMenu( )
 	CreateDestroyMainMenuButtons( FALSE );
 
 	for( iCounter2 = 1; iCounter2 < MAX_ELEMENT; iCounter2++ )
-	{	
+	{			
 		if (gMainMenulayout[iCounter2].Visible == 1)
 		{
+			// WANNE: This is a dirty fix. I don't know when that was introduced, but when clicking on "Multiplayer Game", the game crashes when trying to call DeleteVideoSurfaceFromIndex()
+			if (is_networked && iCounter2 == 1)
+				continue;		
+
 //			DeleteVideoObjectFromIndex( gMainMenulayout[iCounter2].uiIndex );
 			DeleteVideoSurfaceFromIndex( gMainMenulayout[iCounter2].uiIndex );
 		}
 	}
 	
-
-
-
-
-
 	gMsgBox.uiExitScreen = MAINMENU_SCREEN;
 }
 
