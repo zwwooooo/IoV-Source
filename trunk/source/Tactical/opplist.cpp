@@ -252,7 +252,7 @@ UINT16 gsWhoThrewRock = NOBODY;
 // % values of sighting distance at various light levels
 
 INT8 gbLightSighting[1][SHADE_MIN+1] =
-{
+{ //zwwooooo - IoV: Sight ranger of day / night from 2/1 change to 3/1. In other word you can see 30 grid at day, but at night just 10 grid.
 { // human
 	80, // brightest
 	86,
@@ -272,6 +272,28 @@ INT8 gbLightSighting[1][SHADE_MIN+1] =
 	9
 }
 };
+/*
+{
+{ // human
+	80, // brightest
+	86,
+	93,
+	100, // normal daylight, 3
+	94,
+	88,
+	82,
+	76,
+	70, // mid-dawn, 8
+	64,
+	58,
+	51,
+	43, // normal nighttime, 12 (11 tiles)
+	30,
+	17,
+	9
+}
+};
+*/
 /*
 {
 { // human
@@ -7647,7 +7669,7 @@ void MakeBloodcatsHostile( void )
 
 BOOLEAN SoldierHasLimitedVision(SOLDIERTYPE * pSoldier)
 {
-	if ( GetPercentTunnelVision(pSoldier) > 0 || ( gGameExternalOptions.gfAllowLimitedVision ) )
+	if ( gGameExternalOptions.gfAllowLimitedVision || GetPercentTunnelVision(pSoldier) > 0 )
 		return TRUE;
 	else
 		return FALSE;
