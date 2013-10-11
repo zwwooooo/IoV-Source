@@ -94,6 +94,7 @@ enum
 
 	TOPTION_SHOW_LAST_ENEMY,					//DBrot: show approximate locations for the last enemies
 	TOPTION_SHOW_LBE_CONTENT,					//DBrot: toggle between the content of an lbe and its attachments
+	TOPTION_INVERT_WHEEL,						//jikuja: invert mouse wheel
 
 	// arynn: Debug/Cheat
 	TOPTION_CHEAT_MODE_OPTIONS_HEADER,
@@ -344,6 +345,7 @@ typedef struct
 	BOOLEAN fAllowInstantInterruptsOnSight;
 
 	BOOLEAN fNoEnemyAutoReadyWeapon;
+	BOOLEAN fAllNamedNpcsDecideAction;
 
 	UINT16 usAwardSpecialExpForQuests;
 
@@ -360,7 +362,15 @@ typedef struct
 	BOOLEAN fEnableChanceOfEnemyAmbushes; 
 	INT8 bChanceModifierEnemyAmbushes;
 	UINT8 usSpecialNPCStronger;
-	BOOLEAN fAssassinsAreDisguised;	// added by Flugente
+
+	// Flugente: should kingpin's hitmen be disguised? This will make them have random clothes among other stuff
+	BOOLEAN fAssassinsAreDisguised;
+
+	// Flugente: does the queen send out assassins that mix among your militia?
+	BOOLEAN fEnemyAssassins;
+	UINT8	usAssassinMinimumProgress;
+	UINT8	usAssassinMinimumMilitia;
+	UINT32  usAssassinPropabilityModifier;
 	///////////////////////////////////////
 
 	// System settings
@@ -377,6 +387,7 @@ typedef struct
 	BOOLEAN fZombieSpawnWaves;
 	INT8	sZombieRiseWaveFrequency;	
 	BOOLEAN fZombieCanClimb;
+	BOOLEAN fZombieCanJumpWindows;
 	BOOLEAN fZombieExplodingCivs;
 	INT8	sEnemyZombieDamageResistance;
 	INT8	sEnemyZombieBreathDamageResistance;
@@ -520,6 +531,11 @@ typedef struct
 	UINT32 ubGameProgressMikeAvailable;
 	UINT32 ubGameProgressIggyAvaliable;
 	BOOLEAN ubSendTroopsToDrassen;
+
+	// Flugente: new counterattacks and other new AI tactics
+	UINT8  ubAgressiveStrategicAI;
+	UINT32 ubGameProgressOffensiveStage1;
+	UINT32 ubGameProgressOffensiveStage2;
 
 	// WDS - make number of mercenaries, etc. be configurable
 	// group sizes
@@ -699,6 +715,9 @@ typedef struct
 	UINT32	usAttachmentDropRate;
 	INT16   iMaxEnemyAttachments;
 
+	// Flugente: class specific gun/item choice
+	BOOLEAN	fSoldierClassSpecificItemTables;
+
 	//** ddd
 	//enable ext mouse key
 	BOOLEAN fExtMouseKeyEnabled;
@@ -718,6 +737,7 @@ typedef struct
 	FLOAT uShotHeadPenalty;
 	FLOAT fShotHeadDivisor;
 	INT16 iPenaltyShootUnSeen;
+	BOOLEAN fNoStandingAnimAdjustInCombat;	// Flugente: in turnbased combat, do not adjust animation after arriving at target location
 
 	//Inventory AP Weight Divisor
 	FLOAT uWeightDivisor;
@@ -1068,6 +1088,7 @@ typedef struct
 
 	//legion by Jazz
 	BOOLEAN fCanJumpThroughWindows;
+	BOOLEAN fCanJumpThroughClosedWindows;	
 	BOOLEAN fCanClimbOnWalls;
 
 	//legion by Jazz
@@ -1108,6 +1129,8 @@ typedef struct
 
 	UINT8 ubChanceTonyAvailable; // silversurfer/SANDRO
 
+	BOOLEAN fShowSkillsInHirePage;
+
 	BOOLEAN fBobbyRayFastShipments;
 
 	BOOLEAN fGridExitInTurnBased;
@@ -1130,8 +1153,8 @@ typedef struct
 	// Flugente: Weapon Overheating
 	BOOLEAN	fDisplayOverheatThermometer;			// Should a 'thermometer' for guns and replacable barrels be displayed?
 	UINT8	ubOverheatThermometerRedOffset;			// amount of red colour while temperature is below threshold
-	FLOAT   iCooldownModificatorLonelyBarrel;		// Cooldown modificator for barrels alone in the landscape ;-)
-	FLOAT	iOverheatTemperatureGlobalModfier;		// a global modifier to the singel shot temperatuer value, if one feels that all values hould be lower/higher
+	FLOAT   iCooldownModificatorLonelyBarrel;		// Cooldown modificator for barrels left alone in the landscape ;-)
+	FLOAT	iOverheatTemperatureGlobalModfier;		// a global modifier to the singel shot temperature value, if one feels that all values should be lower/higher
 	
 	// Flugente: Weapon Mounting
 	BOOLEAN	fWeaponResting;							// Should it be possible to rest your weapon on structures in crouched position?
@@ -1147,8 +1170,21 @@ typedef struct
 
 	// Flugente: advanced repair/dirt system
 	BOOLEAN	fAdvRepairSystem;						// allow thresholds to repairing
+	BOOLEAN fOnlyRepairGunsArmour;					// we can only repair guns and armour
 	BOOLEAN fDirtSystem;							// allow dirt on items increase the chance for weapon jamming
 	UINT32	usSectorDirtDivider;					// divide a guns dirt factor by this to get dirt increase for every turn
+
+	// Flugente: prisoner related settings
+	BOOLEAN fAllowPrisonerSystem;
+	BOOLEAN	fEnemyCanSurrender;
+	BOOLEAN	fPlayerCanAsktoSurrender;
+	UINT8	ubPrisonerReturntoQueenChance;
+	UINT8	ubPrisonerProcessDefectChance;
+	UINT8	ubPrisonerProcessInfoBaseChance;
+	UINT8	ubPrisonerProcessInfoDetectChance;
+	UINT8	ubPrisonerProcessInfoNumberChance;
+	UINT8	ubPrisonerProcessInfoDirectionChance;
+	UINT8	ubPrisonerProcessRansomBaseChance;
 	
 	// Sandro: Alternative weapon holding (rifles fired from hip / pistols fired one-handed)
 	UINT8 ubAllowAlternativeWeaponHolding;
@@ -1184,7 +1220,8 @@ typedef struct
 	UINT8 ubMaxNumberOfTraits;
 	UINT8 ubNumberOfMajorTraitsAllowed;
 
-	BOOLEAN fAllowDrQTraitsException;
+	BOOLEAN fAllowSpecialMercTraitsException;
+	UINT8 ubSpecialMercID;
 
 	BOOLEAN fAllowAttributePrereq;
 

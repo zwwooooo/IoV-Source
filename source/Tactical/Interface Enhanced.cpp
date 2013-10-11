@@ -7574,18 +7574,18 @@ void DrawAmmoValues( OBJECTTYPE * gpItemDescObject, int shotsLeft )
 			sHeight = gItemDescGenRegions[ubNumLine][1].sBottom - sTop;
 
 			// Get final Penetration
-			FLOAT fArmourImpactReduction = 1.0f / ((FLOAT) AmmoTypes[Magazine[ Item[ gpItemDescObject->usItem ].ubClassIndex].ubAmmoType].armourImpactReductionMultiplier / (FLOAT) AmmoTypes[Magazine[ Item[ gpItemDescObject->usItem ].ubClassIndex].ubAmmoType].armourImpactReductionDivisor);
+			FLOAT fArmourImpactReduction = ((FLOAT) AmmoTypes[Magazine[ Item[ gpItemDescObject->usItem ].ubClassIndex].ubAmmoType].armourImpactReductionMultiplier / (FLOAT) AmmoTypes[Magazine[ Item[ gpItemDescObject->usItem ].ubClassIndex].ubAmmoType].armourImpactReductionDivisor);
 
 			// Get base Penetration
 			FLOAT fFinalArmourImpactReduction = fArmourImpactReduction;
 
 			// Print base value
 			SetFontForeground( 5 );
-			if ( fArmourImpactReduction < 1.0 )
+			if ( fArmourImpactReduction > 1.0 )
 			{
 				SetFontForeground( ITEMDESC_FONTNEGATIVE );
 			}
-			else if ( fArmourImpactReduction > 1.0 )
+			else if ( fArmourImpactReduction < 1.0 )
 			{
 				SetFontForeground( ITEMDESC_FONTPOSITIVE );
 			}

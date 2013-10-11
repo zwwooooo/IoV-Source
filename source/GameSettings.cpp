@@ -261,6 +261,7 @@ BOOLEAN LoadGameSettings()
 		gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_SHOW_LAST_ENEMY"					,  FALSE );
 		 
 		gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]				= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_SHOW_LBE_CONTENT"					,  TRUE );
+		gGameSettings.fOptions[TOPTION_INVERT_WHEEL]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_INVERT_WHEEL"					,  FALSE );
 
 		gGameSettings.fOptions[NUM_ALL_GAME_OPTIONS]                    = iniReader.ReadBoolean("JA2 Game Settings","NUM_ALL_GAME_OPTIONS"                     ,  FALSE );
 
@@ -421,6 +422,7 @@ BOOLEAN	SaveGameSettings()
 		settings << "TOPTION_AUTO_FAST_FORWARD_MODE           = " << (gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]			?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_SHOW_LAST_ENEMY				  = " << (gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]					?	 "TRUE"	: "FALSE" ) << endl;
 		settings << "TOPTION_SHOW_LBE_CONTENT				  = " << (gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]					?	 "TRUE"	: "FALSE" ) << endl;
+		settings << "TOPTION_INVERT_WHEEL				  = " << (gGameSettings.fOptions[TOPTION_INVERT_WHEEL]						?	 "TRUE"	: "FALSE" ) << endl;
 
 #ifdef ENABLE_ZOMBIES
 		settings << "TOPTION_ZOMBIES						  = " << (gGameSettings.fOptions[TOPTION_ZOMBIES]							?    "TRUE" : "FALSE" ) << endl;
@@ -558,6 +560,7 @@ void InitGameSettings()
 
 	gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]						= FALSE;
 	gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]					= TRUE;
+	gGameSettings.fOptions[TOPTION_INVERT_WHEEL]						= FALSE;
 
 #ifdef ENABLE_ZOMBIES
 	gGameSettings.fOptions[ TOPTION_ZOMBIES ]							= FALSE;	// Flugente Zombies 1.0	
@@ -847,6 +850,9 @@ void LoadGameExternalOptions()
 	// CHRISL: New setting to allow Slay to remain as a hired PC
 	gGameExternalOptions.fEnableSlayForever					= iniReader.ReadBoolean("Recruitment Settings", "SLAY_STAYS_FOREVER", FALSE);
 
+	// Buggler: setting to show/hide skills/traits in AIM & MERC hiring page
+	gGameExternalOptions.fShowSkillsInHirePage			= iniReader.ReadBoolean("Recruitment Settings", "SHOW_SKILLS_IN_HIRING_PAGE", FALSE);
+
 	//################# Financial Settings #################
 
 	gGameExternalOptions.iStartingCashNovice		= iniReader.ReadInteger("Financial Settings", "STARTING_CASH_NOVICE",45000, 2000, 0x0FFFFFFF);
@@ -1066,7 +1072,12 @@ void LoadGameExternalOptions()
 	// Flugente: the assassins are disguised initially, so it is harder for the player to detect them
 	gGameExternalOptions.fAssassinsAreDisguised		  = iniReader.ReadBoolean("Tactical Difficulty Settings", "ASSASSINS_DISGUISED", TRUE);
 	
-
+	// Flugente: does the queen send out assassins that mix among your militia?
+	gGameExternalOptions.fEnemyAssassins			    = iniReader.ReadBoolean("Tactical Difficulty Settings", "ENEMY_ASSASSINS", FALSE);
+	gGameExternalOptions.usAssassinMinimumProgress	    = iniReader.ReadInteger("Tactical Difficulty Settings", "ASSASSIN_MINIMUM_PROGRESS", 30, 0, 100);
+	gGameExternalOptions.usAssassinMinimumMilitia	    = iniReader.ReadInteger("Tactical Difficulty Settings", "ASSASSIN_MINIMUM_MILITIA", 10, 0, 64);
+	gGameExternalOptions.usAssassinPropabilityModifier	= iniReader.ReadInteger("Tactical Difficulty Settings", "ASSASSIN_PROPABILITY_MODIFIER", 100, 0, 1000);		
+	
 	//################# Tactical Vision Settings #################
 
 	// Sight range
@@ -1209,6 +1220,7 @@ void LoadGameExternalOptions()
 
 	//legion by Jazz
 	gGameExternalOptions.fCanJumpThroughWindows	 			= iniReader.ReadBoolean("Tactical Gameplay Settings","CAN_JUMP_THROUGH_WINDOWS", FALSE);
+	gGameExternalOptions.fCanJumpThroughClosedWindows		= iniReader.ReadBoolean("Tactical Gameplay Settings","CAN_JUMP_THROUGH_CLOSED_WINDOWS", TRUE);
 	gGameExternalOptions.fCanClimbOnWalls					= iniReader.ReadBoolean("Tactical Gameplay Settings","CAN_CLIMB_ON_WALLS", FALSE);
 	
 	//legion by Jazz
@@ -1260,8 +1272,11 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fShotHeadDivisor					= iniReader.ReadFloat("Tactical Interface Settings","SHOT_HEAD_DIVISOR",1.5,1,10);	
 
 	// Penalty for fire when you don't see enemy (when you see enemy because his see militya or ather merc)
-	gGameExternalOptions.iPenaltyShootUnSeen				= iniReader.ReadInteger("Tactical Interface Settings","SHOOT_UNSEEN_PENALTY",0,0,255);		
-	
+	gGameExternalOptions.iPenaltyShootUnSeen				= iniReader.ReadInteger("Tactical Interface Settings","SHOOT_UNSEEN_PENALTY",0,0,255);
+
+	// Flugente: in turnbased combat, do not adjust animation after arriving at target location
+	gGameExternalOptions.fNoStandingAnimAdjustInCombat		= iniReader.ReadBoolean("Tactical Interface Settings","NO_STANDING_ANIM_ADJUSTMENT_IN_COMBAT", TRUE);	
+			
 	//Inventory AP Weight Divisor
 	gGameExternalOptions.uWeightDivisor						= iniReader.ReadFloat("Tactical Interface Settings","INV_AP_WEIGHT_DIVISOR",5,0,100);		
 	
@@ -1291,6 +1306,10 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fAllowInstantInterruptsOnSight		= iniReader.ReadBoolean("Tactical Gameplay Settings", "ALLOW_INSTANT_INTERRUPTS_ON_SPOTTING", FALSE);
 
 	gGameExternalOptions.fNoEnemyAutoReadyWeapon			= iniReader.ReadInteger("Tactical Gameplay Settings", "NO_ENEMY_AUTOMATIC_WEAPON_READYING", 1, 0, 2);
+
+
+	// enable schedules and decision making for any named npc regardless of their team
+	gGameExternalOptions.fAllNamedNpcsDecideAction			= iniReader.ReadBoolean("Tactical Gameplay Settings", "ALL_NAMED_NPCS_DECIDE_ACTION", FALSE);
 
 	//################# Tactical Cover System Settings ##################
 
@@ -1399,6 +1418,7 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fZombieSpawnWaves								= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_SPAWN_WAVES", FALSE);
 	gGameExternalOptions.sZombieRiseWaveFrequency						= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_RISE_WAVE_FREQUENCY", 30, 0, 100);	
 	gGameExternalOptions.fZombieCanClimb								= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_CAN_CLIMB", TRUE);
+	gGameExternalOptions.fZombieCanJumpWindows							= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_CAN_JUMP_WINDOWS", TRUE);
 	gGameExternalOptions.fZombieExplodingCivs							= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_EXPLODING_CIVS", FALSE);
 	gGameExternalOptions.sEnemyZombieDamageResistance					= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_DAMAGE_RESISTANCE", 0, -50, 95);
 	gGameExternalOptions.sEnemyZombieBreathDamageResistance				= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_BREATH_DAMAGE_RESISTANCE", 0, -50, 95);
@@ -1503,13 +1523,17 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.ubGameProgressStartMadlabQuest			= iniReader.ReadInteger("Strategic Progress Settings","GAME_PROGRESS_START_MADLAB_QUEST",35, 0, 100);
 	gGameExternalOptions.ubGameProgressMikeAvailable			= iniReader.ReadInteger("Strategic Progress Settings","GAME_PROGRESS_MIKE_AVAILABLE",50, 0, 100);
 	gGameExternalOptions.ubGameProgressIggyAvaliable			= iniReader.ReadInteger("Strategic Progress Settings","GAME_PROGRESS_IGGY_AVAILABLE",70, 0, 100);
-
+	gGameExternalOptions.ubGameProgressOffensiveStage1			= iniReader.ReadInteger("Strategic Progress Settings","GAME_PROGRESS_OFFENSIVE_STAGE_1", 65, 0, 100);
+	gGameExternalOptions.ubGameProgressOffensiveStage2			= iniReader.ReadInteger("Strategic Progress Settings","GAME_PROGRESS_OFFENSIVE_STAGE_2", 80, 0, 100);
 
 	//################# Strategic Event Settings ##################
 
 	// Drassen counterattack
 	gGameExternalOptions.ubSendTroopsToDrassen			= iniReader.ReadBoolean("Strategic Event Settings","TRIGGER_MASSIVE_ENEMY_COUNTERATTACK_AT_DRASSEN",TRUE);
 
+	// Flugente: new strategic AI
+	gGameExternalOptions.ubAgressiveStrategicAI			= iniReader.ReadInteger("Strategic Event Settings","AGGRESSIVE_STRATEGIC_AI", 1, 0, 4);
+		
 	// Enable/Disable crepitus completely in SCI-FI mode.
 	gGameExternalOptions.fEnableCrepitus				= iniReader.ReadBoolean("Strategic Event Settings", "ENABLE_CREPITUS", TRUE);
 
@@ -1546,8 +1570,21 @@ void LoadGameExternalOptions()
 
 	// Flugente: advanced repair/dirt system
 	gGameExternalOptions.fAdvRepairSystem					= iniReader.ReadBoolean("Strategic Gameplay Settings","ADVANCED_REPAIR", FALSE);
+	gGameExternalOptions.fOnlyRepairGunsArmour				= iniReader.ReadBoolean("Strategic Gameplay Settings","ONLY_REPAIR_GUNS_AND_ARMOUR", FALSE);
 	gGameExternalOptions.fDirtSystem						= iniReader.ReadBoolean("Strategic Gameplay Settings","DIRT_SYSTEM", FALSE);
 	gGameExternalOptions.usSectorDirtDivider				= iniReader.ReadInteger("Strategic Gameplay Settings","SECTOR_DIRT_DIVIDER", 1000, 1, 100000);
+	
+	// Flugente: prisoner system
+	gGameExternalOptions.fAllowPrisonerSystem				= iniReader.ReadBoolean("Strategic Gameplay Settings","ALLOW_TAKE_PRISONERS", TRUE);
+	gGameExternalOptions.fEnemyCanSurrender					= iniReader.ReadBoolean("Strategic Gameplay Settings","ENEMY_CAN_SURRENDER", TRUE);
+	gGameExternalOptions.fPlayerCanAsktoSurrender			= iniReader.ReadBoolean("Strategic Gameplay Settings","PLAYER_CAN_ASK_TO_SURRENDER", TRUE);
+	gGameExternalOptions.ubPrisonerReturntoQueenChance		= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_RETURN_TO_ARMY_CHANCE", 50, 0, 100);
+	gGameExternalOptions.ubPrisonerProcessDefectChance		= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_DEFECT_CHANCE", 10, 0, 100);
+	gGameExternalOptions.ubPrisonerProcessInfoBaseChance	= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_INFO_BASECHANCE", 10, 0, 100);
+	gGameExternalOptions.ubPrisonerProcessInfoDetectChance	= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_INFO_DETECT_CHANCE", 5, 0, 100);
+	gGameExternalOptions.ubPrisonerProcessInfoNumberChance	= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_INFO_NUMBER_CHANCE", 30, 0, 100);
+	gGameExternalOptions.ubPrisonerProcessInfoDirectionChance	= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_INFO_DIRECTION_CHANCE", 40, 0, 100);
+	gGameExternalOptions.ubPrisonerProcessRansomBaseChance	= iniReader.ReadInteger("Strategic Gameplay Settings","PRISONER_RANSOM_CHANCE", 10, 0, 100);
 
 	// CHRISL: Determine how Skyrider should handle landing in enemy occupied sectors
 	gGameExternalOptions.ubSkyriderHotLZ					= iniReader.ReadInteger("Strategic Gameplay Settings", "ALLOW_SKYRIDER_HOT_LZ", 0);
@@ -1615,6 +1652,9 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fUseDefaultSlots					= iniReader.ReadBoolean("Item Property Settings","USE_DEFAULT_SLOTS_WHEN_MISSING",FALSE);
 	gGameExternalOptions.usAttachmentDropRate				= iniReader.ReadInteger("Item Property Settings","ATTACHMENT_DROP_RATE",10, 0, 100);
 	gGameExternalOptions.iMaxEnemyAttachments				= iniReader.ReadInteger("Item Property Settings","MAX_ENEMY_ATTACHMENTS",6, 2, MAX_ATTACHMENTS);
+
+	// Flugente: class specific gun choice
+	gGameExternalOptions.fSoldierClassSpecificItemTables	= iniReader.ReadBoolean("Item Property Settings","SOLDIERCLASS_SPECIFIC_ITEM_TABLES", TRUE);
 
 	//################# Strategic Enemy AI Settings ##################
 
@@ -1896,8 +1936,9 @@ void LoadSkillTraitsExternalSettings()
 	gSkillTraitValues.ubMaxNumberOfTraits = iniReader.ReadInteger("Generic Traits Settings","MAX_NUMBER_OF_TRAITS", 3, 2, 30);
 	gSkillTraitValues.ubNumberOfMajorTraitsAllowed = iniReader.ReadInteger("Generic Traits Settings","NUMBER_OF_MAJOR_TRAITS_ALLOWED", 2, 2, 20);
 
-	// Allow an exception in number of traits for Dr.Q?
-	gSkillTraitValues.fAllowDrQTraitsException = iniReader.ReadBoolean("Generic Traits Settings","ALLOW_EXCEPTION_FOR_DR_Q", TRUE); 
+	// Allow an exception in number of traits for Special Merc?
+	gSkillTraitValues.fAllowSpecialMercTraitsException = iniReader.ReadBoolean("Generic Traits Settings","ALLOW_EXCEPTION_FOR_SPECIAL_MERC", TRUE); 
+	gSkillTraitValues.ubSpecialMercID = iniReader.ReadInteger("Generic Traits Settings","SPECIAL_MERC_ID", 33, 0, 254);
 
 	// Allow traits prerequisities for attributes?
 	gSkillTraitValues.fAllowAttributePrereq = iniReader.ReadBoolean("Generic Traits Settings","SET_MINIMUM_ATTRIBUTES_FOR_TRAITS", TRUE); 
@@ -2397,6 +2438,16 @@ void LoadGameAPBPConstants()
 	APBPConstants[AP_INV_TO_BIG_POCKET] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_INV_TO_BIG_POCKET",4),4);
 	APBPConstants[AP_INV_TO_SMALL_POCKET] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_INV_TO_SMALL_POCKET",5),5);
 	APBPConstants[AP_INV_MAX_COST] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_INV_MAX_COST",25),25);
+	APBPConstants[AP_JUMPWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPOFFWALL",40),40);
+	APBPConstants[AP_JUMPOFFWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPWALL",24),24);
+	APBPConstants[AP_FORTIFICATION]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_FORTIFICATION", 250), 250);
+	APBPConstants[AP_REMOVE_FORTIFICATION]			= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_REMOVE_FORTIFICATION", 150), 150);
+	APBPConstants[AP_FILL_SANDBAG]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_FILL_SANDBAG", 200), 200);
+	APBPConstants[AP_EAT]							= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_EAT",80),80);
+	APBPConstants[AP_CLEANINGKIT]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_CLEANINGKIT",80),80);
+	APBPConstants[AP_INVENTORY_EXPLOSIVE_ACTIVATE]	= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_INVENTORY_EXPLOSIVE_ACTIVATE",20),20);
+	APBPConstants[AP_DISGUISE]						= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_DISGUISE",80),80);
+	APBPConstants[AP_HANDCUFF]						= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_HANDCUFF",50),50);
 
 	APBPConstants[DEFAULT_APS] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","DEFAULT_APS",80),80);
 	APBPConstants[DEFAULT_AIMSKILL] = iniReader.ReadInteger("APConstants","DEFAULT_AIMSKILL",80);
@@ -2447,20 +2498,14 @@ void LoadGameAPBPConstants()
 	APBPConstants[BP_JUMP_OVER] = iniReader.ReadInteger("BPConstants","BP_JUMP_OVER",250);
 	APBPConstants[BP_BACK_PACK] = iniReader.ReadInteger("APConstants","BP_JUMP_OVER",50);
 	APBPConstants[BP_WORK_ZIPPER] = iniReader.ReadInteger("APConstants","BP_WORK_ZIPPER",250);
-	APBPConstants[BP_UNJAM] = iniReader.ReadInteger("APConstants","BP_WORK_ZIPPER",0);
-	
+	APBPConstants[BP_UNJAM] = iniReader.ReadInteger("APConstants","BP_WORK_ZIPPER",0);	
 	APBPConstants[BP_JUMPOFFWALL] = iniReader.ReadInteger("BPConstants","BP_JUMPOFFWALL",250);
 	APBPConstants[BP_JUMPWALL] = iniReader.ReadInteger("BPConstants","BP_JUMPWALL",500);
-	
-	APBPConstants[AP_JUMPWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPOFFWALL",40),40);
-	APBPConstants[AP_JUMPOFFWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPWALL",24),24);
-
-	APBPConstants[AP_FORTIFICATION]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_FORTIFICATION",80),80);
-	APBPConstants[AP_EAT]							= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_EAT",80),80);
-	APBPConstants[AP_CLEANINGKIT]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_CLEANINGKIT",80),80);
-	APBPConstants[AP_INVENTORY_EXPLOSIVE_ACTIVATE]	= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_INVENTORY_EXPLOSIVE_ACTIVATE",20),20);
-	APBPConstants[AP_DISGUISE]						= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_DISGUISE",80),80);
-
+	APBPConstants[BP_FORTIFICATION]					= iniReader.ReadInteger("BPConstants","BP_FORTIFICATION", 700);
+	APBPConstants[BP_REMOVE_FORTIFICATION]			= iniReader.ReadInteger("BPConstants","BP_REMOVE_FORTIFICATION", 400);
+	APBPConstants[BP_FILL_SANDBAG]					= iniReader.ReadInteger("BPConstants","BP_FILL_SANDBAG", 500);
+	APBPConstants[BP_HANDCUFF]						= iniReader.ReadInteger("BPConstants","BP_HANDCUFF", 100);
+			
 	SetupMaxActionPointsAnimation();
 #undef ReadInteger
 }

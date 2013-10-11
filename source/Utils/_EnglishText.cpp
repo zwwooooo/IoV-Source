@@ -1635,13 +1635,14 @@ STR16 pAssignmentStrings[] =
 	L"In Trans", // in transit - abbreviated form
 	L"Repair", // repairing
 	L"Practice", // training themselves  
-  L"Militia", // training a town to revolt 
+	L"Militia", // training a town to revolt 
 	L"M.Militia", //training moving militia units
 	L"Trainer", // training a teammate
 	L"Student", // being trained by someone else 
 	L"Staff", // operating a strategic facility
 	L"Eat",		// eating at a facility (cantina etc.)
 	L"Rest", // Resting at a facility
+	L"Prison",		// Flugente: interrogate prisoners
 	L"Dead", // dead
 	L"Incap.", // abbreviation for incapacitated
 	L"POW", // Prisoner of war - captured
@@ -1727,6 +1728,7 @@ STR16 pPersonnelAssignmentStrings[] =
 	L"Facility Staff",	// Missing
 	L"Eat",		// eating at a facility (cantina etc.)
 	L"Resting at Facility",		// Missing
+	L"Interrogate prisoners",		// Flugente: interrogate prisoners
 	L"Dead",
 	L"Incap.",
 	L"POW",
@@ -1772,6 +1774,7 @@ STR16 pLongAssignmentStrings[] =
 	L"Student",
 	L"Staff Facility",	// Missing
 	L"Rest at Facility",	// Missing
+	L"Interrogate prisoners",		// Flugente: interrogate prisoners
 	L"Dead",
 	L"Incap.",
 	L"POW",
@@ -1796,7 +1799,7 @@ STR16 pContractStrings[] =
 STR16 pPOWStrings[] =
 {
 	L"POW",  //an acronym for Prisoner of War
-	L" ± ± ",
+	L"??",
 };
 
 STR16 pLongAttributeStrings[] =
@@ -1831,8 +1834,8 @@ STR16 pShortAttributeStrings[] =
 	L"Wis", // wisdom
 	L"Lvl", // experience level
 	L"Mrk", // marksmanship skill
-	L"Exp", // explosive skill
 	L"Mec", // mechanical skill
+	L"Exp", // explosive skill
 	L"Med", // medical skill
 };
 
@@ -2592,12 +2595,13 @@ CHAR16 gMoneyStatsDesc[][ 14 ] =
 CHAR16 zHealthStr[][13] =
 {
 	L"DYING",		//	>= 0
-	L"CRITICAL", 		//	>= 15
+	L"CRITICAL", 	//	>= 15
 	L"POOR",		//	>= 30
 	L"WOUNDED",    	//	>= 45
 	L"HEALTHY",    	//	>= 60
 	L"STRONG",     	// 	>= 75
-  L"EXCELLENT",		// 	>= 90
+	L"EXCELLENT",	// 	>= 90
+	L"CAPTURED",	// added by Flugente
 };
 
 STR16 gzHiddenHitCountStr[1] =
@@ -2903,13 +2907,29 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Health: %d/%d\nPoison: %d/%d\nEnergy: %d/%d\nMorale: %s\nWater: %d%s\nFood: %d%s",
 
 	// added by Flugente: selection of a function to call in tactical
-	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Take off clothes",
+	L"What do you want to do?",
+	L"Fill canteens",
+	L"Clean gun",
+	L"Clean all guns",
+	L"Take off clothes",
 
 	// added by Flugente: decide what to do with the corpses
-	L"1 - Decapitate 2 - Gut 3 - Take Clothes 4 - Take Body",
+	L"What do you want to do with the body?",
+	L"Decapitate",
+	L"Gut",
+	L"Take Clothes",
+	L"Take Body",
 
 	// Flugente: weapon cleaning
 	L"%s cleaned %s",
+
+	// added by Flugente: decide what to do with prisoners
+	L"You have no prison for these prisoners, you have to let them go",
+	L"Yes - Send prisoners to jail      No - Let them go",
+	L"What do you want to do?",
+	L"Demand surrender",
+	L"Offer surrender",
+	L"Talk",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -3408,6 +3428,7 @@ STR16 pTransactionText[] =
 	L"Sold Item(s) to the Locals",
 	L"Facility Use", // HEADROCK HAM 3.6
 	L"Militia upkeep", // HEADROCK HAM 3.6
+	L"Ransom for released prisoners",	// Flugente: prisoner system
 };
 
 STR16 pTransactionAlternateText[] =
@@ -4191,11 +4212,15 @@ STR16			MercInfo[] =
 	L"Home",
 	L"Hired",
 	L"Salary:",
-	L"Per Day",
+	L"per Day",
+	L"Gear:",
+	L"Total:",
 	L"Deceased",
 
 	L"Looks like you're trying to hire too many mercs. Your limit is 18.",
-	L"Unavailable",											
+	L"Buy Equipment?",
+	L"Unavailable",
+	L"Unsettled Bills",
 	L"Bio",
 	L"Inv",
 };
@@ -4467,6 +4492,10 @@ STR16			BobbyRText[] =
 	L"Rng:",			// The range of the gun
 	L"Dam:",			// Damage of the weapon	
 	L"ROF:",			// Weapon's Rate Of Fire, acronym ROF
+	L"AP:",				// Weapon's Action Points, acronym AP
+	L"Stun:",			// Weapon's Stun Damage
+	L"Protect:",		// Armour's Protection
+	L"Camo:",			// Armour's Camouflage
 	L"Cost:",			// Cost of the item
 	L"In stock:",			// The number of items still in the store's inventory
 	L"Qty on Order:",		// The number of items on order
@@ -5117,6 +5146,7 @@ STR16		zOptionsToggleText[] =
 	L"Enable inventory popups",				// the_bob : enable popups for picking items from sector inv
 	L"Mark Remaining Hostiles",
 	L"Show LBE Content",
+	L"Invert mouse wheel",
 	L"--Cheat Mode Options--",				// TOPTION_CHEAT_MODE_OPTIONS_HEADER,
 	L"Force Bobby Ray shipments",			// force all pending Bobby Ray shipments
 	L"-----------------",					// TOPTION_CHEAT_MODE_OPTIONS_END
@@ -5232,6 +5262,7 @@ STR16	zOptionsScreenHelpText[] =
 	L"When ON, enables popup boxes that appear when you left click on empty merc inventory slots while viewing sector inventory in mapscreen.",
 	L"When ON, approximate locations of the last enemies in the sector are highlighted.",
 	L"When ON, show the contents of an LBE item, otherwise show the regular NAS interface.",
+	L"When ON, inverts mouse wheel directions.",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_HEADER",
 	L"Force all pending Bobby Ray shipments",
 	L"(text not rendered)TOPTION_CHEAT_MODE_OPTIONS_END",
@@ -6693,6 +6724,7 @@ STR16 gzFacilityAssignmentStrings[]=
 	L"Trainer Mechanical",
 	L"Trainer Leadership",
 	L"Trainer Explosives",
+	L"Interrogate Prisoners",	// added by Flugente
 };
 STR16 Additional113Text[]=
 {
@@ -6956,7 +6988,7 @@ STR16 szUDBGenAmmoStatsTooltipText[]=
 
 STR16 szUDBGenAmmoStatsExplanationsTooltipText[]=
 {
-	L"\n \nThis is the bullet's ability to penetrate\na target's armor.\n \nWhen above 1.0, the bullet proportionally\nreduces the Protection value of any\narmor it hits.\n \nWhen below 1.0, the bullet increases the\nprotection value of the armor instead.\n \nHigher is better.",
+	L"\n \nThis is the bullet's ability to penetrate\na target's armor.\n \nWhen below 1.0, the bullet proportionally\nreduces the Protection value of any\narmor it hits.\n \nWhen above 1.0, the bullet increases the\nprotection value of the armor instead.\n \nLower is better.",
 	L"\n \nDetermines a proportional increase of damage\npotential once the bullet gets through the\ntarget's armor and hits the bodypart behind it.\n \nWhen above 1.0, the bullet's damage\nincreases after penetrating the armor.\n \nWhen below 1.0, the bullet's damage\npotential decreases after passing through armor.\n \nHigher is better.",
 	L"\n \nA multiplier to the bullet's damage potential\nthat is applied immediately before hitting the\ntarget.\n \nValues above 1.0 indicate an increase in damage,\nvalues below 1.0 indicate a decrease.\n \nHigher is better.",
 	L"\n \nAdditional heat generated by this ammunition.\n \nLower is better.",
@@ -7402,28 +7434,33 @@ STR16	szCovertTextStr[]=
 	L"%s has camo!",
 	L"%s has a backpack!",
 	L"%s is seen carrying a corpse!",
-	L"%s wears suspicious LBE gear!",
-	L"%s possesses military hardware!",
+	L"%s's %s is suspicious!",
+	L"%s's %s is considered military hardware!",
 	L"%s carries too many guns!",
-	L"%s equipment is too good!",
-	L"%s gun has too many attachments!",
+	L"%s's %s is too advanced for an arulcan soldier!",
+	L"%s's %s has too many attachments!",
 	L"%s was seen performing suspicious activities!",
 	L"%s does not look like a civilian!",
 	L"%s bleeding was discovered!",
-	L"%s is drunk and doesn't look like a soldier!",
+	L"%s is drunk and doesn't behave like a soldier!",
 	L"On closer inspection, %s's disguise does not hold!",
 	L"%s isn't supposed to be here!",
 	L"%s isn't supposed to be here at this time!",
 	L"%s was seen near a fresh corpse!",
 	L"%s equipment raises a few eyebrows!",
-	L"%s is seen targeting a soldier!",
-	L"%s has seen through %s disguise!",
+	L"%s is seen targetting %s!",
+	L"%s has seen through %s's disguise!",
 	L"No clothes item found in Items.xml!",
 	L"This does not work with the old trait system!",
-	L"Not enough Aps!",
+	L"Not enough APs!",
 	L"Bad palette found!",
 	L"You need the covert skill to do this!",
 	L"No uniform found!",
+	L"%s is now disguised as a civilian.",
+	L"%s is now disguised as a soldier.",
+	L"%s wears a disorderly uniform!",
+	L"In retrospect, asking for surrender in disguise wasn't the best idea...",
+	L"%s was uncovered!",
 };
 
 STR16	szCorpseTextStr[]=
@@ -7455,6 +7492,30 @@ STR16	szFoodTextStr[]=
 	L"%s's health was damaged due to excessive drinking!",
 	L"%s's health was damaged due to lack of water!",
 	L"Sectorwide canteen filling not possible, Food System is off!"
+};
+
+STR16	szPrisonerTextStr[]=
+{
+	L"%d prisoners were interrogated.",
+	L"%d prisoners paid ransom money.",
+	L"%d prisoners revealed enemy positions.",
+	L"%d prisoners joined our cause.",
+	L"Prisoners start a massive riot in %s!",
+	L"Prisoners were sent to %s!",
+	L"Prisoners have been released!",
+	L"The army now occupies the prison in %s, the prisoners were freed!",
+	L"The enemy refuses to surrender!",
+	L"The enemy refuses to take you as prisoners - they prefer you dead!",
+	L"This behaviour is set OFF in your ini settings.",
+};
+
+STR16	szMTATextStr[]=
+{
+	L"nothing",
+	L"building a fortification",
+	L"removing a fortification",
+	L"filling sandbags",
+	L"%s had to stop %s.",
 };
 
 //kenkenkenken: IoV921+z.5b2b3 --> | >>2012.09.24 rewrite by zwwooooo

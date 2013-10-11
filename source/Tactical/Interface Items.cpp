@@ -176,8 +176,8 @@ INT16		ITEMDESC_DONE_Y;
 #define		ITEMDESC_ITEM_WIDTH			117
 #define		ITEMDESC_ITEM_HEIGHT		54
 
-#define		ITEMDESC_AMMO_TEXT_X	3
-#define		ITEMDESC_AMMO_TEXT_Y	1
+#define		ITEMDESC_AMMO_TEXT_X	2
+#define		ITEMDESC_AMMO_TEXT_Y	3
 #define		ITEMDESC_AMMO_TEXT_WIDTH 31
 
 #define		WORD_WRAP_INV_WIDTH			58
@@ -3530,13 +3530,13 @@ void RenderPocketItemCapacity( UINT32 uiWhichBuffer, INT8 pCapacity, INT16 bPos,
 	// Setup display parameters
 	SetFont( ITEM_FONT );
 	SetFontBackground( FONT_MCOLOR_BLACK );
-	SetFontForeground( FONT_RED );
+	SetFontForeground( FONT_LTRED );
 	if(pSoldier == NULL || (pCapacity != 0 && CanItemFitInPosition(pSoldier, gpItemPointer, (INT8)bPos, FALSE)))
 	{
 		// Adjust capacity to account for current items
 		if(gpItemPointer->usItem == pObj->usItem)
 		{
-			SetFontForeground( FONT_GREEN );
+			SetFontForeground( FONT_LTGREEN );
 			pCapacity = pCapacity - pObj->ubNumberOfObjects;
 			if(pCapacity > 0)
 				swprintf( pStr, L"+%d", pCapacity );
@@ -3949,7 +3949,7 @@ void INVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pObjec
 				
 				if ( pSoldier->bScopeMode == USE_ALT_WEAPON_HOLD )
 				{		
-					BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoAdvancedIcon, 55, sNewX, sNewY, VO_BLT_TRANSSHADOW, NULL );
+					BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoAdvancedIcon, 56, sNewX, sNewY, VO_BLT_TRANSSHADOW, NULL );
 
 					SetFontForeground( FONT_ORANGE );
 			
@@ -4415,7 +4415,7 @@ void MAPINVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pOb
 
 		// Set font properties
 		SetFontForeground( FONT_GRAY4 );
-		SetFont( TINYFONT1 );
+		SetFont( SMALLFONT1 );
 
 		// Find difference in width and height.
 		INT16 sFontHeightDifference = 1;
@@ -4497,7 +4497,7 @@ void MAPINVRenderItem( UINT32 uiBuffer, SOLDIERTYPE * pSoldier, OBJECTTYPE  *pOb
 
 		// Set font properties
 		SetFontForeground( FONT_GRAY4 );
-		SetFont( TINYFONT1 );
+		SetFont( SMALLFONT1 );
 
 		// Find difference in width and height.
 		INT16 sFontHeightDifference = 1;
@@ -5050,7 +5050,7 @@ BOOLEAN InternalInitItemDescriptionBox( OBJECTTYPE *pObject, INT16 sX, INT16 sY,
 		if( guiCurrentItemDescriptionScreen == MAP_SCREEN )
 		{
 			// in mapscreen, move over a bit
-			giItemDescAmmoButton = CreateIconAndTextButton( giItemDescAmmoButtonImages, pStr, TINYFONT1,
+			giItemDescAmmoButton = CreateIconAndTextButton( giItemDescAmmoButtonImages, pStr, BLOCKFONTNARROW,
 															 sForeColour, FONT_MCOLOR_BLACK,
 															 sForeColour, FONT_MCOLOR_BLACK,
 															 TEXT_CJUSTIFIED,
@@ -5062,7 +5062,7 @@ BOOLEAN InternalInitItemDescriptionBox( OBJECTTYPE *pObject, INT16 sX, INT16 sY,
 		{
 
 			// not in mapscreen
-			giItemDescAmmoButton = CreateIconAndTextButton( giItemDescAmmoButtonImages, pStr, TINYFONT1,
+			giItemDescAmmoButton = CreateIconAndTextButton( giItemDescAmmoButtonImages, pStr, BLOCKFONTNARROW,
 															 sForeColour, FONT_MCOLOR_BLACK,
 															 sForeColour, FONT_MCOLOR_BLACK,
 															 TEXT_CJUSTIFIED,
@@ -5084,7 +5084,7 @@ BOOLEAN InternalInitItemDescriptionBox( OBJECTTYPE *pObject, INT16 sX, INT16 sY,
 			MSYS_SetBtnUserData( giItemDescAmmoButton, 1, ubStatusIndex );
 		}
 
-		FindFontCenterCoordinates( (INT16)ITEMDESC_AMMO_TEXT_X, (INT16)ITEMDESC_AMMO_TEXT_Y, ITEMDESC_AMMO_TEXT_WIDTH, GetFontHeight( TINYFONT1 ), pStr, TINYFONT1, &usX, &usY);
+		FindFontCenterCoordinates( (INT16)ITEMDESC_AMMO_TEXT_X, (INT16)ITEMDESC_AMMO_TEXT_Y, ITEMDESC_AMMO_TEXT_WIDTH, GetFontHeight( BLOCKFONTNARROW ), pStr, BLOCKFONTNARROW, &usX, &usY);
 
 		SpecifyButtonTextOffsets( giItemDescAmmoButton, (UINT8) usX, (UINT8) usY, TRUE );
 
@@ -7281,7 +7281,10 @@ void RenderItemDescriptionBox( )
 				swprintf( pStr, L"%ld", gRemoveMoney.uiMoneyRemaining );
 				InsertCommasForDollarFigure( pStr );
 				InsertDollarSignInToString( pStr );
-				FindFontRightCoordinates( gMoneyStats[ 4 ].sX + 50, gMoneyStats[ 4 ].sY, ITEM_STATS_WIDTH ,ITEM_STATS_HEIGHT ,pStr, BLOCKFONT2, &usX, &usY);
+				if (UsingNewInventorySystem() == true)
+					FindFontRightCoordinates( gMoneyStats[ 4 ].sX + 50, gMoneyStats[ 4 ].sY, ITEM_STATS_WIDTH ,ITEM_STATS_HEIGHT ,pStr, BLOCKFONT2, &usX, &usY);
+				else
+					FindFontRightCoordinates( gMoneyStats[ 4 ].sX + 5, gMoneyStats[ 4 ].sY, ITEM_STATS_WIDTH ,ITEM_STATS_HEIGHT ,pStr, BLOCKFONT2, &usX, &usY);
 				mprintf( usX, usY, pStr );
 
 				//Display the total amount of money removing
@@ -7289,7 +7292,10 @@ void RenderItemDescriptionBox( )
 				swprintf( pStr, L"%ld", gRemoveMoney.uiMoneyRemoving );
 				InsertCommasForDollarFigure( pStr );
 				InsertDollarSignInToString( pStr );
-				FindFontRightCoordinates( gMoneyStats[ 5 ].sX + 50, gMoneyStats[ 5 ].sY, ITEM_STATS_WIDTH ,ITEM_STATS_HEIGHT ,pStr, BLOCKFONT2, &usX, &usY);
+				if (UsingNewInventorySystem() == true)
+					FindFontRightCoordinates( gMoneyStats[ 5 ].sX + 50, gMoneyStats[ 5 ].sY, ITEM_STATS_WIDTH ,ITEM_STATS_HEIGHT ,pStr, BLOCKFONT2, &usX, &usY);
+				else
+					FindFontRightCoordinates( gMoneyStats[ 5 ].sX + 5, gMoneyStats[ 5 ].sY, ITEM_STATS_WIDTH ,ITEM_STATS_HEIGHT ,pStr, BLOCKFONT2, &usX, &usY);
 				mprintf( usX, usY, pStr );
 			}
 			else
@@ -11819,9 +11825,9 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 				if ( gGameExternalOptions.fAdvRepairSystem && gGameExternalOptions.fDirtSystem && ( sThreshold < 100 || bDirt > 0 ) )
 				{
 					#ifdef CHINESE
-						swprintf( pStr, L"%s [%d%ге(%d%ге)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n %s %.2f%%",
+						swprintf( pStr, L"%s [%d%ге(%d%ге)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n %s %.2f%%",
 					#else
-						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n%s %.2f%%",
+						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n%s %.2f%%",
 					#endif
 
 					ItemNames[ usItem ],
@@ -11835,6 +11841,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
 					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
 					apStr,						//AP's
 					gWeaponStatsDesc[ 12 ],		//Weight String
 					fWeight,					//Weight
@@ -11846,9 +11853,9 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 				else if ( gGameExternalOptions.fAdvRepairSystem && sThreshold < 100 )
 				{
 					#ifdef CHINESE
-						swprintf( pStr, L"%s [%d%ге(%d%ге)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
+						swprintf( pStr, L"%s [%d%ге(%d%ге)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s",
 					#else
-						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
+						swprintf( pStr, L"%s [%d%%(%d%%)]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s",
 					#endif
 
 					ItemNames[ usItem ],
@@ -11862,6 +11869,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
 					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
 					apStr,						//AP's
 					gWeaponStatsDesc[ 12 ],		//Weight String
 					fWeight,					//Weight
@@ -11871,9 +11879,9 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 				else if ( gGameExternalOptions.fDirtSystem && bDirt > 0 )
 				{
 					#ifdef CHINESE
-						swprintf( pStr, L"%s [%d%ге]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n %s %.2f%%",
+						swprintf( pStr, L"%s [%d%ге]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n %s %.2f%%",
 					#else
-						swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s\n%s %.2f%%",
+						swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s\n%s %.2f%%",
 					#endif
 
 					ItemNames[ usItem ],
@@ -11886,6 +11894,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
 					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
 					apStr,						//AP's
 					gWeaponStatsDesc[ 12 ],		//Weight String
 					fWeight,					//Weight
@@ -11897,9 +11906,9 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 				else
 				{
 					#ifdef CHINESE
-						swprintf( pStr, L"%s [%d%ге]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
+						swprintf( pStr, L"%s [%d%ге]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s",
 					#else
-						swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s %s\n%s %1.1f %s",
+						swprintf( pStr, L"%s [%d%%]\n%s %d\n%s %d\n%s %d (%d)\n%s (%d) %s\n%s %1.1f %s",
 					#endif
 
 					ItemNames[ usItem ],
@@ -11912,6 +11921,7 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GunRange( pObject, NULL )/10 : GunRange( pObject, NULL ),	 // SANDRO - added argument		//Modified Range
 					gGameSettings.fOptions[ TOPTION_SHOW_WEAPON_RANGE_IN_TILES ] ? GetModifiedGunRange(usItem)/10 : GetModifiedGunRange(usItem),	//Gun Range
 					gWeaponStatsDesc[ 6 ],		//AP String
+					(Weapon[ usItem ].ubReadyTime * (100 - GetPercentReadyTimeAPReduction( pObject )) / 100),    // Ready AP's
 					apStr,						//AP's
 					gWeaponStatsDesc[ 12 ],		//Weight String
 					fWeight,					//Weight
@@ -13131,13 +13141,30 @@ void TransformationMenuPopup_Arm( OBJECTTYPE* pObj )
 		}
 		else if ( HasAttachmentOfClass( gpItemDescObject, (AC_DEFUSE ) ) )
 		{
+			wcscpy( gzUserDefinedButton[0], L"1-A" );
+			wcscpy( gzUserDefinedButton[1], L"1-B" );
+			wcscpy( gzUserDefinedButton[2], L"1-C" );
+			wcscpy( gzUserDefinedButton[3], L"1-D" );
+			wcscpy( gzUserDefinedButton[4], L"2-A" );
+			wcscpy( gzUserDefinedButton[5], L"2-B" );
+			wcscpy( gzUserDefinedButton[6], L"2-C" );
+			wcscpy( gzUserDefinedButton[7], L"2-D" );
+			wcscpy( gzUserDefinedButton[8], L"3-A" );
+			wcscpy( gzUserDefinedButton[9], L"3-B" );
+			wcscpy( gzUserDefinedButton[10], L"3-C" );
+			wcscpy( gzUserDefinedButton[11], L"3-D" );
+			wcscpy( gzUserDefinedButton[12], L"4-A" );
+			wcscpy( gzUserDefinedButton[13], L"4-B" );
+			wcscpy( gzUserDefinedButton[14], L"4-C" );
+			wcscpy( gzUserDefinedButton[15], L"4-D" );
+
 			if ( HasAttachmentOfClass( gpItemDescObject, (AC_DETONATOR ) ) )
 			{
-				DoMessageBox( MSG_BOX_BASIC_SMALL_BUTTONS, TacticalStr[ CHOOSE_DETONATE_AND_REMOTE_DEFUSE_FREQUENCY_STR ], screen, MSG_BOX_FLAG_SIXTEEN_NUMBERED_BUTTONS, BombInventoryMessageBoxCallBack, NULL );
+				DoMessageBox( MSG_BOX_BASIC_SMALL_BUTTONS, TacticalStr[ CHOOSE_DETONATE_AND_REMOTE_DEFUSE_FREQUENCY_STR ], screen, MSG_BOX_FLAG_GENERIC_SIXTEEN_BUTTONS, BombInventoryMessageBoxCallBack, NULL );
 			}
 			else if ( HasAttachmentOfClass( gpItemDescObject, (AC_REMOTEDET ) ) )
 			{
-				DoMessageBox( MSG_BOX_BASIC_SMALL_BUTTONS,  TacticalStr[ CHOOSE_REMOTE_DETONATE_AND_REMOTE_DEFUSE_FREQUENCY_STR ], screen, MSG_BOX_FLAG_SIXTEEN_NUMBERED_BUTTONS, BombInventoryMessageBoxCallBack, NULL );
+				DoMessageBox( MSG_BOX_BASIC_SMALL_BUTTONS, TacticalStr[ CHOOSE_REMOTE_DETONATE_AND_REMOTE_DEFUSE_FREQUENCY_STR ], screen, MSG_BOX_FLAG_GENERIC_SIXTEEN_BUTTONS, BombInventoryMessageBoxCallBack, NULL );
 			}
 		}
 		else if ( HasAttachmentOfClass( gpItemDescObject, (AC_DETONATOR ) ) )

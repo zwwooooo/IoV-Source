@@ -601,10 +601,11 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 
 				// ATE: if it's the begin cower animation, unset ui, cause it could
 				// be from player changin stance
-				if ( pSoldier->usAnimState == START_COWER )
+				if ( pSoldier->usAnimState == START_COWER || pSoldier->usAnimState == START_COWER_CROUCHED || pSoldier->usAnimState == START_COWER_PRONE )
 				{
 					UnSetUIBusy( pSoldier->ubID );
-				}
+				} 
+
 				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				// SANDRO - if pending interrupt flag was set for after-attack type of interupt, try to resolve it now
 				else if ( gGameOptions.fImprovedInterruptSystem )
@@ -1803,6 +1804,26 @@ BOOLEAN AdjustToNextAnimationFrame( SOLDIERTYPE *pSoldier )
 											if ( pSoldier->aiData.bOppCnt > 0 )
 											{
 												continue;
+											}
+										}
+										
+										// If it is lookaround animation, don't play it if we see at least one enemy
+										if ( pAnimDef->ubFlags & RANDOM_ANIM_SHOWOFF )
+										{
+											// enemy on sight, don't pretend we don't see him!
+											if ( pSoldier->ubProfile != NO_PROFILE )
+											{
+												if ( gMercProfiles[ pSoldier->ubProfile ].bCharacterTrait != CHAR_TRAIT_SHOWOFF && Random( 10 ) < 9 )
+												{
+													continue;
+												}
+											}
+											else 
+											{
+												if ( Random( 10 ) < 7 )
+												{
+													continue;
+												}
 											}
 										}
 
