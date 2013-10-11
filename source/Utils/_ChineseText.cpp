@@ -870,7 +870,7 @@ STR16 pPasteMercPlacementText[] =
 {
 	L"Placement not pasted as no placement is saved in buffer.",
 	L"Placement pasted.",
-	L"Placement not pasted as the maximum number of placements for this team is reached.",
+	L"Placement not pasted as the maximum number of placements for this team has been reached.",
 };
 
 //editscreen.cpp
@@ -2104,37 +2104,39 @@ STR16 gzMercSkillText[] =
 STR16 gzMercSkillTextNew[] = 
 {
 	// Major traits
-	L"没有技能",
+	L"没有技能",		// 0
 	L"自动武器",
 	L"重武器",
 	L"神枪手",
 	L"猎兵",
-	L"快枪手",
+	L"快枪手",		// 5
 	L"格斗家",
 	L"班副",
 	L"技师",
 	L"救护兵",
+	L"Covert Ops",		// 10
 	// Minor traits
 	L"双持",
 	L"近战",
 	L"投掷",
 	L"夜战",
-	L"潜行",
+	L"潜行",		// 15
 	L"运动员",
 	L"健身",
 	L"爆破",
 	L"教学",
-	L"侦察",
+	L"侦察",		// 20
 	// second names for major skills
 	L"机枪手",
 	L"掷弹兵",
 	L"狙击手",
 	L"游骑兵",
-	L"枪斗术",
+	L"枪斗术",		// 25
 	L"武术家",
 	L"班长",
 	L"工兵",
 	L"军医",
+	L"间谍",				// 30
 	L"更多...",
 };
 //////////////////////////////////////////////////////////
@@ -2444,7 +2446,7 @@ STR16 sKeyDescriptionStrings[2] =
 
 //The headers used to describe various weapon statistics.
 
-CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from 17 to 28. 2012/08/18 modify: 19~29
+CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from 18 to 28. 2012/08/18 modify: 19~29
 {
 	// HEADROCK: Changed this for Extended Description project
 	L"状态: ",
@@ -2488,6 +2490,7 @@ CHAR16		gWeaponStatsDesc[][ 29 ] = //kenkenkenken: IoV921+z.5 Altered value from
 // HEADROCK: Several arrays of tooltip text for new Extended Description Box
 // Please note, several of these are artificially inflated to 19 entries to help fix a complication with
 // changing item type while watching its description box
+// HEADROCK HAM 5: Apparently this isn't used anymore... see the next array.
 STR16		gzWeaponStatsFasthelp[ 32 ] =
 {
 	L"精度",
@@ -2546,10 +2549,11 @@ STR16		gzWeaponStatsFasthelpTactical[ 32 ] =
 	L"连发AP",
 	L"上弹AP",
 	L"手动上弹AP",
-	L"",	//19
-	L"两脚架修正",
+	L"点射惩罚（越低越好）",	//19
+	L"脚架修正",
 	L"连发数量/5AP",
-	L"点射/自动惩罚（越低越好）",	//22
+	L"连发惩罚（越低越好）",
+	L"点射/连发惩罚（越低越好",	//23
 	L"投掷AP",	//20
 	L"发射AP",
 	L"捅人AP",
@@ -2557,8 +2561,7 @@ STR16		gzWeaponStatsFasthelpTactical[ 32 ] =
 	L"无点射模式！",
 	L"无连发模式！",
 	L"格斗AP",
-	L"连发惩罚（越低越好）",
-    L"点射惩罚（越低越好）",
+    L"",
 };
 
 STR16		gzMiscItemStatsFasthelp[ 34 ] =
@@ -2947,7 +2950,10 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"生命: %d/%d\n毒性: %d/%d\n精力: %d/%d\n士气: %s\n口渴: %d%s\n饥饿: %d%s",
 
 	// added by Flugente: selection of a function to call in tactical
-	L"1 - Fill Canteens 2 - Clean Weapons 3,4 - Nothing",	// TODO.Translate
+	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Nothing",	// TODO.Translate
+
+	// added by Flugente: decide what to do with the corpses
+	L"1 - Decapitate 2 - Gut 3 - Take Clothes 4 - Take Body",	// TODO.Translate
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -3224,8 +3230,6 @@ STR16 pMapScreenInvenButtonHelpText[] =
 	L"下一页 (|.)",		// next page
 	L"上一页 (|,)",		// previous page
 	L"离开 (|E|s|c)",	// exit sector inventory
-
-	// TODO.Translate
 	L"放大", // HEAROCK HAM 5: Inventory Zoom Button
 	L"合并堆叠同类的物品", // HEADROCK HAM 5: Stack and Merge
 	L"|L|e|f|t |C|l|i|c|k: 将子弹分类装入弹箱\n|R|i|g|h|t |C|l|i|c|k: 将子弹分类装入纸盒", // HEADROCK HAM 5: Sort ammo
@@ -4236,6 +4240,8 @@ STR16			MercInfo[] =
 
 	L"看起来你雇佣了太多的佣兵。最多只能雇18人。",	//"Looks like you're trying to hire too many mercs. Your limit is 18.",
 	L"不可雇佣",	//"Unavailable",
+	L"Bio", //TODO.Translate
+	L"Inv",
 };
 
 
@@ -4976,6 +4982,7 @@ STR16			zSaveLoadText[] =
 #else
 	L"试图载入老版本的存档。你要自动更新并载入存档吗？",
 #endif
+
 	L"你确认你要将#%d位置的存档覆盖吗?",
 	L"你要从#号位置载入存档吗",
 
@@ -5137,6 +5144,7 @@ STR16		zOptionsToggleText[] =
 #ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"自动加速敌军回合",			// Automatic fast forward through AI turns
 #endif
+
 #ifdef ENABLE_ZOMBIES
 	L"僵尸模式",
 #endif
@@ -5273,7 +5281,6 @@ STR16	zOptionsScreenHelpText[] =
 	L"尝试在鼠标周围地区显示斜线矩形", // an example of a DEBUG build option
 	L"(text not rendered)TOPTION_DEBUG_MODE_OPTIONS_END", // an example options screen options divider (pure text)
 
-
 	// this is THE LAST option that exists (debug the options screen, doesnt do anything, except exist)
 	L"TOPTION_LAST_OPTION",
 };
@@ -5360,6 +5367,7 @@ STR16	gzGIOScreenText[] =
 	L"10",
 	//L"Bobby Ray 快速出货", //L"Faster Bobby Ray Shipments",
 	L"战斗时取放物品消耗AP", //L"Inventory Manipulation Costs AP",
+	
 	L"新命中率系统（NCTH）", //L"New Chance to Hit System",
 	L"改进的中断系统（IIS）", //L"Improved Interrupt System",
 	L"武器过热", //L"Weapon Overheating",
@@ -6205,7 +6213,6 @@ STR16 New113HAMMessage[] =
 	L"日常支出",// L"Daily Expenses",
 	// 21 - 25
 	L"维持民兵的资金不足！%d 名民兵回老家结婚去了。",// L"Insufficient funds to pay all enlisted militia! %d militia have disbanded and returned home.",
-
 	// TODO.Translate
 	L"To examine an item's stats during combat, you must pick it up manually first.", // HAM 5
 	L"To attach an item to another item during combat, you must pick them both up first.", // HAM 5
@@ -6314,6 +6321,8 @@ STR16 MissingIMPSkillsDescriptions[] =
 	L"爆破：播种手雷，深埋炸弹，看羊羔飞。这就是你的生活！ ± ",
 	// Scouting
 	L"侦查：没有什么东西你觉察不到！ ± ",
+	// Covert ops // TODO.Translate
+	L"Covert Operations: You make 007 look like an amateur! ± ",
 };
 
 STR16 NewInvMessage[] = 
@@ -6436,7 +6445,7 @@ STR16 MPClientMessage[] =
 	L"你击毙了一个敌人。",
 	L"无法启动游戏，因为所有小队都一样。",	//L"Cannot start the game, because all teams are the same.",
 	L"The server has choosen New Inventory (NIV), but your screen resolution does not support NIV.",
-	// 70	
+	// 70
 	L"Could not save received file '%S'",
 	L"%s's bomb was disarmed by %s",
 	L"You loose, what a shame",	// All over red rover
@@ -6447,7 +6456,7 @@ STR16 MPClientMessage[] =
 	L"Client failed to start. Terminating.",
 	L"Client disconnected and shutdown.",
 	L"Client is not running.",
-	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",
+	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",	
 };
 
 STR16 gszMPEdgesText[] =
@@ -6987,7 +6996,7 @@ STR16 szUDBGenWeaponsStatsExplanationsTooltipText[]=
 	L"\n \n连发模式下，该武器一次\n齐射三发子弹所需的AP。\n \n超过3发子弹，\n则需要额外的AP。\n \n如果该图标发灰，则该武器不可连发。\n \n该数值越低越好。",
 	L"\n \n重新装填子弹所需的AP。\n \n该数值越低越好。",
 	L"\n \n在射击间歇为该武器手动更换弹匣的AP消耗。\n \n该数值越低越好。",
-	L"",	// No longer used!
+	L"\n \nThe distance this weapon's muzzle will shift\nhorizontally between each and every bullet in a\nburst or autofire volley.\n \nPositive numbers indicate shifting to the right.\nNegative numbers indicate shifting to the left.\n \nCloser to 0 is better.", // No longer used
 	L"\n \nThe total distance this weapon's muzzle will shift\nbetween each and every bullet in a burst or\nautofire volley, if no Counter Force is applied.\n \nLower is better.", // HEADROCK HAM 5: Altered to reflect unified number.	// TODO.Translate
 	L"\n \n该参数显示了该武器每多花费5AP在连发模式时\n可多发射的子弹数。\n \n该数值越高越好。",
 };
@@ -7080,6 +7089,7 @@ STR16 szUDBGenExplosiveStatsExplanationsTooltipText[]=
 	// HEADROCK HAM 5: End Fragmentations
 	L"\n \n这是爆破品爆炸时发出的声音能够被佣兵和敌\n军听到的距离（格数）。\n \n听到爆炸声的敌人会察觉到你。\n \n该数值越低越好。",
 	L"\n \n这个数值代表该爆破品受到伤害时（如其他爆破品在\n近处爆炸）自身爆炸的几率（100以内）。\n \n因此携带高挥发性爆破品进入战斗极其危险，\n应当极力避免。\n \n数值范围：0~100，越低越好。",
+	
 };
 
 STR16 szUDBGenSecondaryStatsTooltipText[]=
@@ -7115,6 +7125,7 @@ STR16 szUDBGenSecondaryStatsTooltipText[]=
 	L"|A|m|m|o |B|e|l|t",
 	L"|A|m|m|o |V|e|s|t",
 	L"|D|e|f|u|s|a|l |K|i|t",	// TODO.Translate
+	L"|C|o|v|e|r|t |I|t|e|m",
 };
 
 STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
@@ -7150,6 +7161,7 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \nWith this ammo belt you can\nfeed someone else's MG.",
 	L"\n \nYou can feed an MG with ammo\nbelts stored in this vest.",
 	L"\n \nThis item improves your trap disarm chance by ",			// TODO.Translate
+	L"\n \nThis item and everything attached/inside\nit is hidden from curious eyes.",
 };
 
 STR16 szUDBAdvStatsTooltipText[]=

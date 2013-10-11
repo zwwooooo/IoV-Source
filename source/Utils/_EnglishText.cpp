@@ -1794,7 +1794,7 @@ STR16 pContractStrings[] =
 STR16 pPOWStrings[] =
 {
 	L"POW",  //an acronym for Prisoner of War
-	L"??",
+	L" ± ± ",
 };
 
 STR16 pLongAttributeStrings[] =
@@ -2104,37 +2104,39 @@ STR16 gzMercSkillText[] =
 STR16 gzMercSkillTextNew[] = 
 {
 	// Major traits
-	L"No Skill",
+	L"No Skill",		// 0
 	L"Auto Weapons",
 	L"Heavy Weapons",
 	L"Marksman",
 	L"Hunter",
-	L"Gunslinger",
+	L"Gunslinger",		// 5
 	L"Hand to Hand",
 	L"Deputy",
 	L"Technician",
 	L"Paramedic",
+	L"Covert Ops",		// 10
 	// Minor traits
 	L"Ambidextrous",
 	L"Melee",
 	L"Throwing",
 	L"Night Ops",
-	L"Stealthy",
+	L"Stealthy",		// 15
 	L"Athletics",
 	L"Bodybuilding",
 	L"Demolitions",
 	L"Teaching",
-	L"Scouting",
+	L"Scouting",		// 20
 	// second names for major skills
 	L"Machinegunner",
 	L"Bombardier",
 	L"Sniper",
 	L"Ranger",
-	L"Gunfighter",
+	L"Gunfighter",		// 25
 	L"Martial Arts",
 	L"Squadleader",
 	L"Engineer",
 	L"Doctor",
+	L"Spy",				// 30
 	L"More...",
 };
 //////////////////////////////////////////////////////////
@@ -2947,7 +2949,10 @@ CHAR16 TacticalStr[][ MED_STRING_LENGTH ] =
 	L"Health: %d/%d\nPoison: %d/%d\nEnergy: %d/%d\nMorale: %s\nWater: %d%s\nFood: %d%s",
 
 	// added by Flugente: selection of a function to call in tactical
-	L"1 - Fill Canteens 2 - Clean Weapons 3,4 - Nothing",
+	L"1 - Fill Canteens 2 - Clean one gun 3 - Clean all guns 4 - Nothing",
+
+	// added by Flugente: decide what to do with the corpses
+	L"1 - Decapitate 2 - Gut 3 - Take Clothes 4 - Take Body",
 };
 
 //Varying helptext explains (for the "Go to Sector/Map" checkbox) what will happen given different circumstances in the "exiting sector" interface.
@@ -4234,6 +4239,8 @@ STR16			MercInfo[] =
 
 	L"Looks like you're trying to hire too many mercs. Your limit is 18.",
 	L"Unavailable",											
+	L"Bio",
+	L"Inv",
 };
 
 
@@ -5841,7 +5848,7 @@ STR16	gzCreditNames[]=
 {
 	L"Chris Camfield",
 	L"Shaun Lyng",
-	L"Kris M?rnes",
+	L"Kris M鋜nes",
 	L"Ian Currie",
 	L"Linda Currie",
 	L"Eric \"WTF\" Cheng",
@@ -6310,7 +6317,9 @@ STR16 MissingIMPSkillsDescriptions[] =
 	// Demolitions
 	L"Demolitions: Sowing grenades like seeds, planting bombs, watching the limbs flying.. This is what you live for! ± ",
 	// Scouting
-	L"Scouting: Nothing can escape your notice! ± ",	
+	L"Scouting: Nothing can escape your notice! ± ",
+	// Covert ops
+	L"Covert Operations: You make 007 look like an amateur! ± ",
 };
 
 STR16 NewInvMessage[] = 
@@ -7098,6 +7107,7 @@ STR16 szUDBGenSecondaryStatsTooltipText[]=
 	L"|A|m|m|o |B|e|l|t",
 	L"|A|m|m|o |V|e|s|t",
 	L"|D|e|f|u|s|a|l |K|i|t",
+	L"|C|o|v|e|r|t |I|t|e|m",
 };
 
 STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
@@ -7133,6 +7143,7 @@ STR16 szUDBGenSecondaryStatsExplanationsTooltipText[]=
 	L"\n \nWith this ammo belt you can\nfeed someone else's MG.",
 	L"\n \nYou can feed an MG with ammo\nbelts stored in this vest.",
 	L"\n \nThis item improves your trap disarm chance by ",
+	L"\n \nThis item and everything attached/inside\nit is hidden from curious eyes.",
 };
 
 STR16 szUDBAdvStatsTooltipText[]=

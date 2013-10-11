@@ -643,8 +643,8 @@ extern STR16		szUDBGenAmmoStatsTooltipText[ 6 ];						// Flugente Overheating: 3
 extern STR16		szUDBGenAmmoStatsExplanationsTooltipText[ 6 ];			// Flugente Overheating: 3->4	poison: 4->5	dirt: 5->6
 extern STR16		szUDBGenExplosiveStatsTooltipText[ 22 ];
 extern STR16		szUDBGenExplosiveStatsExplanationsTooltipText[ 22 ];
-extern STR16		szUDBGenSecondaryStatsTooltipText[ 31 ];				// Flugente Food System: 26 -> 28 external feeding: 28->30 JMich_SkillsModifiers: 31 for Defusal kit
-extern STR16		szUDBGenSecondaryStatsExplanationsTooltipText[ 31 ];	// Flugente Food System: 26 -> 28 external feeding: 28->30 JMich_SkillsModifiers: 31 for Defusal kit
+extern STR16		szUDBGenSecondaryStatsTooltipText[ 32 ];				// Flugente Food System: 26 -> 28 external feeding: 28->30 JMich_SkillsModifiers: 31 for Defusal kit - covert item: 31->32
+extern STR16		szUDBGenSecondaryStatsExplanationsTooltipText[ 32 ];	// Flugente Food System: 26 -> 28 external feeding: 28->30 JMich_SkillsModifiers: 31 for Defusal kit - covert item: 31->32
 extern STR16		szUDBAdvStatsTooltipText[ 58 ];							// Flugente Overheating Weapons: 48->56 poison: 56->57 dirt: 57->58
 extern STR16		szUDBAdvStatsExplanationsTooltipText[ 58 ];				// Flugente Overheating Weapons: 48->56 poison: 56->57 dirt: 57->58
 extern STR16		szUDBAdvStatsExplanationsTooltipTextForWeapons[ 52 ];	// Flugente Overheating Weapons: 48->52
@@ -822,6 +822,8 @@ enum
 	MERC_VITAL_STATS_WITH_POISON_AND_FOOD_POPUPTEXT,
 
 	FUNCTION_SELECTION_STR,
+
+	CORPSE_SELECTION_STR,
 	
 	TEXT_NUM_TACTICAL_STR
 };
@@ -926,6 +928,8 @@ enum
 	MERC_FILES_HIRE_TO_MANY_PEOPLE_WARNING,
 
 	MERC_FILES_MERC_UNAVAILABLE,
+	MERC_FILES_BIO,	//JMich_MMG: Adding two new texts for the small button, assuming we manage to add a silhouette with the gear, add it after this.
+	MERC_FILES_INVENTORY,
 	TEXT_NUM_MERC_FILES,
 };
 extern		STR16			MercInfo[];

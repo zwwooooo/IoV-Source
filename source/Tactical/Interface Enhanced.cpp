@@ -2523,7 +2523,16 @@ void InternalInitEDBTooltipRegion( OBJECTTYPE * gpItemDescObject, UINT32 guiCurr
 			SetRegionFastHelpText( &(gUDBFasthelpRegions[ iFirstDataRegion + cnt ]), pStr );
 			MSYS_EnableRegion( &gUDBFasthelpRegions[ iFirstDataRegion + cnt ] );
 			cnt++;
-	}
+		}
+
+		//////////////////// COVERT ITEM
+		if ( HasItemFlag(gpItemDescObject->usItem, COVERT) )
+		{
+			swprintf( pStr, L"%s%s", szUDBGenSecondaryStatsTooltipText[ 31 ], szUDBGenSecondaryStatsExplanationsTooltipText[ 31 ]);
+			SetRegionFastHelpText( &(gUDBFasthelpRegions[ iFirstDataRegion + cnt ]), pStr );
+			MSYS_EnableRegion( &gUDBFasthelpRegions[ iFirstDataRegion + cnt ] );
+			cnt++;
+		}
 	}
 
 	//////////////////////////////////////////////////////
@@ -5532,7 +5541,14 @@ void DrawSecondaryStats( OBJECTTYPE * gpItemDescObject )
 	{
 		BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoSecondaryIcon, 11, gItemDescGenSecondaryRegions[cnt].sLeft+sOffsetX, gItemDescGenSecondaryRegions[cnt].sTop+sOffsetY, VO_BLT_SRCTRANSPARENCY, NULL );
 		cnt++;
-}
+	}
+
+	//////////////////// COVERT ITEM
+	if ( HasItemFlag(gpItemDescObject->usItem, COVERT) )
+	{
+		BltVideoObjectFromIndex( guiSAVEBUFFER, guiItemInfoSecondaryIcon, 30, gItemDescGenSecondaryRegions[cnt].sLeft+sOffsetX, gItemDescGenSecondaryRegions[cnt].sTop+sOffsetY, VO_BLT_SRCTRANSPARENCY, NULL );
+		cnt++;
+	}
 }
 
 void DrawWeaponValues( OBJECTTYPE * gpItemDescObject )
@@ -9011,8 +9027,9 @@ void DrawAdvancedValues( OBJECTTYPE *gpItemDescObject )
 				// Print Values
 				for (UINT8 cnt2 = 0; cnt2 < 3; cnt2++)
 				{
-					if (UsingNewCTHSystem() == false && cnt2 > 0)
-						break;
+					// Flugente: no idea why we would want to skip this in OCTH, commenting this out
+					//if (UsingNewCTHSystem() == false && cnt2 > 0)
+						//break;
 					SetFontForeground( 5 );
 					sLeft = gItemDescAdvRegions[cnt-sFirstLine][cnt2+1].sLeft;
 					sWidth = gItemDescAdvRegions[cnt-sFirstLine][cnt2+1].sRight - sLeft;
@@ -11099,7 +11116,7 @@ void DrawAdvancedValues( OBJECTTYPE *gpItemDescObject )
 				sTop = gItemDescAdvRegions[cnt-sFirstLine][1].sTop;
 				sHeight = gItemDescAdvRegions[cnt-sFirstLine][1].sBottom - sTop;		
 
-				iFloatModifier[0] = Weapon[ gpItemDescObject->usItem ].usOverheatingSingleShotTemperature;
+				iFloatModifier[0] = Weapon[ gpItemDescObject->usItem ].usOverheatingSingleShotTemperature * gGameExternalOptions.iOverheatTemperatureGlobalModfier;
 
 				iFloatModifier[1] = GetSingleShotTemperature( gpItemDescObject ) - iFloatModifier[0];
 				iFloatModifier[2] = GetSingleShotTemperature( gpItemDescObject );
