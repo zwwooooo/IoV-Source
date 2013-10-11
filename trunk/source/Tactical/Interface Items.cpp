@@ -9082,7 +9082,7 @@ BOOLEAN InitSectorStackPopup( SOLDIERTYPE *pSoldier, WORLDITEM *pInventoryPoolLi
 	gfInSectorStackPopup = TRUE;
 	fShowInventoryFlag = TRUE;
 
-	//Reserict mouse cursor to panel
+	//Restrict mouse cursor to panel
 	aRect.iLeft = sInvX + sOffSetX;
 	aRect.iTop = sInvY + sOffSetY;
 	aRect.iRight = aRect.iLeft + sItemWidth * usPopupWidth;
@@ -9252,10 +9252,10 @@ BOOLEAN InitItemStackPopup( SOLDIERTYPE *pSoldier, UINT8 ubPosition, INT16 sInvX
 
 	gfInItemStackPopup = TRUE;
 
-	//Reserict mouse cursor to panel
+	//Restrict mouse cursor to panel
 	aRect.iLeft = sInvX + xResOffset;
 	aRect.iTop = sInvY + sOffSetY;
-	aRect.iRight = aRect.iLeft + sItemWidth * usPopupWidth;
+	aRect.iRight = aRect.iLeft + min(cnt,sItemWidth) * usPopupWidth;
 	aRect.iBottom = aRect.iTop + (INT32)(ceil((float)cnt/(float)sItemWidth)+1) * usPopupHeight;
 	//aRect.iTop = sInvY;
 	//aRect.iLeft = sInvX;
@@ -9561,11 +9561,11 @@ BOOLEAN InitKeyRingPopup( SOLDIERTYPE *pSoldier, INT16 sInvX, INT16 sInvY, INT16
 
 	gfInKeyRingPopup = TRUE;
 
-	//Reserict mouse cursor to panel
+	//Restrict mouse cursor to panel
 	aRect.iLeft = gsKeyRingPopupInvX + sOffSetX;
 	aRect.iTop = sInvY + sOffSetY;
 	aRect.iRight = aRect.iLeft + sKeyRingItemWidth * usPopupWidth;
-	aRect.iBottom = aRect.iTop + (INT32)(ceil((float)cnt/(float)sKeyRingItemWidth)+1) * usPopupHeight;
+	aRect.iBottom = aRect.iTop + (INT32)(ceil((float)cnt/(float)sKeyRingItemWidth)) * usPopupHeight;
 
 	RestrictMouseCursor( &aRect );
 
@@ -10070,6 +10070,11 @@ void ItemPopupRegionCallback( MOUSE_REGION * pRegion, INT32 iReason )
 		//Remove
 		gfItemPopupRegionCallbackEndFix = TRUE;
 
+		// Close old description box when nothing in hand while clicking on an item in sector stack
+		if ( InItemDescriptionBox( ) && gpItemPointer == NULL && InSectorStackPopup( ) && gpItemPopupObject->ubNumberOfObjects > uiItemPos )
+		{
+			DeleteItemDescriptionBox( );
+		}
 
 		DeleteItemStackPopup( );
 
@@ -12053,8 +12058,8 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					sThreshold,					//repair threshold
 					pInvPanelTitleStrings[ 4 ],	//Protection string
 					iProtection,				//Protection rating in % based on best armor
-					Armour[ Item[ usItem ].ubClassIndex ].ubProtection, //Protection (raw data)
 					Armour[ Item[ usItem ].ubClassIndex ].ubProtection * sValue / 100,
+					Armour[ Item[ usItem ].ubClassIndex ].ubProtection, //Protection (raw data)
 					pInvPanelTitleStrings[ 3 ],	//Camo string
 					GetCamoBonus(pObject)+GetUrbanCamoBonus(pObject)+GetDesertCamoBonus(pObject)+GetSnowCamoBonus(pObject),	//Camo bonus
 					gWeaponStatsDesc[ 12 ],		//Weight string
@@ -12074,8 +12079,8 @@ void GetHelpTextForItem( STR16 pzStr, OBJECTTYPE *pObject, SOLDIERTYPE *pSoldier
 					sValue,						//Item condition
 					pInvPanelTitleStrings[ 4 ],	//Protection string
 					iProtection,				//Protection rating in % based on best armor
-					Armour[ Item[ usItem ].ubClassIndex ].ubProtection, //Protection (raw data)
 					Armour[ Item[ usItem ].ubClassIndex ].ubProtection * sValue / 100,
+					Armour[ Item[ usItem ].ubClassIndex ].ubProtection, //Protection (raw data)
 					pInvPanelTitleStrings[ 3 ],	//Camo string
 					GetCamoBonus(pObject)+GetUrbanCamoBonus(pObject)+GetDesertCamoBonus(pObject)+GetSnowCamoBonus(pObject),	//Camo bonus
 					gWeaponStatsDesc[ 12 ],		//Weight string
@@ -12544,40 +12549,31 @@ void DeletePool(ITEM_POOL *pItemPool)
 
 void ItemDescTabButtonCallback( GUI_BUTTON *btn, INT32 reason )
 {
-	switch (btn->UserData[0])
-	{
-		case 0:
-			gubDescBoxPage = 0;
-			InternalInitEDBTooltipRegion( gpItemDescObject, guiCurrentItemDescriptionScreen );
-			RenderItemDescriptionBox();
+	gubDescBoxPage = btn->UserData[0];
+	HandleItemDescTabButton( );
+}
 
-			if (giItemDescAmmoButton > -1)
-				MarkAButtonDirty( giItemDescAmmoButton ); // Required for tactical screen
-			
+void HandleItemDescTabButton( )
+{
+	InternalInitEDBTooltipRegion( gpItemDescObject, guiCurrentItemDescriptionScreen );
+	RenderItemDescriptionBox();
+
+	if (giItemDescAmmoButton > -1)
+		MarkAButtonDirty( giItemDescAmmoButton ); // Required for tactical screen
+
+	switch (gubDescBoxPage)
+	{
+		case 0:	
 			ItemDescTabButtonOn( 0 );
 			ItemDescTabButtonOff( 1 );
 			ItemDescTabButtonOff( 2 );
 			break;
 		case 1:
-			gubDescBoxPage = 1;
-			InternalInitEDBTooltipRegion( gpItemDescObject, guiCurrentItemDescriptionScreen );
-			RenderItemDescriptionBox();
-
-			if (giItemDescAmmoButton > -1)
-				MarkAButtonDirty( giItemDescAmmoButton ); // Required for tactical screen
-
 			ItemDescTabButtonOff( 0 );
 			ItemDescTabButtonOn( 1 );
 			ItemDescTabButtonOff( 2 );
 			break;
 		case 2:
-			gubDescBoxPage = 2;
-			InternalInitEDBTooltipRegion( gpItemDescObject, guiCurrentItemDescriptionScreen );
-			RenderItemDescriptionBox();
-
-			if (giItemDescAmmoButton > -1)
-				MarkAButtonDirty( giItemDescAmmoButton ); // Required for tactical screen
-
 			ItemDescTabButtonOff( 0 );
 			ItemDescTabButtonOff( 1 );
 			ItemDescTabButtonOn( 2 );

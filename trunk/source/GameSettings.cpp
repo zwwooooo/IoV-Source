@@ -38,10 +38,8 @@
 	#include "InterfaceItemImages.h"
 #endif
 
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
-	#include "KeyMap.h"
-	#include "Timer Control.h"
-#endif
+#include "KeyMap.h"
+#include "Timer Control.h"
 
 #include "Text.h"
 #include "connect.h"
@@ -245,8 +243,6 @@ BOOLEAN LoadGameSettings()
 		gGameSettings.fOptions[TOPTION_QUIET_REPAIRING]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_QUIET_REPAIRING"				   ,  FALSE );
 		gGameSettings.fOptions[TOPTION_QUIET_DOCTORING]					= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_QUIET_DOCTORING"				   ,  FALSE );
 		
-
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 		if (!is_networked)
 			gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]		= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_AUTO_FAST_FORWARD_MODE"           ,  FALSE );
 		else
@@ -255,7 +251,6 @@ BOOLEAN LoadGameSettings()
 		// The "HIGHSPEED_TIMER" property from the ja2.ini is not set, disable the option
 		if (!IsHiSpeedClockMode())
 			gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]		= FALSE;
-#endif
 
 #ifdef ENABLE_ZOMBIES
 		gGameSettings.fOptions[TOPTION_ZOMBIES]							= iniReader.ReadBoolean("JA2 Game Settings","TOPTION_ZOMBIES"						   ,  FALSE  );
@@ -423,10 +418,7 @@ BOOLEAN	SaveGameSettings()
 		settings << "TOPTION_QUIET_TRAINING					  = " << (gGameSettings.fOptions[TOPTION_QUIET_TRAINING]				    ?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_QUIET_REPAIRING				  = " << (gGameSettings.fOptions[TOPTION_QUIET_REPAIRING]				    ?    "TRUE" : "FALSE" ) << endl;
 		settings << "TOPTION_QUIET_DOCTORING				  = " << (gGameSettings.fOptions[TOPTION_QUIET_DOCTORING]				    ?    "TRUE" : "FALSE" ) << endl;
-		
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 		settings << "TOPTION_AUTO_FAST_FORWARD_MODE           = " << (gGameSettings.fOptions[TOPTION_AUTO_FAST_FORWARD_MODE]			?    "TRUE" : "FALSE" ) << endl;
-#endif
 		settings << "TOPTION_SHOW_LAST_ENEMY				  = " << (gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]					?	 "TRUE"	: "FALSE" ) << endl;
 		settings << "TOPTION_SHOW_LBE_CONTENT				  = " << (gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]					?	 "TRUE"	: "FALSE" ) << endl;
 
@@ -562,9 +554,8 @@ void InitGameSettings()
 	gGameSettings.fOptions[ TOPTION_QUIET_REPAIRING ]					= FALSE;
 	gGameSettings.fOptions[ TOPTION_QUIET_DOCTORING ]					= FALSE;
 
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	gGameSettings.fOptions[ TOPTION_AUTO_FAST_FORWARD_MODE ]			= FALSE;
-#endif
+
 	gGameSettings.fOptions[TOPTION_SHOW_LAST_ENEMY]						= FALSE;
 	gGameSettings.fOptions[TOPTION_SHOW_LBE_CONTENT]					= TRUE;
 
@@ -1072,6 +1063,9 @@ void LoadGameExternalOptions()
 	// SANDRO - Special NPCs strength increased by percent
 	gGameExternalOptions.usSpecialNPCStronger = iniReader.ReadInteger("Tactical Difficulty Settings", "SPECIAL_NPCS_STRONGER",0, 0, 200);
 
+	// Flugente: the assassins are disguised initially, so it is harder for the player to detect them
+	gGameExternalOptions.fAssassinsAreDisguised		  = iniReader.ReadBoolean("Tactical Difficulty Settings", "ASSASSINS_DISGUISED", TRUE);
+	
 
 	//################# Tactical Vision Settings #################
 
@@ -1411,6 +1405,7 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fZombieOnlyHeadshotsWork						= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_ONLY_HEADSHOTS_WORK", FALSE);
 	gGameExternalOptions.sZombieDifficultyLevel 						= iniReader.ReadInteger("Tactical Zombie Settings", "ZOMBIE_DIFFICULTY_LEVEL", 2, 1, 4);
 	gGameExternalOptions.fZombieRiseWithArmour							= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_RISE_WITH_ARMOUR", TRUE);
+	gGameExternalOptions.fZombieOnlyHeadShotsPermanentlyKill			= iniReader.ReadBoolean("Tactical Zombie Settings", "ZOMBIE_ONLY_HEADSHOTS_PERMANENTLY_KILL", TRUE);
 #endif
 
 	//################# Tactical Poison Settings ##################
@@ -1435,6 +1430,8 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fFoodDecayInSectors							= iniReader.ReadBoolean("Tactical Food Settings", "FOOD_DECAY_IN_SECTORS", TRUE);
 	gGameExternalOptions.sFoodDecayModificator							= iniReader.ReadFloat("Tactical Food Settings", "FOOD_DECAY_MODIFICATOR",			1.0f, 0.1f, 10.0f);
 
+	gGameExternalOptions.usFoodMaxPoisoning								= iniReader.ReadInteger("Tactical Food Settings", "FOOD_MAX_POISONING",  5, 0, 100);
+	
 	//################# Strategic Gamestart Settings ##################
 
 	//Lalien: Game starting time
@@ -1573,6 +1570,7 @@ void LoadGameExternalOptions()
 #endif
 	gGameExternalOptions.fDisableLaptopTransition			= iniReader.ReadBoolean("Laptop Settings", "DISABLE_LAPTOP_TRANSITION", FALSE);
 	gGameExternalOptions.fFastWWWSitesLoading				= iniReader.ReadBoolean("Laptop Settings", "FAST_WWW_SITES_LOADING", FALSE);
+	gGameExternalOptions.fLaptopMouseCaptured				= iniReader.ReadBoolean("Laptop Settings", "LAPTOP_MOUSE_CAPTURED", FALSE);
 
 
 	//################# Bobby Ray Settings ##################
@@ -1877,7 +1875,6 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.fEnableInventoryPoolQ = FALSE;
 #endif	
 	
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	////////// CLOCK SETTINGS //////////
 
 	// Key to artificially alter the clock so turns run faster
@@ -1888,7 +1885,6 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.iFastForwardPeriod			= (FLOAT)iniReader.ReadDouble("Clock Settings","FAST_FORWARD_PERIOD", 500, 1, 10000);
 	gGameExternalOptions.fClockSpeedPercent			= (FLOAT)iniReader.ReadDouble("Clock Settings","CLOCK_SPEED_PERCENT", 150, 100, 300);
 	gGameExternalOptions.iNotifyFrequency			= iniReader.ReadInteger("Clock Settings","UPDATE_FREQUENCY", 16000, 1000, 20000);	
-#endif
 }
 
 

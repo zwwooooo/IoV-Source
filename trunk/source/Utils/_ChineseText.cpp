@@ -453,7 +453,7 @@ STR16 iEditorBuildingsToolbarText[] =
 
 STR16 iEditorItemsToolbarText[] =
 {
-	L"Weapons", //0
+	L"Wpns", //0
 	L"Ammo",
 	L"Armour",
 	L"LBE",
@@ -463,6 +463,7 @@ STR16 iEditorItemsToolbarText[] =
 	L"E3",
 	L"Triggers",
 	L"Keys",
+	L"Rnd",
 };
 
 STR16 iEditorMapInfoToolbarText[] =
@@ -1904,6 +1905,7 @@ STR16 pMilitiaControlMenuStrings[] =
 	L"撤退", // retreat militia
 	L"向我靠拢", // retreat militia
 	L"卧倒", // retreat militia
+	L"Crouch",	// TODO.Translate
 	L"隐蔽",
 	L"全体: 进攻",
 	L"全体: 原地坚守",
@@ -1911,6 +1913,7 @@ STR16 pMilitiaControlMenuStrings[] =
 	L"全体: 向我靠拢",
 	L"全体: 分散",
 	L"全体: 卧倒",
+	L"All: Crouch",	// TODO.Translate
 	L"全体: 隐蔽",
 	//L"All: Find items",
 	L"取消", // cancel this menu
@@ -2474,6 +2477,7 @@ CHAR16		gWeaponStatsDesc[][ 19 ] =
 	L"默认:",	//17 //WarmSteel - So we can also display default attachments
 	L"污垢:",	// 18	//added by Flugente	// TODO.Translate
 	L"Space:", // 19 //space left on Molle items //TODO.Translate
+
 };
 
 // HEADROCK: Several arrays of tooltip text for new Extended Description Box
@@ -4527,9 +4531,16 @@ STR16			AimSortText[] =
 	L"薪金",	//"Price",
 	L"级别",	//"Experience",
 	L"枪法",	//"Marksmanship",
-	L"医疗",	//"Medical",
-	L"爆破",	//"Explosives",
 	L"机械",	//"Mechanical",
+	L"爆破",	//"Explosives",
+	L"医疗",	//"Medical",
+	L"生命",	//"Health",
+	L"敏捷",	//"Agility",
+	L"灵巧",	//"Dexterity",
+	L"力量",	//"Strength",
+	L"领导",	//"Leadership",
+	L"智慧",	//"Wisdom",
+	L"姓名",	//"Name",
 
 	//Text of the links to other AIM pages
 
@@ -4723,9 +4734,16 @@ STR16			AimFiText[] =
 	L"薪金",	//"Price",
 	L"级别",	//"Experience",
 	L"枪法",	//"Marksmanship",
-	L"医疗",	//"Medical",
-	L"爆破",	//"Explosives",
 	L"机械",	//"Mechanical",
+	L"爆破",	//"Explosives",
+	L"医疗",	//"Medical",
+	L"生命",	//"Health",
+	L"敏捷",	//"Agility",
+	L"灵巧",	//"Dexterity",
+	L"力量",	//"Strength",
+	L"领导",	//"Leadership",
+	L"智慧",	//"Wisdom",
+	L"姓名",	//"Name",
 
 	// The title of the page, the above text gets added at the end of this text
 
@@ -5093,10 +5111,7 @@ STR16		zOptionsToggleText[] =
 	L"佣兵训练时保持沉默",	// Madd: mercs don't say quotes while training
 	L"佣兵修理时保持沉默",	// Madd: mercs don't say quotes while repairing
 	L"佣兵医疗时保持沉默",	// Madd: mercs don't say quotes while doctoring
-	
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"自动加速敌军回合",			// Automatic fast forward through AI turns
-#endif
 
 #ifdef ENABLE_ZOMBIES
 	L"僵尸模式",
@@ -5211,10 +5226,7 @@ STR16	zOptionsScreenHelpText[] =
 	L"打开时，佣兵训练时不会随时汇报进程。",
 	L"打开时，佣兵修理时不会随时汇报进程。",
 	L"打开时，佣兵医疗时不会随时汇报进程。",
-	
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"打开时，敌军回合将被大幅加速。",
-#endif
 
 #ifdef ENABLE_ZOMBIES
 	L"打开时，被击毙的敌人将有可能变成僵尸！杀出个黎明！",
@@ -6405,11 +6417,13 @@ STR16 MPClientMessage[] =
 	L"Spectator mode disabled",
 	L"Choose client to kick from game. #1: <Cancel>, #2: %S, #3: %S, #4: %S",
 	// 75
-	L"Team #%d is wiped out.",
+	L"Team %s is wiped out.",
 	L"Client failed to start. Terminating.",
 	L"Client disconnected and shutdown.",
 	L"Client is not running.",
 	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",	
+	// 80
+	L"AI's turn - %d left",		// TODO.Translate
 };
 
 STR16 gszMPEdgesText[] =
@@ -6930,7 +6944,7 @@ STR16 szUDBGenWeaponsStatsExplanationsTooltipText[]=
 	L"\n \n连发模式下，该武器一次\n齐射三发子弹所需的AP。\n \n超过3发子弹，\n则需要额外的AP。\n \n如果该图标发灰，则该武器不可连发。\n \n该数值越低越好。",
 	L"\n \n重新装填子弹所需的AP。\n \n该数值越低越好。",
 	L"\n \n在射击间歇为该武器手动更换弹匣的AP消耗。\n \n该数值越低越好。",
-	L"\n \nThe distance this weapon's muzzle will shift\nhorizontally between each and every bullet in a\nburst or autofire volley.\n \nPositive numbers indicate shifting to the right.\nNegative numbers indicate shifting to the left.\n \nCloser to 0 is better.", // No longer used
+	L"",	// No longer used!
 	L"\n \nThe total distance this weapon's muzzle will shift\nbetween each and every bullet in a burst or\nautofire volley, if no Counter Force is applied.\n \nLower is better.", // HEADROCK HAM 5: Altered to reflect unified number.	// TODO.Translate
 	L"\n \n该参数显示了该武器每多花费5AP在连发模式时\n可多发射的子弹数。\n \n该数值越高越好。",
 };

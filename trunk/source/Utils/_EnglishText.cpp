@@ -453,7 +453,7 @@ STR16 iEditorBuildingsToolbarText[] =
 
 STR16 iEditorItemsToolbarText[] =
 {
-	L"Weapons", //0
+	L"Wpns", //0
 	L"Ammo",
 	L"Armour",
 	L"LBE",
@@ -463,6 +463,7 @@ STR16 iEditorItemsToolbarText[] =
 	L"E3",
 	L"Triggers",
 	L"Keys",
+	L"Rnd",
 };
 
 STR16 iEditorMapInfoToolbarText[] =
@@ -1902,8 +1903,9 @@ STR16 pMilitiaControlMenuStrings[] =
 	L"Attack", // set militia to aggresive
 	L"Hold Position", // set militia to stationary
 	L"Retreat", // retreat militia
-	L"Come to me", // retreat militia
-	L"Get down", // retreat militia	
+	L"Come to me",
+	L"Get down",
+	L"Crouch",
 	L"Take cover",
 	L"All: Attack", 
 	L"All: Hold Position",
@@ -1911,6 +1913,7 @@ STR16 pMilitiaControlMenuStrings[] =
 	L"All: Come to me",
 	L"All: Spread out",
 	L"All: Get down",
+	L"All: Crouch",
 	L"All: Take cover",
 	//L"All: Find items",
 	L"Cancel", // cancel this menu
@@ -2474,6 +2477,7 @@ CHAR16		gWeaponStatsDesc[][ 19 ] =
 	L"Default:",	//17 //WarmSteel - So we can also display default attachments
 	L"Dirt:",	// 18	//added by Flugente
 	L"Space:", // 19 //space left on Molle items
+
 };
 
 // HEADROCK: Several arrays of tooltip text for new Extended Description Box
@@ -4526,9 +4530,16 @@ STR16			AimSortText[] =
 	L"Price",											
 	L"Experience",
 	L"Marksmanship",
-	L"Medical",
-	L"Explosives",
 	L"Mechanical",
+	L"Explosives",
+	L"Medical",
+	L"Health",
+	L"Agility",
+	L"Dexterity",
+	L"Strength",
+	L"Leadership",
+	L"Wisdom",
+	L"Name",
 
 	//Text of the links to other AIM pages
 
@@ -4722,9 +4733,16 @@ STR16			AimFiText[] =
 	L"Price",
 	L"Experience",
 	L"Marksmanship",
-	L"Medical",
-	L"Explosives",
 	L"Mechanical",
+	L"Explosives",
+	L"Medical",
+	L"Health",
+	L"Agility",
+	L"Dexterity",
+	L"Strength",
+	L"Leadership",
+	L"Wisdom",
+	L"Name",
 
 	// The title of the page, the above text gets added at the end of this text
 
@@ -5092,11 +5110,7 @@ STR16		zOptionsToggleText[] =
 	L"Quiet Training",						// Madd: mercs don't say quotes while training
 	L"Quiet Repairing",						// Madd: mercs don't say quotes while repairing
 	L"Quiet Doctoring",						// Madd: mercs don't say quotes while doctoring
-	
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	L"Auto Fast Forward AI Turns",			// Automatic fast forward through AI turns
-#endif
-
 #ifdef ENABLE_ZOMBIES
 	L"Allow Zombies",						// Flugente Zombies 1.0
 #endif
@@ -5210,10 +5224,7 @@ STR16	zOptionsScreenHelpText[] =
 	L"When ON, mercs will not report progress during training.",
 	L"When ON, mercs will not report progress during repairing.",
 	L"When ON, mercs will not report progress during doctoring.",
-	
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER 
 	L"When ON, AI turns will be much faster.",
-#endif
 
 #ifdef ENABLE_ZOMBIES
 	L"When ON, zombies will spawn. Be aware!",							// allow zombies
@@ -6402,11 +6413,13 @@ STR16 MPClientMessage[] =
 	L"Spectator mode disabled",
 	L"Choose client to kick from game. #1: <Cancel>, #2: %S, #3: %S, #4: %S",
 	// 75
-	L"Team #%d is wiped out.",
+	L"Team %s is wiped out.",
 	L"Client failed to start. Terminating.",
 	L"Client disconnected and shutdown.",
 	L"Client is not running.",
-	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",	
+	L"INFO: If the game is stuck (the opponents progress bar is not moving), notify the server to press ALT + E to give the turn back to you!",
+	// 80
+	L"AI's turn - %d left",
 };
 
 STR16 gszMPEdgesText[] =

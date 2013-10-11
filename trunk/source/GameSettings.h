@@ -84,9 +84,7 @@ enum
 	TOPTION_QUIET_REPAIRING,					//Madd: mercs don't say gained experience quote while repairing items
 	TOPTION_QUIET_DOCTORING,					//Madd: mercs don't say gained experience quote while doctoring
 	
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	TOPTION_AUTO_FAST_FORWARD_MODE,				// automatically fast forward through AI turns
-#endif
 
 #ifdef ENABLE_ZOMBIES
 	TOPTION_ZOMBIES,							// Flugente Zombies 1.0: allow zombies	
@@ -362,6 +360,7 @@ typedef struct
 	BOOLEAN fEnableChanceOfEnemyAmbushes; 
 	INT8 bChanceModifierEnemyAmbushes;
 	UINT8 usSpecialNPCStronger;
+	BOOLEAN fAssassinsAreDisguised;	// added by Flugente
 	///////////////////////////////////////
 
 	// System settings
@@ -384,6 +383,7 @@ typedef struct
 	BOOLEAN fZombieOnlyHeadshotsWork;
 	INT8	sZombieDifficultyLevel;
 	BOOLEAN fZombieRiseWithArmour;
+	BOOLEAN fZombieOnlyHeadShotsPermanentlyKill;
 #endif
 	
 	// Flugente: poison settings
@@ -407,6 +407,8 @@ typedef struct
 		
 	BOOLEAN fFoodDecayInSectors;
 	FLOAT	sFoodDecayModificator;
+
+	UINT8	usFoodMaxPoisoning;
 	
 	//Animation settings
 	FLOAT giPlayerTurnSpeedUpFactor;
@@ -729,6 +731,9 @@ typedef struct
 
 	// CHRISL: Skyrider and enemy occupied sectors
 	UINT8 ubSkyriderHotLZ;
+
+	// Laptop mouse capturing
+	BOOLEAN fLaptopMouseCaptured;
 
 	// WANNE: Fast loading settings
 	BOOLEAN fDisableLaptopTransition;
@@ -1111,7 +1116,6 @@ typedef struct
 	
 	INT32 iInitialMercArrivalLocation;
 
-#ifdef USE_HIGHSPEED_GAMELOOP_TIMER
 	// Keyboard shortcut (as VK) for fastforward key.  See Utils/KeyMap
 	INT32 iFastForwardKey;
 	// Turn on fast forward whenever ui is disabled.
@@ -1122,7 +1126,6 @@ typedef struct
 	INT32 iNotifyFrequency;
 	// Frequency that the screen is updated
 	FLOAT fClockSpeedPercent;
-#endif
 
 	// Flugente: Weapon Overheating
 	BOOLEAN	fDisplayOverheatThermometer;			// Should a 'thermometer' for guns and replacable barrels be displayed?

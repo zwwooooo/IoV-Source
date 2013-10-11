@@ -2783,13 +2783,24 @@ BOOLEAN EvaluateValidMerge( UINT16 usMerge, UINT16 usItem, UINT16 * pusResult, U
 		}
 	}
 
+	// Flugente: for random items, we have to do the resolution here
+	UINT16 result1 = Merge[iLoop][2];
+	UINT16 rdresult1 = 0;
+	if ( GetItemFromRandomItem(result1, &rdresult1) )
+		result1 = rdresult1;
+
+	UINT16 result2 = Merge[iLoop][3];
+	UINT16 rdresult2 = 0;
+	if ( GetItemFromRandomItem(result2, &rdresult2) )
+		result2 = rdresult2;
+
 	//WarmSteel - Return false if the results aren't valid.
-	if( !ItemIsLegal(Merge[iLoop][2], TRUE) && !ItemIsLegal(Merge[iLoop][3], TRUE) ){
+	if( !ItemIsLegal(result1, TRUE) && !ItemIsLegal(result2, TRUE) ){
 		return( FALSE );
 	}
 
-	*pusResult = Merge[iLoop][2];
-	*pusResult2 = Merge[iLoop][3];
+	*pusResult = result1;
+	*pusResult2 = result2;
 	*pubType = (UINT8) Merge[iLoop][4];
 	*pubAPCost = (UINT8) Merge[iLoop][5];
 	return( TRUE );
@@ -7662,6 +7673,18 @@ BOOLEAN CreateItem( UINT16 usItem, INT16 bStatus, OBJECTTYPE * pObj )
 		DebugBreakpoint();
 		return( FALSE );
 	}
+
+	// Flugente: random items
+	UINT16 newitemfromrandom = 0;
+	if ( GetItemFromRandomItem(usItem, &newitemfromrandom) )
+		usItem = newitemfromrandom;
+
+	if (usItem == 0)
+	{
+		DebugBreakpoint();
+		return( FALSE );
+	}
+
 	if (Item[ usItem ].usItemClass == IC_GUN)
 	{
 		fRet = CreateGun( usItem, bStatus, pObj );
@@ -9316,8 +9339,11 @@ BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj)
 			// we now have to determine wether we are currently wearing civilian or military clothes
 			for ( int i = UNIFORM_ENEMY_ADMIN; i <= UNIFORM_ENEMY_ELITE; ++i )
 			{
-				if ( pSoldier->VestPal == gUniformColors[ i ].vest && pSoldier->PantsPal == gUniformColors[ i ].pants )
+				if ( COMPARE_PALETTEREP_ID(pSoldier->VestPal, gUniformColors[ i ].vest) && COMPARE_PALETTEREP_ID(pSoldier->PantsPal, gUniformColors[ i ].pants) )
+				{
 					pSoldier->bSoldierFlagMask |= SOLDIER_COVERT_SOLDIER;
+					break;
+				}
 			}
 
 			// if not dressed as a soldier, we must be dressed as a civilian
@@ -14057,6 +14083,12 @@ BOOLEAN OBJECTTYPE::TransformObject( SOLDIERTYPE * pSoldier, UINT8 ubStatusIndex
 		if (Transform->usResult[curResult] > 0)
 		{
 			usResult[curResult] = Transform->usResult[curResult];
+
+			// Flugente: resolution of random items
+			UINT16 rdresult = 0;
+			if ( GetItemFromRandomItem(usResult[curResult], &rdresult) )
+				usResult[curResult] = rdresult;
+
 			// Count the number of valid result items
 			iNumResults++;
 		}
@@ -14736,4 +14768,178 @@ BOOLEAN	GetFirstClothesItemWithSpecificData( UINT16* pusItem, PaletteRepID aPalV
 	}
 
 	return( FALSE );
+}
+
+#define RANDOM_ITEM_MAX_NUMBER 1000
+#define RANDOM_TABOO_MAX		 50
+#define	RANDOM_XML_LENGTH		 10
+
+UINT16 randomitemarray[RANDOM_ITEM_MAX_NUMBER];
+UINT16 randomitemtabooarray[RANDOM_TABOO_MAX];			// We remember which random items we added, to prevent loops
+UINT16 randomitemclasstabooarray[RANDOM_TABOO_MAX];		// We also remember the random item classes
+
+UINT16 itemcnt = 0;
+UINT16 rdtaboocnt = 0;
+UINT16 rdclasstaboocnt = 0;
+
+INT8  rditemmaxcoolness = 0;
+
+BOOL AddToRandomListFromRandomItemClass( UINT16 usRandomItemClass );
+BOOL AddToRandomListFromRandomItem( UINT16 usRandomItem );
+BOOL AddToRandomListFromItem( UINT16 usItem );
+BOOL RandomItemClassIsTaboo( UINT16 usRandomItemClass );
+BOOL RandomItemIsTaboo( UINT16 usRandomItem );
+
+BOOLEAN GetItemFromRandomItem( UINT16 usRandomItem, UINT16* pusNewItem )
+{
+	*pusNewItem = 0;
+
+	// no random item solving in the map editor
+#ifdef JA2EDITOR
+	return FALSE;
+#endif
+
+	// is this a random item?
+	if ( Item[usRandomItem].randomitem > 0 )
+	{
+		// we build a list of all the items in the random item class this item references to
+		// We also have to check for other random item classes
+		// as it is also possible to reference to other random items, we also have to check for them
+
+		// clear the random item arrays and reset the counters
+		for ( int i = 0; i < RANDOM_ITEM_MAX_NUMBER; ++i)
+			randomitemarray[i] = 0;
+
+		for ( int i = 0; i < RANDOM_TABOO_MAX; ++i)
+		{
+			randomitemtabooarray[i] = 0;
+			randomitemclasstabooarray[i] = 0;
+		}
+
+		itemcnt = 0;
+		rdtaboocnt = 0;
+		rdclasstaboocnt = 0;
+
+		// determine maximum allowed coolness
+		rditemmaxcoolness = HighestPlayerProgressPercentage() / 10 + 1 + Item[usRandomItem].randomitemcoolnessmodificator;	// the random item itself can modify coolness
+		
+		// build the list of items to choose from. We will search down the random item class an can even branch into mulitple other random item classes.
+		// We only stop if maximum number of items or random item classes is reached
+		AddToRandomListFromRandomItem(usRandomItem);
+
+		if ( itemcnt )
+		{
+			// select a random item from our list
+			UINT16 random = Random(itemcnt);
+
+			*pusNewItem = randomitemarray[random];
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+BOOL AddToRandomListFromRandomItemClass( UINT16 usRandomItemClass )
+{
+	if ( usRandomItemClass && !RandomItemClassIsTaboo(usRandomItemClass) )
+	{
+		// end if we reached the maximum number of taboos
+		if ( rdclasstaboocnt >= RANDOM_TABOO_MAX )
+			return FALSE;
+
+		// add items
+		for ( int i = 0; i < RANDOM_XML_LENGTH; ++i)
+		{
+			// if this returns false, we're either at the maximum number of items or taboos - both reasons to end
+			if ( !AddToRandomListFromItem(gRandomItemClass[usRandomItemClass].item[i]) )
+				return FALSE;
+		}
+
+		// add random item classes
+		for ( int i = 0; i < RANDOM_XML_LENGTH; ++i)
+		{
+			// if this returns false, we're either at the maximum number of items or taboos - both reasons to end
+			if ( !AddToRandomListFromRandomItemClass(gRandomItemClass[usRandomItemClass].randomitem[i]) )
+				return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+// add from a random item to the list
+BOOL AddToRandomListFromRandomItem( UINT16 usRandomItem )
+{
+	if ( Item[usRandomItem].randomitem > 0 && !RandomItemIsTaboo( usRandomItem ) )
+	{
+		// end if we reached the maximum number of taboos
+		if ( rdtaboocnt >= RANDOM_TABOO_MAX )
+			return FALSE;
+
+		return AddToRandomListFromRandomItemClass(Item[usRandomItem].randomitem);
+	}
+
+	return TRUE;
+}
+
+// add an item to the list
+BOOL AddToRandomListFromItem( UINT16 usItem )
+{
+	if ( usItem )
+	{
+		// is it another random item?
+		if ( Item[usItem].randomitem > 0 )
+		{
+			// continue adding items from this new random item
+			return AddToRandomListFromRandomItem(usItem);
+		}
+		else
+		{
+			// only allow those items that are viable at the current progress
+			if ( Item[usItem].ubCoolness <= rditemmaxcoolness )
+			{
+				// if item is food, not drug or canteen, and food system is off, don't add this
+				if ( !gGameOptions.fFoodSystem && Item[usItem].foodtype > 0 && Item[usItem].drugtype == 0 && Item[usItem].canteen == 0 )
+					;
+				else
+					randomitemarray[itemcnt++] = usItem;
+			}
+
+			// if maximum is reached, return false, thereby signalling an end
+			return ( itemcnt < RANDOM_ITEM_MAX_NUMBER );
+		}			
+	}
+
+	return TRUE;
+}
+
+// check wether this class is already on the taboo list (forbidden to add from there again, because this can lead to loops). If not, add this to the taboo list
+BOOL RandomItemClassIsTaboo( UINT16 usRandomItemClass )
+{
+	for ( int i = 0; i < rdclasstaboocnt; ++i)
+	{
+		if ( randomitemclasstabooarray[i] == usRandomItemClass )
+			return TRUE;
+	}
+
+	// add to taboo list
+	randomitemclasstabooarray[rdclasstaboocnt++] = usRandomItemClass;
+
+	return FALSE;
+}
+
+BOOL RandomItemIsTaboo( UINT16 usRandomItem )
+{
+	for ( int i = 0; i < rdtaboocnt; ++i)
+	{
+		if ( randomitemtabooarray[i] == usRandomItem )
+			return TRUE;
+	}
+
+	// add to taboo list
+	randomitemtabooarray[rdtaboocnt++] = usRandomItem;
+
+	return FALSE;
 }
