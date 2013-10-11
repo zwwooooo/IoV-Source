@@ -770,6 +770,11 @@ void CheckHostileOrSayQuoteList( void )
 					{
 						gTacticalStatus.fCivGroupHostile[ pSoldier->ubCivilianGroup ] = CIV_GROUP_HOSTILE;
 					}
+
+					// reevaluate sight - we might already see people that weren't enemies until now
+					ManLooksForOtherTeams(pSoldier);
+
+					pSoldier->aiData.bAlertStatus = STATUS_RED;
 				}
 			}
 
@@ -2206,6 +2211,10 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 		return;
 	}
 
+	// Flugente: if the other guy is in med or deep water and wearing scua gear, then we cannot see him as he is submerged
+	if ( pOpponent->UsesScubaGear() )
+		return;
+
 	// Flugente: update our sight concerning this guy, otherwise we could get way with open attacks because this does not get updated
 	pSoldier->RecognizeAsCombatant(pOpponent->ubID);
 
@@ -2366,6 +2375,42 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 					}
 				}
 			}
+			// Flugente: for assassins without profiles
+			else if ( pSoldier->IsAssassin() && pSoldier->bTeam == CIV_TEAM )
+			{
+				// if we are an assassin and still neutral and undercover, approach target and then become hostile
+				if ( pSoldier->aiData.bNeutral && pSoldier->bSoldierFlagMask & (SOLDIER_COVERT_CIV|SOLDIER_COVERT_SOLDIER) )
+				{
+					// only if this guy isn't disguised himself!
+					if ( (pOpponent->bSoldierFlagMask & (SOLDIER_COVERT_CIV|SOLDIER_COVERT_SOLDIER)) == 0)
+					{
+						if ( pSoldier->ubCivilianGroup != NON_CIV_GROUP && gTacticalStatus.fCivGroupHostile[ pSoldier->ubCivilianGroup ] >= CIV_GROUP_WILL_BECOME_HOSTILE )
+						{
+							// measure distance to our opponent, only go hostile if he is close enough
+							if ( PythSpacesAway( pSoldier->sGridNo, pOpponent->sGridNo ) <= NPC_TALK_RADIUS * 2 )
+							{
+								AddToShouldBecomeHostileOrSayQuoteList( pSoldier->ubID );
+								fNotAddedToList = FALSE;
+							}
+						}
+					}
+				}
+
+				if ( fNotAddedToList )
+				{
+					// change orders, reset action!
+					if ( pSoldier->aiData.bOrders != SEEKENEMY )
+					{
+						pSoldier->aiData.bOrders = SEEKENEMY;
+						if ( pSoldier->aiData.bOppCnt == 0 )
+						{
+							// didn't see anyone before!
+							CancelAIAction( pSoldier, TRUE );
+							SetNewSituation( pSoldier );
+						}
+					}
+				}
+			}
 			else
 			{
 				if ( pSoldier->bTeam == CIV_TEAM )
@@ -2511,9 +2556,29 @@ void ManSeesMan(SOLDIERTYPE *pSoldier, SOLDIERTYPE *pOpponent, INT32 sOppGridNo,
 			*/
 		}
 
-		// if both of us are not neutral, AND
-		// if this man is actually a true opponent (we're not on the same side)
-		if (!CONSIDERED_NEUTRAL( pOpponent, pSoldier ) && !CONSIDERED_NEUTRAL( pSoldier, pOpponent ) && (pSoldier->bSide != pOpponent->bSide) && pSoldier->RecognizeAsCombatant(pOpponent->ubID) )
+		// Flugente: reworked this to account for covert ops and assassin mechanisms
+		// if we are not neutral against this guy, we are truly opponents (we're not on the same side) and recognize him as an opponent...
+		BOOLEAN fAddAsOpponent = FALSE;
+		if ( !CONSIDERED_NEUTRAL( pSoldier, pOpponent ) && (pSoldier->bSide != pOpponent->bSide) && pSoldier->RecognizeAsCombatant(pOpponent->ubID) )
+		{
+			 // ... check wether he is not neutral against us (account for the fact that we might be covert!)
+			// if we are an NPC assassin
+			if ( pSoldier->bSoldierFlagMask & SOLDIER_ASSASSIN && pSoldier->bSoldierFlagMask & (SOLDIER_COVERT_CIV|SOLDIER_COVERT_SOLDIER) )
+			{
+				// check wether our opponent would see us as an opponent if we weren't covert
+				if ( !( (pSoldier->aiData.bNeutral || pSoldier->bSoldierFlagMask & SOLDIER_POW) && ( pOpponent->bTeam != CREATURE_TEAM || pOpponent->flags.uiStatusFlags & SOLDIER_VEHICLE ) ) )
+					fAddAsOpponent = TRUE;
+			}
+			else
+			{
+				// simply check wether this guy sees us as an opponent too
+				if ( !CONSIDERED_NEUTRAL( pOpponent, pSoldier ) )
+					fAddAsOpponent = TRUE;
+			}
+		}
+
+
+		if ( fAddAsOpponent )
 		{
 			AddOneOpponent(pSoldier);
 
@@ -3012,9 +3077,12 @@ IAN COMMENTED THIS OUT MAY 1997 - DO WE NEED THIS?
 		if (pOpponent)
 		{
 			// check to see if OPPONENT considers US neutral
-			if ( (pOpponent->aiData.bOppList[ubTarget] == SEEN_CURRENTLY) && !pOpponent->aiData.bNeutral && !CONSIDERED_NEUTRAL( pOpponent, pSoldier ) && (pSoldier->bSide != pOpponent->bSide) && pOpponent->RecognizeAsCombatant(pSoldier->ubID) )
+			if ( (pOpponent->aiData.bOppList[ubTarget] == SEEN_CURRENTLY) && !pOpponent->aiData.bNeutral && (pSoldier->bSide != pOpponent->bSide) )
 			{
-				RemoveOneOpponent(pOpponent);
+				// Flugente: we consider enemies to be neutral if they are prisoners of war (otherwise the AI would kill prisoners). Bu as we want to remove them, we have to account for that
+				// we also move RecognizeAsCombatant to be the last condition checked, because it is the most computationally expensive one
+				if ( ( !CONSIDERED_NEUTRAL( pOpponent, pSoldier ) || pSoldier->bSoldierFlagMask & SOLDIER_POW ) && pOpponent->RecognizeAsCombatant(pSoldier->ubID) )
+					RemoveOneOpponent(pOpponent);
 			}
 			UpdatePersonal(pOpponent,ubTarget,NOT_HEARD_OR_SEEN,NOWHERE,0);
 			gbSeenOpponents[ubLoop][ubTarget] = FALSE;
@@ -6800,7 +6868,7 @@ void DecayIndividualOpplist(SOLDIERTYPE *pSoldier)
 	if (pSoldier->stats.bLife < OKLIFE)
 	{
 		// must make sure that public opplist is kept to match...
-		for ( uiLoop = 0; uiLoop < TOTAL_SOLDIERS; uiLoop++ )
+		for ( uiLoop = 0; uiLoop < TOTAL_SOLDIERS; ++uiLoop )
 		{
 			if ( pSoldier->aiData.bOppList[ uiLoop ] == SEEN_CURRENTLY )
 			{
@@ -6815,7 +6883,7 @@ void DecayIndividualOpplist(SOLDIERTYPE *pSoldier)
 	}
 
 	// man looks for each of his opponents WHO IS CURRENTLY SEEN
-	for (uiLoop = 0; uiLoop < guiNumMercSlots; uiLoop++)
+	for (uiLoop = 0; uiLoop < guiNumMercSlots; ++uiLoop)
 	{
 		pOpponent = MercSlots[ uiLoop ];
 
@@ -6828,20 +6896,19 @@ void DecayIndividualOpplist(SOLDIERTYPE *pSoldier)
 				continue;
 			}
 
-		pPersOL = pSoldier->aiData.bOppList + pOpponent->ubID;
+			pPersOL = pSoldier->aiData.bOppList + pOpponent->ubID;
 
-	 // if this opponent is seen currently
-	 if (*pPersOL == SEEN_CURRENTLY)
-		{
+			 // if this opponent is seen currently
+			 if (*pPersOL == SEEN_CURRENTLY)
+			{
 				// they are NOT visible now!
 				(*pPersOL)++;
 				if (!CONSIDERED_NEUTRAL( pOpponent, pSoldier ) && !CONSIDERED_NEUTRAL( pSoldier, pOpponent ) && (pSoldier->bSide != pOpponent->bSide) && pSoldier->RecognizeAsCombatant(pOpponent->ubID) )
 				{
 					RemoveOneOpponent(pSoldier);
 				}
-
+			}
 		}
-	}
 	}
 }
 

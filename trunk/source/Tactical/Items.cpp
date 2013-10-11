@@ -61,6 +61,7 @@
 
 	#include "drugs and alcohol.h"
 	#include "Food.h"
+	#include "opplist.h"
 #endif
 
 #ifdef JA2UB
@@ -6787,10 +6788,12 @@ BOOLEAN AutoPlaceObjectToWorld(SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj, INT8 b
 		}
 
 		// WANNE: This should fix the bug, that items get lost in the sector when switching between tactical sectors
-		// This bug was introduced in revision 4571 (2011-07-14)
+		// This bug was introduced in revision 4571 (2011-07-14), fixed in 5228
+		// Buggler:  Previously item get lost when holding CTRL & clicking on item in merc inventory when map screen shows other sectors
+		// Fixed above issue on commit in 5781 (2013-01-13). Please remove all comments if no reported issue after adequate public testing
 		
-		//if(!fShowMapInventoryPool)
-		if(fShowMapInventoryPool)
+		if(!fShowMapInventoryPool)
+		//if(fShowMapInventoryPool) // Buggler: to remove too
 		{
 			fShowMapInventoryPool = TRUE;
 			CreateDestroyMapInventoryPoolButtons(FALSE);
@@ -7386,12 +7389,16 @@ UINT16 FindReplacementMagazineIfNecessary( UINT16 usOldGun, UINT16 usOldAmmo, UI
 // increase this if any gun can have more types that this
 #define MAX_AMMO_TYPES_PER_GUN		24  // MADD MARKER
 
-UINT16 RandomMagazine( UINT16 usItem, UINT8 ubPercentStandard, UINT8 maxCoolness )
+UINT16 RandomMagazine( UINT16 usItem, UINT8 ubPercentStandard, UINT8 maxCoolness, INT8 bSoldierClass )
 {
 	// Note: if any ammo items in the item table are separated from the main group,
 	// this function will have to be rewritten to scan the item table for an item
 	// with item class ammo, which has class index ubLoop
 	DebugMsg (TOPIC_JA2,DBG_LEVEL_3,String("RandomMagazine (by index)"));
+
+	// Flugente: if accessing with wrong soldier class, or not using different selection choices, take default one
+	if ( bSoldierClass >= SOLDIER_GUN_CHOICE_SELECTIONS || bSoldierClass < SOLDIER_CLASS_NONE || !gGameExternalOptions.fSoldierClassSpecificItemTables )
+		bSoldierClass = SOLDIER_CLASS_NONE;
 
 	WEAPONTYPE *	pWeapon;
 	UINT16			usLoop;
@@ -7420,11 +7427,11 @@ UINT16 RandomMagazine( UINT16 usItem, UINT8 ubPercentStandard, UINT8 maxCoolness
 			// store it! (make sure array is big enough)
 			Assert(usPossibleMagCnt < MAX_AMMO_TYPES_PER_GUN);
 			// Madd: check to see if allowed by army
-			if ( gArmyItemChoices[ENEMYAMMOTYPES].ubChoices > 0 )
+			if ( gArmyItemChoices[bSoldierClass][ENEMYAMMOTYPES].ubChoices > 0 )
 			{
-				for ( int i=0;i<gArmyItemChoices[ENEMYAMMOTYPES].ubChoices;i++ )
+				for ( int i=0;i<gArmyItemChoices[bSoldierClass][ENEMYAMMOTYPES].ubChoices;i++ )
 				{
-					if ( gArmyItemChoices[ENEMYAMMOTYPES].bItemNo[i] == Magazine[usLoop].ubAmmoType )
+					if ( gArmyItemChoices[bSoldierClass][ENEMYAMMOTYPES].bItemNo[i] == Magazine[usLoop].ubAmmoType )
 					{
 						usPossibleMagIndex[usPossibleMagCnt++] = usLoop;
 						break;
@@ -7472,12 +7479,16 @@ UINT16 RandomMagazine( UINT16 usItem, UINT8 ubPercentStandard, UINT8 maxCoolness
 	}
 }
 
-UINT16 RandomMagazine( OBJECTTYPE * pGun, UINT8 ubPercentStandard, UINT8 maxCoolness )
+UINT16 RandomMagazine( OBJECTTYPE * pGun, UINT8 ubPercentStandard, UINT8 maxCoolness, INT8 bSoldierClass )
 {
 	// Note: if any ammo items in the item table are separated from the main group,
 	// this function will have to be rewritten to scan the item table for an item
 	// with item class ammo, which has class index ubLoop
 	DebugMsg (TOPIC_JA2,DBG_LEVEL_3,String("RandomMagazine"));
+
+	// Flugente: if accessing with wrong soldier class, or not using different selection choices, take default one
+	if ( bSoldierClass >= SOLDIER_GUN_CHOICE_SELECTIONS || bSoldierClass < SOLDIER_CLASS_NONE || !gGameExternalOptions.fSoldierClassSpecificItemTables )
+		bSoldierClass = SOLDIER_CLASS_NONE;
 
 	WEAPONTYPE *	pWeapon;
 	UINT16			usLoop;
@@ -7506,11 +7517,11 @@ UINT16 RandomMagazine( OBJECTTYPE * pGun, UINT8 ubPercentStandard, UINT8 maxCool
 			// store it! (make sure array is big enough)
 			Assert(usPossibleMagCnt < MAX_AMMO_TYPES_PER_GUN);
 			// Madd: check to see if allowed by army
-			if ( gArmyItemChoices[ENEMYAMMOTYPES].ubChoices > 0 )
+			if ( gArmyItemChoices[bSoldierClass][ENEMYAMMOTYPES].ubChoices > 0 )
 			{
-				for ( int i=0;i<gArmyItemChoices[ENEMYAMMOTYPES].ubChoices;i++ )
+				for ( int i=0;i<gArmyItemChoices[bSoldierClass][ENEMYAMMOTYPES].ubChoices;i++ )
 				{
-					if ( gArmyItemChoices[ENEMYAMMOTYPES].bItemNo[i] == Magazine[usLoop].ubAmmoType )
+					if ( gArmyItemChoices[bSoldierClass][ENEMYAMMOTYPES].bItemNo[i] == Magazine[usLoop].ubAmmoType )
 					{
 						usPossibleMagIndex[usPossibleMagCnt++] = usLoop;
 						break;
@@ -7994,7 +8005,7 @@ BOOLEAN OBJECTTYPE::RemoveAttachment( OBJECTTYPE* pAttachment, OBJECTTYPE * pNew
 			{
 				removedAttachment = *pAttachment;
 				iter = (*this)[subObject]->RemoveAttachmentAtIter(iter);
-
+				pAttachment = NULL;
 				objDeleted = TRUE;
 				break;
 			}
@@ -8008,7 +8019,7 @@ BOOLEAN OBJECTTYPE::RemoveAttachment( OBJECTTYPE* pAttachment, OBJECTTYPE * pNew
 				{
 					removedAttachment = *pAttachment;
 					iter = (*this)[subObject]->RemoveAttachmentAtIter(iter);
-
+					pAttachment = NULL;
 					objDeleted = TRUE;
 					break;
 				}
@@ -8110,8 +8121,11 @@ BOOLEAN OBJECTTYPE::RemoveAttachment( OBJECTTYPE* pAttachment, OBJECTTYPE * pNew
 	if(pNewObj != NULL)
 		*pNewObj = removedAttachment;
 
-	if(pAttachment->exists() && (pAttachment->usItem == 0 || pAttachment->usItem == removedAttachment.usItem ))
-		*pAttachment = removedAttachment;
+
+	// Why is this here? By now, the object, pAttachment had been pointing to, has already been deconstructed via RemoveAttachmentAtIter.
+	// (Commenting out the following two lines)
+	//if(pAttachment->exists() && (pAttachment->usItem == 0 || pAttachment->usItem == removedAttachment.usItem ))
+	//	*pAttachment = removedAttachment;
 
 	if (pNewObj->exists() && Item[pNewObj->usItem].grenadelauncher )//UNDER_GLAUNCHER)
 	{
@@ -8120,10 +8134,14 @@ BOOLEAN OBJECTTYPE::RemoveAttachment( OBJECTTYPE* pAttachment, OBJECTTYPE * pNew
 		OBJECTTYPE* pGrenade = FindAttachmentByClass( this, IC_GRENADE );
 		if (pGrenade->exists())
 		{
-			pNewObj->AttachObject(NULL, pGrenade, FALSE, 0, -1, 0);
 			//ADB ubWeight has been removed, see comments in OBJECTTYPE
 			//pNewObj->ubWeight = CalculateObjectWeight( pNewObj );
-			this->RemoveAttachment(pGrenade, NULL, 0, NULL, 1, 0);
+
+			// we might have to do it in this order, because if we attach first,
+			// the object is pretty much gone and RemoveAttachment won't work (returns right away)
+			OBJECTTYPE tmp;
+			this->RemoveAttachment(pGrenade, &tmp, 0, NULL, 1, 0);
+			pNewObj->AttachObject(NULL, &tmp, FALSE, 0, -1, 0);
 		}
 	}
 	//Removing an attachment can alter slots, check them.
@@ -9294,6 +9312,9 @@ BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj)
 
 				SET_PALETTEREP_ID( pSoldier->VestPal, Clothes[clothestype].vest );
 				pSoldier->bSoldierFlagMask |= SOLDIER_NEW_VEST;
+
+				// this vest is not damaged, so remove the damaged vest flag
+				pSoldier->bSoldierFlagMask &= ~SOLDIER_DAMAGED_VEST;
 			}
 
 			if ( newpants )
@@ -9314,6 +9335,9 @@ BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj)
 
 				SET_PALETTEREP_ID( pSoldier->PantsPal, Clothes[clothestype].pants );
 				pSoldier->bSoldierFlagMask |= SOLDIER_NEW_PANTS;
+
+				// these pants are not damaged, so remove the damaged pants flag
+				pSoldier->bSoldierFlagMask &= ~SOLDIER_DAMAGED_PANTS;
 			}
 
 			// Use palette from HVOBJECT, then use substitution for pants, etc
@@ -9333,22 +9357,31 @@ BOOLEAN ApplyClothes( SOLDIERTYPE * pSoldier, OBJECTTYPE * pObj)
 
 		if ( pSoldier->bSoldierFlagMask & SOLDIER_NEW_VEST && pSoldier->bSoldierFlagMask & SOLDIER_NEW_PANTS )
 		{
-			// first, remove the covert flags, adn then reapply the correct ones, in case we switch between civilina and military garb
+			// first, remove the covert flags, and then reapply the correct ones, in case we switch between civilian and military clothes
 			pSoldier->bSoldierFlagMask &= ~(SOLDIER_COVERT_CIV|SOLDIER_COVERT_SOLDIER);
 
 			// we now have to determine wether we are currently wearing civilian or military clothes
-			for ( int i = UNIFORM_ENEMY_ADMIN; i <= UNIFORM_ENEMY_ELITE; ++i )
+			for ( UINT8 i = UNIFORM_ENEMY_ADMIN; i <= UNIFORM_ENEMY_ELITE; ++i )
 			{
+				// both parts have to fit. We cant mix different uniforms and get soldier disguise
 				if ( COMPARE_PALETTEREP_ID(pSoldier->VestPal, gUniformColors[ i ].vest) && COMPARE_PALETTEREP_ID(pSoldier->PantsPal, gUniformColors[ i ].pants) )
 				{
 					pSoldier->bSoldierFlagMask |= SOLDIER_COVERT_SOLDIER;
+					ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_DISGUISED_AS_SOLDIER], pSoldier->name );
+
 					break;
 				}
 			}
 
 			// if not dressed as a soldier, we must be dressed as a civilian
 			if ( !(pSoldier->bSoldierFlagMask & SOLDIER_COVERT_SOLDIER) )
+			{
 				pSoldier->bSoldierFlagMask |= SOLDIER_COVERT_CIV;
+				ScreenMsg( FONT_MCOLOR_LTYELLOW, MSG_INTERFACE, szCovertTextStr[STR_COVERT_DISGUISED_AS_CIVILIAN], pSoldier->name );
+			}
+
+			// reevaluate sight - otherwise we could hide by changing clothes in plain sight!
+			OtherTeamsLookForMan(pSoldier);
 		}
 	}
 		
@@ -14171,6 +14204,11 @@ BOOLEAN OBJECTTYPE::TransformObject( SOLDIERTYPE * pSoldier, UINT8 ubStatusIndex
 	this->usItem = usResult[0];
 	// Record the new itemclass
 	UINT32 uiNewClass = Item[this->usItem].usItemClass;
+
+	// Flugente: if the new item is a food item (and the old one wasn't), we define it to be fresh, so adjust its temperature
+	if ( Item[usOldItem].foodtype == 0 &&  Item[this->usItem].foodtype > 0 )
+		(*this)[0]->data.bTemperature = OVERHEATING_MAX_TEMPERATURE;
+
 	// Make a clone of this object, so that we can point the DescBox to it later if we run into any problems.
 	gCloneItemDescObject = *(this);
 	///////////////////////////////////////////////////////////////
