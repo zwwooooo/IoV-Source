@@ -3,14 +3,7 @@
 
 #include "Types.h"
 
-#ifdef JA2UB
-	#define				GAME_INI_FILE					"Ja2_UB.ini"
-#elif defined (JA113DEMO)
-	#define				GAME_INI_FILE					"Ja2_Demo.ini"
-#else
-	#define				GAME_INI_FILE					"Ja2.ini"
-#endif
-
+#define				GAME_INI_FILE					"Ja2.ini"
 
 //If you add any options, MAKE sure you add the corresponding string to the Options Screen string array.
 //	 look up : zOptionsScreenHelpText , zOptionsToggleText
@@ -1131,10 +1124,11 @@ typedef struct
 	FLOAT fClockSpeedPercent;
 #endif
 
-	// Flugente FTW 1: Weapon Overheating
+	// Flugente: Weapon Overheating
 	BOOLEAN	fDisplayOverheatThermometer;			// Should a 'thermometer' for guns and replacable barrels be displayed?
 	UINT8	ubOverheatThermometerRedOffset;			// amount of red colour while temperature is below threshold
 	FLOAT   iCooldownModificatorLonelyBarrel;		// Cooldown modificator for barrels alone in the landscape ;-)
+	FLOAT	iOverheatTemperatureGlobalModfier;		// a global modifier to the singel shot temperatuer value, if one feels that all values hould be lower/higher
 	
 	// Flugente: Weapon Mounting
 	BOOLEAN	fWeaponResting;							// Should it be possible to rest your weapon on structures in crouched position?
@@ -1429,6 +1423,13 @@ typedef struct
 	BOOLEAN fSCPreventsTheEnemyToAmbushMercs;
 	BOOLEAN fSCPreventsBloodcatsAmbushes;
 	BOOLEAN fSCThrowMessageIfAmbushPrevented;
+
+	// COVERT OPS
+	INT16	sCOMeleeCTHBonus;
+	INT16	sCoMeleeInstakillBonus;
+	INT16	sCODisguiseAPReduction;
+	INT16	sCOCloseDetectionRange;
+	INT16	sCOCloseDetectionRangeSoldierCorpse;
 
 } SKILL_TRAIT_VALUES;
 

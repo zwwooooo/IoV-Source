@@ -698,7 +698,7 @@ void LoadGameExternalOptions()
 
 	gGameExternalOptions.iMaxEnemyGroupSize							= iniReader.ReadInteger("System Limit Settings","MAX_STRATEGIC_ENEMY_GROUP_SIZE",20, 10, 100);
 	//JMich
-	//gGameExternalOptions.guiMaxItemSize								= iniReader.ReadInteger("System Limit Settings","MAX_ITEM_SIZE",34, 0, 65000);
+	//gGameExternalOptions.guiMaxItemSize							= iniReader.ReadInteger("System Limit Settings","MAX_ITEM_SIZE",34, 0, 65000);
 	//gGameExternalOptions.guiMaxWeaponSize							= iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 9, 0, 32000);
 	gGameExternalOptions.guiMaxItemSize								= __max(54,iniReader.ReadInteger("System Limit Settings","MAX_ITEM_SIZE",34, 0, 65000)); //zwwooooo: IoV921+ z.6b2 - IoV's MAX_WEAPON_SIZE must >= 54 - z.6b3 modify
 	gGameExternalOptions.guiMaxWeaponSize							= __max(11,iniReader.ReadInteger("System Limit Settings","MAX_WEAPON_SIZE", 9, 0, 32000)); //zwwooooo: IoV921+ z.6b2 - IoV's MAX_WEAPON_SIZE must >= 11 - z.6b3 modify
@@ -1392,11 +1392,12 @@ void LoadGameExternalOptions()
 	gGameExternalOptions.guiChanceToDoLightningBetweenTurns				= iniReader.ReadInteger("Tactical Weather Settings","CHANCE_TO_DO_LIGHTNING_BETWEEN_TURNS",35, 0, 100);
 
 	//################# Tactical Weapon Overheating Settings ##################
-	// Flugente FTW 1: These settings control the behavior of Weapon Overheating, its severity, and its display.
+	// Flugente: These settings control the behavior of Weapon Overheating, its severity, and its display.
 
 	gGameExternalOptions.fDisplayOverheatThermometer					= iniReader.ReadBoolean("Tactical Weapon Overheating Settings","OVERHEATING_DISPLAY_THERMOMETER",TRUE);
 	gGameExternalOptions.ubOverheatThermometerRedOffset					= iniReader.ReadInteger("Tactical Weapon Overheating Settings","OVERHEATING_DISPLAY_THERMOMETER_RED_OFFSET", 100, 0, 255);
 	gGameExternalOptions.iCooldownModificatorLonelyBarrel			    = iniReader.ReadFloat  ("Tactical Weapon Overheating Settings","OVERHEATING_COOLDOWN_MODIFICATOR_LONELYBARREL", 1.15f, 1.0f, 10.0f);
+	gGameExternalOptions.iOverheatTemperatureGlobalModfier			    = iniReader.ReadFloat  ("Tactical Weapon Overheating Settings","OVERHEATING_TEMPERATURE_GLOBAL_MODIFIER", 1.0f, 0.1f, 10.0f);
 		
 #ifdef ENABLE_ZOMBIES
 	//################# Tactical Zombie Settings ##################
@@ -1414,7 +1415,7 @@ void LoadGameExternalOptions()
 
 	//################# Tactical Poison Settings ##################
 	gGameExternalOptions.ubPoisonBaseMedicalSkillToCure					= iniReader.ReadInteger("Tactical Poison Settings", "POISON_BASE_MEDICAL_SKILL_TO_CURE", 50, 1, 100);
-	gGameExternalOptions.sPoisonMedicalPtsToCureMultiplicator			= iniReader.ReadFloat("Tactical Poison Settings", "POISON_MEDICAL_POINTS_TO_CURE_MULTIPLICATOR", 0.5, 0.1, 10.0);
+	gGameExternalOptions.sPoisonMedicalPtsToCureMultiplicator			= iniReader.ReadFloat("Tactical Poison Settings", "POISON_MEDICAL_POINTS_TO_CURE_MULTIPLICATOR", 0.5f, 0.1f, 10.0f);
 	gGameExternalOptions.sZombiePoisonDamagePercentage					= iniReader.ReadInteger("Tactical Poison Settings", "ZOMBIE_POISON_DAMAGE_PERCENTAGE", 50, 0, 100);	
 	gGameExternalOptions.sPoisonInfectionDamageMultiplier				= iniReader.ReadFloat("Tactical Poison Settings", "POISON_INFECTION_DAMAGE_MULTIPLIER", 4.0, 1.0, 10.0);	
 
@@ -2146,6 +2147,12 @@ void LoadSkillTraitsExternalSettings()
 	gSkillTraitValues.fSCPreventsBloodcatsAmbushes = iniReader.ReadBoolean("Scouting","PREVENTS_BLOODCATS_AMBUSHES", TRUE);
 	gSkillTraitValues.fSCThrowMessageIfAmbushPrevented = iniReader.ReadBoolean("Scouting","SHOW_MESSAGE_IF_AMBUSH_PREVENTED", TRUE);
 
+	// Flugente: COVERT OPS
+	gSkillTraitValues.sCOMeleeCTHBonus						= iniReader.ReadInteger("Covert Ops","COVERT_MELEE_CTH_BONUS", 40, 0, 200);
+	gSkillTraitValues.sCoMeleeInstakillBonus				= iniReader.ReadInteger("Covert Ops","COVERT_MELEE_INSTAKILL_BONUS", 35, 0, 200);
+	gSkillTraitValues.sCODisguiseAPReduction				= iniReader.ReadInteger("Covert Ops","COVERT_DISGUISE_PERCENT_AP_REDUCTION", 20, 0, 100);
+	gSkillTraitValues.sCOCloseDetectionRange				= iniReader.ReadInteger("Covert Ops","COVERT_CLOSE_DETECTION_RANGE", 10, 0, 100);
+	gSkillTraitValues.sCOCloseDetectionRangeSoldierCorpse	= iniReader.ReadInteger("Covert Ops","COVERT_CLOSE_DETECTION_RANGE_SOLDIER_CORPSE", 5, 0, 100);
 }
 //DBrot: Grids
 void LoadModSettings(){
@@ -2452,9 +2459,11 @@ void LoadGameAPBPConstants()
 	APBPConstants[AP_JUMPWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPOFFWALL",40),40);
 	APBPConstants[AP_JUMPOFFWALL] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_JUMPWALL",24),24);
 
-	APBPConstants[AP_FORTIFICATION] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_FORTIFICATION",80),80);
-	APBPConstants[AP_EAT] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_EAT",80),80);
-	APBPConstants[AP_CLEANINGKIT] = DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_CLEANINGKIT",80),80);
+	APBPConstants[AP_FORTIFICATION]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_FORTIFICATION",80),80);
+	APBPConstants[AP_EAT]							= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_EAT",80),80);
+	APBPConstants[AP_CLEANINGKIT]					= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_CLEANINGKIT",80),80);
+	APBPConstants[AP_INVENTORY_EXPLOSIVE_ACTIVATE]	= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_INVENTORY_EXPLOSIVE_ACTIVATE",20),20);
+	APBPConstants[AP_DISGUISE]						= DynamicAdjustAPConstants(iniReader.ReadInteger("APConstants","AP_DISGUISE",80),80);
 
 	SetupMaxActionPointsAnimation();
 #undef ReadInteger
